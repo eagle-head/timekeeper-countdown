@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 0.1.3
+
+### Patch Changes
+
+- Update peerDependencies and dependencies
+
 ## 0.1.2
 
 ### Patch Changes

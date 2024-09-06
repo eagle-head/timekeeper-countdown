@@ -28,7 +28,7 @@ export default [
       typescript({ tsconfig: "./tsconfig.json" }),
       terser({ maxWorkers: 4 }),
     ],
-    external: ["react"],
+    external: ["immer", "react", "use-immer"],
     onwarn: (warning, warn) => {
       if (warning.code === "EMPTY_BUNDLE") return;
       warn(warning);
