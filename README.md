@@ -25,21 +25,57 @@ import React from "react";
 import { useCountdown, CountdownState } from "timekeeper-countdown";
 
 const CountdownTimer = () => {
-  const { time, start, pause, reset, resume, restart, state } = useCountdown(60); // 60 seconds countdown
+  const {
+    totalSeconds,
+    days,
+    hours,
+    minutes,
+    seconds,
+    start,
+    pause,
+    reset,
+    resume,
+    restart,
+    state,
+  } = useCountdown(3 * 24 * 60 * 60); // 3 days countdown
 
   return (
     <div>
       <h1>Countdown Timer</h1>
-      <h3>Time: {time}</h3>
+
       <div>
-        <button onClick={start} disabled={state === CountdownState.RUNNING}>Start</button>
-        <button onClick={pause} disabled={state !== CountdownState.RUNNING}>Pause</button>
-        <button onClick={reset}>Reset</button>
-        <button onClick={resume} disabled={state !== CountdownState.PAUSED}>Resume</button>
-        <button onClick={() => restart()}>Restart (same time)</button>
-        <button onClick={() => restart(30)}>Restart (30 seconds)</button>
+        <div>Days: {days}</div>
+        <div>Hours: {hours}</div>
+        <div>Minutes: {minutes}</div>
+        <div>Seconds: {seconds}</div>
+        <div>Total Seconds: {totalSeconds}</div>
       </div>
-      <div>Current state: {state}</div>
+
+      <div>
+        <button onClick={start} disabled={state !== CountdownState.IDLE}>
+          Start
+        </button>
+        <button onClick={pause} disabled={state !== CountdownState.RUNNING}>
+          Pause
+        </button>
+        <button onClick={() => reset()} disabled={state === CountdownState.RUNNING}>
+          Reset
+        </button>
+        <button onClick={() => reset(2 * 24 * 60 * 60)} disabled={state === CountdownState.RUNNING}>
+          Reset to 2 Days
+        </button>
+        <button onClick={resume} disabled={state !== CountdownState.PAUSED}>
+          Resume
+        </button>
+        <button onClick={() => restart()} disabled={state === CountdownState.IDLE}>
+          Restart
+        </button>
+        <button onClick={() => restart(1 * 24 * 60 * 60)} disabled={state === CountdownState.IDLE}>
+          Restart to 1 Day
+        </button>
+      </div>
+
+      <div>Current State: {state}</div>
     </div>
   );
 };

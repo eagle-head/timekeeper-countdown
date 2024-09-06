@@ -1,6 +1,6 @@
 {
   "name": "timekeeper-countdown",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A countdown timer library for React and React Native with TypeScript",
   "module": "dist/main.js",
   "files": [

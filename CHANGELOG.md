@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated documentation with a new example showing how to manage countdown states.
+
 ## 0.1.1
 
 ### Patch Changes
