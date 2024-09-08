@@ -12,11 +12,11 @@ A finite-state machine is a computational model used to design systems that can 
 
 In the context of a countdown timer, a finite-state machine defines states like "IDLE", "RUNNING", "PAUSED", and "COMPLETED". Each state dictates which actions are valid and what the next state should be based on the current action.
 
-### How the Timekeeper Countdown Utilizes FSM Principles
+#### How the Timekeeper Countdown Utilizes FSM Principles
 
 The **Timekeeper Countdown** library leverages FSM principles by defining strict states that the countdown timer can be in. These states ensure that the timer behaves consistently across different scenarios, reducing the risk of invalid operations, such as pausing a timer that hasn’t started or resetting a completed timer without restarting it first.
 
-### Defined States
+#### Defined States
 
 The timer operates in four core states:
 
@@ -25,7 +25,7 @@ The timer operates in four core states:
 - **PAUSED**: The countdown has been temporarily stopped but can be resumed or reset.
 - **COMPLETED**: The countdown has finished. The only valid action from this state is to reset or restart the timer.
 
-### Why This Makes the Library Unique
+#### Why This Makes the Library Unique
 
 1. **Error Prevention**: By using clearly defined states, the **Timekeeper Countdown** library prevents common errors that can arise from improper timing logic. Actions are only valid when the timer is in the appropriate state, ensuring that the timer operates smoothly.
 
@@ -36,6 +36,73 @@ The timer operates in four core states:
 4. **Scalability**: As FSM models are easy to extend, the library can accommodate more complex features or states if needed in future updates, making it a flexible and scalable solution for countdown-related tasks.
 
 By applying FSM principles, the **Timekeeper Countdown** offers a highly reliable, scalable, and predictable timer solution that ensures invalid actions are prevented and the countdown’s state is always clearly defined.
+
+### Implementation of the `immer` Library
+
+In addition to utilizing FSM principles for state management, the **Timekeeper Countdown** library also integrates the powerful [`immer`](https://immerjs.github.io/immer/) library. **Immer** simplifies working with immutable data structures by allowing you to write code as if you're directly mutating objects, but under the hood, it keeps your data immutable.
+
+#### What is `immer`?
+
+**Immer** is a JavaScript library that helps manage immutability in a more intuitive way. In JavaScript, immutability is important to maintain data consistency, especially in state management libraries like React, where changing an object directly (mutating it) can lead to unexpected bugs and side effects. **Immer** allows you to work with immutable data in a way that feels more natural, using a "draft" state that you can mutate freely. Once the changes are made, **Immer** produces a new, immutable state based on the changes.
+
+#### How `immer` Enhances the Timekeeper Countdown Library
+
+1. **Simplified State Management**:
+   With **immer**, the internal state of the countdown timer can be updated more easily without worrying about mutating the state directly. This makes the code more readable and easier to maintain while ensuring that immutability is preserved.
+
+2. **Efficient Performance**:
+   **Immer** only creates a new copy of the state when changes are made, and it uses structural sharing to ensure that unchanged parts of the state are reused. This leads to better performance, especially for applications that require frequent state updates like a countdown timer.
+
+3. **Cleaner Code**:
+   By using **immer**, the **Timekeeper Countdown** library can handle complex state transitions in a more intuitive and readable way. Developers can modify the state inside reducers without having to clone objects manually, which is common in traditional immutable state management practices.
+
+4. **Avoiding Race Conditions**:
+   One of the key advantages of **immer** is its ability to help prevent **race conditions**. Since **immer** ensures immutability, you can be confident that different parts of your application won't accidentally modify the same state simultaneously. This reduces potential bugs from concurrent updates and provides a more stable and predictable behavior in scenarios where multiple components might interact with the countdown timer's state.
+
+#### Example of Using `immer` in the Countdown Library
+
+Here’s how **immer** simplifies the state management in the **Timekeeper Countdown** library:
+
+```typescript
+export const countdownReducer = (draft: Draft<State>, action: Action) => {
+  switch (action.type) {
+    case ActionTypes.START:
+      draft.state = CountdownState.RUNNING;
+      break;
+    case ActionTypes.PAUSE:
+      draft.state = CountdownState.PAUSED;
+      break;
+    case ActionTypes.RESET:
+      draft.state = CountdownState.IDLE;
+      draft.seconds = action.initialSeconds;
+      break;
+    case ActionTypes.TICK:
+      draft.seconds -= 1;
+      break;
+    case ActionTypes.COMPLETE:
+      draft.state = CountdownState.COMPLETED;
+      draft.seconds = 0;
+      break;
+    case ActionTypes.RESTART:
+      draft.seconds = action.initialSeconds;
+      draft.state = CountdownState.RUNNING;
+      break;
+    default:
+      break;
+  }
+};
+```
+
+Instead of worrying about how to maintain immutability, you can freely mutate the `draft` object, and **Immer** takes care of producing an immutable state for you.
+
+#### Benefits of Using `immer` in the Library
+
+- **Ease of Use**: Developers can handle state transitions as if they were mutable, but the data remains immutable, which aligns well with React’s best practices.
+- **Improved Readability**: By reducing the boilerplate code needed to manage immutability, the countdown timer’s reducer logic becomes much clearer.
+- **Performance**: Since only the affected parts of the state are copied, **immer** ensures that performance remains efficient, even in scenarios where state updates are frequent.
+- **Race Condition Prevention**: **Immer** helps mitigate race conditions by ensuring that state is updated in a predictable and isolated manner, avoiding potential issues that arise when multiple components or processes try to modify the state simultaneously.
+
+By incorporating **immer**, the **Timekeeper Countdown** library not only provides a robust state machine for managing the countdown timer but also ensures that state transitions are handled in a clean, efficient, and immutable way. This combination makes the library both powerful and easy to use for developers.
 
 ## useCountdown Hook
 
