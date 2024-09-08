@@ -41,5 +41,3 @@ The countdown timer uses JavaScript's `setInterval` with a 1-second interval. Fo
 ### 10. **Does the library support countdown completion callbacks?**
 
 Yes, you can monitor the `CountdownState.COMPLETED` state and trigger callbacks or perform actions when the countdown reaches zero.
-
-This FAQ section provides a brief overview of common questions users may have when working with the **Timekeeper Countdown** library.

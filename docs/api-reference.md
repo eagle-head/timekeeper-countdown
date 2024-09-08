@@ -262,6 +262,4 @@ The following actions are dispatched to manage the countdown's internal state.
 dispatch({ type: ActionTypes.START });
 ```
 
-This structure provides the API reference with detailed information on the **useCountdown** hook, the **CountdownState** enum, and the **Actions** available.
-
-Now, users can see how to properly utilize the `CountdownState` to manage UI elements like buttons based on the countdown’s current state.
+With this structure, you can easily manage the countdown `state` and `actions` like `start`, `pause`, and `reset`. Additionally, the CountdownState can be utilized to control UI components, such as enabling or disabling buttons, based on the current `state` of the countdown.
