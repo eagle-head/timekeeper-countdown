@@ -1,6 +1,6 @@
 {
   "name": "timekeeper-countdown",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A countdown timer library for React and React Native with TypeScript",
   "module": "dist/main.js",
   "files": [
@@ -38,7 +38,7 @@
   "bugs": {
     "url": "https://github.com/eagle-head/timekeeper-countdown/issues"
   },
-  "homepage": "https://github.com/eagle-head/timekeeper-countdown#readme",
+  "homepage": "https://eagle-head.github.io/timekeeper-countdown/#/",
   "dependencies": {
     "immer": "^10.1.1",
     "use-immer": "^0.10.0"
