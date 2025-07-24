@@ -1,5 +1,7 @@
 node_modules/
 dist/
+docs/
+.npmrc
 .DS_Store
 *.log
 npm-debug.log*
