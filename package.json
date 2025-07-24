@@ -1,6 +1,6 @@
 {
   "name": "timekeeper-countdown",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
   "keywords": [
     "countdown",
