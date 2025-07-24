@@ -22,5 +22,5 @@
   - [Basic Countdown](examples.md#basic-countdown)
   - [Advanced Countdown](examples.md#advanced-countdown)
   - [Custom Reset and Restart](examples.md#custom-reset-and-restart)
-- [Changelog](../CHANGELOG.md ':include')
+- [Changelog](CHANGELOG.md ':include')
 - [FAQ](faq.md)
