@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 1.0.1
+
+### Patch Changes
+
+- Add Svelte integration example to README
+
 ## 1.0.0
 
 ### Major Changes
