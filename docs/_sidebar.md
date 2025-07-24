@@ -6,7 +6,7 @@
   - [Next Steps](getting-started.md#next-steps)
 - [API Reference](api-reference.md#api-reference)
   - [Concept and Differentiation](api-reference.md#concept-and-differentiation)
-  - [useCountdown Hook](api-reference.md#usecountdown-hook)
+  - [TimekeeperCountdown Class](api-reference.md#timekeeperCountdown-class)
   - [CountdownState Enum](api-reference.md#countdownstate-enum)
   - [Actions](api-reference.md#actions)
 - [Advanced Usage](advanced-usage.md#advanced-usage)

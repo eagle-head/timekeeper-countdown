@@ -4,9 +4,9 @@ Learn how to integrate `timekeeper-countdown` with Vue 3 applications using the 
 
 ## Quick Start
 
-### Basic Composable Implementation
+### Basic Vue Composable Implementation
 
-Create your own `useTimekeeper` composable:
+Create your own `useTimekeeper` composable that wraps the TimekeeperCountdown class:
 
 ```typescript
 // composables/useTimekeeper.ts
@@ -811,9 +811,9 @@ export function useMultipleTimers(configs: TimerConfig[]) {
 ## Best Practices
 
 1. **Reactivity**: Use Vue's ref/reactive for state that needs to trigger re-renders
-2. **Cleanup**: Always use `onUnmounted` to clean up countdown instances
-3. **Watchers**: Use watchers sparingly - prefer options callbacks for performance
-4. **Composable Design**: Keep composables focused and reusable
+2. **Cleanup**: Always use `onUnmounted` to clean up TimekeeperCountdown instances
+3. **Watchers**: Use watchers sparingly - prefer TimekeeperCountdown options callbacks for performance
+4. **Composable Design**: Keep composables focused and reusable around the TimekeeperCountdown class
 5. **Type Safety**: Always provide proper TypeScript types for better DX
 
 ## Testing

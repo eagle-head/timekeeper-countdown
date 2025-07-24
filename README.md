@@ -420,13 +420,13 @@ Check out the `/examples` directory:
 
 ## Migration Guide
 
-### From v1.x (React-only)
+### From v0.x (React-only)
 
 ```typescript
-// v1.x (React only)
+// Old version (React only)
 import { useCountdown } from 'timekeeper-countdown'
 
-// v2.x (Framework agnostic)
+// Current version (Framework agnostic)
 import { TimekeeperCountdown } from 'timekeeper-countdown'
 // + implement your own hook (see React guide)
 ```

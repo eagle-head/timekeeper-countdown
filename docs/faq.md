@@ -4,11 +4,11 @@ This section answers frequently asked questions about the **Timekeeper Countdown
 
 ### 1. **What is the purpose of the Timekeeper Countdown library?**
 
-The library provides an easy-to-use countdown timer hook for React and React Native projects. It allows you to easily create countdowns with various control options like start, pause, reset, restart, and more.
+The library provides an easy-to-use countdown timer class for JavaScript/TypeScript projects. It allows you to easily create countdowns with various control options like start, pause, reset, restart, and more.
 
 ### 2. **Can I use this library with React Native?**
 
-Yes, the **Timekeeper Countdown** library is compatible with both React and React Native, making it versatile for mobile and web applications.
+Yes, the **Timekeeper Countdown** library is framework-agnostic and works with React, Vue, Angular, Svelte, and vanilla JavaScript, making it versatile for any web or mobile application.
 
 ### 3. **How do I change the initial time after starting the countdown?**
 
@@ -20,7 +20,7 @@ When the countdown reaches zero, the internal state switches to `COMPLETED`. You
 
 ### 5. **How do I format the countdown time in days, hours, minutes, and seconds?**
 
-The `useCountdown` hook provides `days`, `hours`, `minutes`, and `seconds` for convenience, allowing you to format the countdown easily in any unit of time.
+The `TimekeeperCountdown` class provides `days`, `hours`, `minutes`, and `seconds` properties for convenience, allowing you to format the countdown easily in any unit of time.
 
 ### 6. **Can I customize the behavior of the reset and restart functions?**
 
@@ -32,7 +32,7 @@ Yes, the library enforces a minimum value of 1 second and a maximum of 99 days (
 
 ### 8. **Can I use multiple countdowns in a single component?**
 
-Absolutely. You can use multiple instances of the `useCountdown` hook in a single component to handle multiple countdowns simultaneously.
+Absolutely. You can create multiple instances of the `TimekeeperCountdown` class to handle multiple countdowns simultaneously.
 
 ### 9. **How does the library handle timer accuracy?**
 

@@ -1,6 +1,6 @@
 # Timekeeper Countdown ⏳
 
-Welcome to the **Timekeeper Countdown** documentation! This library helps you easily implement countdown timers in your React and React Native applications. Whether you need a timer for tasks, events, or custom applications, this library provides flexibility and ease of use.
+Welcome to the **Timekeeper Countdown** documentation! This library helps you easily implement countdown timers in any JavaScript/TypeScript application. Whether you need a timer for tasks, events, or custom applications, this library provides flexibility and ease of use.
 
 ## Overview
 
@@ -8,7 +8,7 @@ The **Timekeeper Countdown** library offers:
 
 - Countdown control functions: start, pause, reset, restart, and resume.
 - Tracking across multiple units: days, hours, minutes, and seconds.
-- Full support for React and React Native.
+- Full support for all frameworks (React, Vue, Angular, Svelte, etc.).
 - Customizable time formats and behaviors.
 - Uses a well-defined **finite state machine** to manage countdown states, ensuring better control and clarity over transitions like `IDLE`, `RUNNING`, `PAUSED`, and `COMPLETED`.
 

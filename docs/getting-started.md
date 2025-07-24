@@ -126,7 +126,7 @@ const CountdownComponent = () => {
 import { ref, onUnmounted } from 'vue'
 import { TimekeeperCountdown, CountdownState } from 'timekeeper-countdown'
 
-export function useCountdown(initialSeconds: number) {
+export function useCountdownTimer(initialSeconds: number) {
   const timer = ref<TimekeeperCountdown | null>(null)
   const time = ref({ days: 0, hours: 0, minutes: 0, seconds: initialSeconds, totalSeconds: initialSeconds })
   const state = ref(CountdownState.IDLE)

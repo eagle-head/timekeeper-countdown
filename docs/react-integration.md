@@ -4,9 +4,9 @@ Learn how to integrate `timekeeper-countdown` with React applications.
 
 ## Quick Start
 
-### Basic Hook Implementation
+### Basic React Hook Implementation
 
-Create your own `useTimekeeper` hook:
+Create your own `useTimekeeper` hook that wraps the TimekeeperCountdown class:
 
 ```typescript
 // hooks/useTimekeeper.ts
@@ -475,10 +475,10 @@ export function useAdvancedTimekeeper(
 
 ## Best Practices
 
-1. **Cleanup**: Always let the hook handle cleanup - don't manually call `destroy()`
+1. **Cleanup**: Always let the hook handle cleanup - don't manually call `destroy()` on the TimekeeperCountdown instance
 2. **Memoization**: Use `useCallback` for event handlers to prevent unnecessary re-renders
 3. **State Management**: Keep countdown state local unless you need global access
-4. **Performance**: Avoid creating new objects in render - use refs for stable values
+4. **Performance**: Avoid creating new objects in render - use refs for stable TimekeeperCountdown instances
 5. **Testing**: Mock the `TimekeeperCountdown` class for easier unit testing
 
 ## Common Patterns
