@@ -1,5 +1,5 @@
 {
-  "name": "@eagle-head/timekeeper-countdown",
+  "name": "timekeeper-countdown",
   "version": "1.0.2",
   "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
   "keywords": [
@@ -98,6 +98,6 @@
     "node": ">=16"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org"
   }
 }
