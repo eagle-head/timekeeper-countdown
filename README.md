@@ -413,12 +413,10 @@ validateInitialSeconds(0) // throws Error
 
 ## Examples & Demos
 
-Check out the `/examples` directory for complete implementations:
+Check out the `/examples` directory:
 
-- **Vanilla JavaScript** - Basic HTML/JS integration
-- **React** - Hook-based component with TypeScript
-- **Vue** - Composable with reactive state
-- **Angular** - Service with RxJS observables
+- **Vanilla** - Basic HTML/JS integration (`/examples/vanilla/basic.html`)
+- **Framework Integrations** - TypeScript examples for React, Vue, Angular, and Svelte (`/examples/integrations/`)
 
 ## Migration Guide
 
@@ -459,7 +457,7 @@ For older browser support, use a bundler with appropriate polyfills.
 
 ## Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please feel free to submit issues and pull requests.
 
 ## License
 
