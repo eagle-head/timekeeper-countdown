@@ -173,6 +173,64 @@ const { minutes, seconds, start, pause, state } = useTimekeeper(300)
 ```
 </details>
 
+<details>
+<summary><strong>Svelte Store (5 minutes to implement)</strong></summary>
+
+```typescript
+// stores/timekeeper.ts
+import { writable, derived } from 'svelte/store'
+import { TimekeeperCountdown } from 'timekeeper-countdown'
+
+export function createTimekeeperStore(initialSeconds: number) {
+  const countdown = new TimekeeperCountdown(initialSeconds)
+  
+  // Create writable store for timer data
+  const timerData = writable({
+    totalSeconds: initialSeconds,
+    days: 0,
+    hours: 0,
+    minutes: Math.floor(initialSeconds / 60),
+    seconds: initialSeconds % 60,
+    state: 'IDLE' as const
+  })
+  
+  // Setup event listeners
+  countdown.on('tick', (data) => timerData.set(data))
+  countdown.on('start', (data) => timerData.set(data))
+  countdown.on('pause', (data) => timerData.set(data))
+  countdown.on('complete', (data) => timerData.set(data))
+  
+  return {
+    subscribe: timerData.subscribe,
+    start: () => countdown.start(),
+    pause: () => countdown.pause(),
+    resume: () => countdown.resume(),
+    reset: () => countdown.reset(),
+    destroy: () => countdown.destroy()
+  }
+}
+```
+
+Usage:
+```svelte
+<script>
+  import { createTimekeeperStore } from './stores/timekeeper'
+  import { onDestroy } from 'svelte'
+  
+  const timer = createTimekeeperStore(300)
+  const { minutes, seconds, state } = timer
+  
+  onDestroy(() => timer.destroy())
+</script>
+
+<div>
+  <div>{$minutes}:{$seconds.toString().padStart(2, '0')}</div>
+  <button on:click={timer.start} disabled={$state === 'RUNNING'}>Start</button>
+  <button on:click={timer.pause} disabled={$state !== 'RUNNING'}>Pause</button>
+</div>
+```
+</details>
+
 ## Core API
 
 ### TimekeeperCountdown Class

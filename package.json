@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eagle-head/timekeeper-countdown"
+    "url": "git+https://github.com/eagle-head/timekeeper-countdown.git"
   },
   "homepage": "https://github.com/eagle-head/timekeeper-countdown#readme",
   "bugs": {
