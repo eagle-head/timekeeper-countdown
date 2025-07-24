@@ -1,5 +1,5 @@
 * [Home](/)
 * [API Reference](api-reference.md)
 * [Examples](examples.md)
-* [Changelog](CHANGELOG.md)
+* [Changelog](../CHANGELOG.md)
 * [FAQ](faq.md)

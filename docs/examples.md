@@ -2,6 +2,26 @@
 
 This section provides practical examples of how to use the **Timekeeper Countdown** library. The examples cover basic, advanced, and custom use cases, demonstrating the flexibility of the library.
 
+## Available Examples
+
+- **Vanilla JavaScript**: Complete HTML example showing core library usage (`examples/vanilla/basic.html`)
+- **Framework Integrations**: TypeScript examples for React, Vue, Angular, and Svelte (`examples/integrations/`)
+
+## File Structure
+
+```
+examples/
+├── integrations/           # Framework integration examples
+│   ├── react.ts           # React hook implementation
+│   ├── vue.ts             # Vue composable implementation  
+│   ├── angular.ts         # Angular service implementation
+│   └── svelte.ts          # Svelte store implementation
+└── vanilla/               # Pure JavaScript/HTML examples
+    └── basic.html         # Complete working HTML example
+```
+
+Each integration file in `examples/integrations/` provides a complete, ready-to-use implementation for the respective framework, along with usage examples and TypeScript definitions.
+
 ## Basic Countdown
 
 A simple countdown timer starting from a specified number of seconds. It covers the basic functions like starting, pausing, and resetting the countdown.
@@ -112,3 +132,14 @@ const CustomResetRestart = () => {
 
 export default CustomResetRestart;
 ```
+
+## Framework Integration Examples
+
+For detailed framework-specific examples, see the integration guides:
+
+- **React**: See [React Integration Guide](react-integration.md) for hooks and component examples
+- **Vue**: See [Vue Integration Guide](vue-integration.md) for composables and component examples  
+- **Angular**: See [Angular Integration Guide](angular-integration.md) for service and component examples
+- **Svelte**: See [Svelte Integration Guide](svelte-integration.md) for store and component examples
+
+Each integration file in `examples/integrations/` provides the core integration logic that can be copied directly into your project.
