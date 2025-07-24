@@ -1,0 +1,100 @@
+{
+  "name": "timekeeper-countdown",
+  "version": "0.1.4",
+  "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
+  "keywords": [
+    "countdown",
+    "timer",
+    "javascript",
+    "typescript",
+    "vanilla",
+    "framework-agnostic",
+    "zero-dependencies",
+    "state-machine",
+    "react",
+    "vue",
+    "angular",
+    "svelte"
+  ],
+  "author": "Eduardo Kohn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eagle-head/timekeeper-countdown"
+  },
+  "homepage": "https://github.com/eagle-head/timekeeper-countdown#readme",
+  "bugs": {
+    "url": "https://github.com/eagle-head/timekeeper-countdown/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish",
+    "prepublishOnly": "npm run build && npm run test && npm run typecheck"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.5",
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^20.11.17",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitest/coverage-v8": "^1.2.2",
+    "@vitest/ui": "^1.2.2",
+    "eslint": "^8.56.0",
+    "http-server": "^14.1.1",
+    "jsdom": "^24.0.0",
+    "prettier": "^3.2.5",
+    "tsup": "^8.0.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "rxjs": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

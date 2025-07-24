@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer E2E Test</title>
+</head>
+<body>
+    <div id="app">
+        <h1>Timer E2E Test</h1>
+        <div id="timer-display">
+            <p>Time: <span id="time">--:--</span></p>
+            <p>State: <span id="state">IDLE</span></p>
+            <p>Total Seconds: <span id="total-seconds">0</span></p>
+        </div>
+        <div id="controls">
+            <button id="start">Start</button>
+            <button id="pause">Pause</button>
+            <button id="resume">Resume</button>
+            <button id="reset">Reset</button>
+        </div>
+        <div id="logs"></div>
+    </div>
+
+    <script type="module">
+        // Import our timer library
+        import { TimekeeperCountdown } from './index.js';
+
+        // Global timer instance for testing
+        window.TimerTest = {
+            timer: null,
+            logs: [],
+            
+            createTimer(seconds) {
+                // Destroy existing timer if any
+                if (this.timer) {
+                    this.timer.destroy();
+                }
+                
+                this.timer = new TimekeeperCountdown(seconds, {
+                    onTick: (data) => {
+                        this.updateDisplay(data);
+                        this.addLog('tick', data);
+                    },
+                    onStart: (data) => {
+                        this.updateDisplay(data);
+                        this.addLog('start', data);
+                    },
+                    onPause: (data) => {
+                        this.updateDisplay(data);
+                        this.addLog('pause', data);
+                    },
+                    onComplete: (data) => {
+                        this.updateDisplay(data);
+                        this.addLog('complete', data);
+                    }
+                });
+                
+                this.updateDisplay({
+                    totalSeconds: this.timer.totalSeconds,
+                    state: this.timer.state,
+                    time: this.timer.time
+                });
+                
+                return this.timer;
+            },
+            
+            updateDisplay(data) {
+                const totalSeconds = data?.totalSeconds !== undefined ? data.totalSeconds : this.timer?.totalSeconds || 0;
+                const state = data?.state || this.timer?.state || 'IDLE';
+                
+                document.getElementById('total-seconds').textContent = totalSeconds;
+                document.getElementById('state').textContent = state;
+                
+                const time = data?.time || this.timer?.time || { minutes: 0, seconds: 0 };
+                document.getElementById('time').textContent = 
+                    `${String(time.minutes).padStart(2, '0')}:${String(time.seconds).padStart(2, '0')}`;
+            },
+            
+            addLog(event, data) {
+                const timestamp = performance.now();
+                const logEntry = { event, data, timestamp };
+                this.logs.push(logEntry);
+                
+                const logsDiv = document.getElementById('logs');
+                const logElement = document.createElement('div');
+                logElement.textContent = `[${timestamp.toFixed(2)}ms] ${event}: ${JSON.stringify(data)}`;
+                logsDiv.appendChild(logElement);
+            },
+            
+            clearLogs() {
+                this.logs = [];
+                document.getElementById('logs').innerHTML = '';
+            }
+        };
+
+        // Setup controls
+        document.getElementById('start').onclick = () => window.TimerTest.timer?.start();
+        document.getElementById('pause').onclick = () => window.TimerTest.timer?.pause();
+        document.getElementById('resume').onclick = () => window.TimerTest.timer?.resume();
+        document.getElementById('reset').onclick = () => window.TimerTest.timer?.reset();
+
+        // Create initial timer for manual testing
+        window.TimerTest.createTimer(5);
+    </script>
+</body>
+</html>
