@@ -1,5 +1,5 @@
 {
-  "name": "timekeeper-countdown",
+  "name": "@eagle-head/timekeeper-countdown",
   "version": "1.0.1",
   "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
   "keywords": [
@@ -45,7 +45,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
@@ -96,5 +96,8 @@
   },
   "engines": {
     "node": ">=16"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }
