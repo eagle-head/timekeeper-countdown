@@ -178,9 +178,9 @@ The timer operates with four distinct states:
 - `resume()`: Continue from paused state
 - `reset(newSeconds?)`: Reset to initial time or new time
 - `restart(newSeconds?)`: Reset and immediately start
-- `getState()`: Get current timer state
-- `getTotalSeconds()`: Get remaining seconds
-- `getTime()`: Get time broken into units
+- `state`: Get current timer state (getter)
+- `totalSeconds`: Get remaining seconds (getter)
+- `time`: Get time broken into units (getter)
 - `destroy()`: Clean up the timer instance
 
 ## Next Steps

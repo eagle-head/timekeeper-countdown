@@ -43,13 +43,14 @@ const timer = new TimekeeperCountdown(initialSeconds, options?)
 
 ```typescript
 interface TimekeeperCountdownOptions {
-  onStart?: () => void
-  onPause?: () => void
-  onResume?: () => void
-  onReset?: () => void
-  onComplete?: () => void
+  autoStart?: boolean
+  onStart?: (data: CountdownEventData) => void
+  onPause?: (data: CountdownEventData) => void
+  onResume?: (data: CountdownEventData) => void
+  onReset?: (data: CountdownEventData) => void
+  onRestart?: (data: CountdownEventData) => void
+  onComplete?: (data: CountdownEventData) => void
   onTick?: (data: CountdownEventData) => void
-  targetUpdateRate?: number // milliseconds between updates (default: 50)
 }
 ```
 
@@ -92,25 +93,25 @@ timer.restart() // Restart with original initial seconds
 timer.restart(600) // Restart with 10 minutes
 ```
 
-#### getState()
-Returns the current state of the timer.
+#### state
+Getter that returns the current state of the timer.
 
 ```typescript
-const state = timer.getState() // 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
+const state = timer.state // 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
 ```
 
-#### getTotalSeconds()
-Returns the total seconds remaining in the countdown.
+#### totalSeconds
+Getter that returns the total seconds remaining in the countdown.
 
 ```typescript
-const seconds = timer.getTotalSeconds()
+const seconds = timer.totalSeconds
 ```
 
-#### getTime()
-Returns the current time broken down into units.
+#### time
+Getter that returns the current time broken down into units.
 
 ```typescript
-const time = timer.getTime()
+const time = timer.time
 // Returns: { days: number, hours: number, minutes: number, seconds: number, totalSeconds: number }
 ```
 
@@ -268,13 +269,14 @@ type CountdownEventListener = (data: CountdownEventData) => void
 
 // Constructor options
 interface TimekeeperCountdownOptions {
-  onStart?: () => void
-  onPause?: () => void
-  onResume?: () => void
-  onReset?: () => void
-  onComplete?: () => void
+  autoStart?: boolean
+  onStart?: (data: CountdownEventData) => void
+  onPause?: (data: CountdownEventData) => void
+  onResume?: (data: CountdownEventData) => void
+  onReset?: (data: CountdownEventData) => void
+  onRestart?: (data: CountdownEventData) => void
+  onComplete?: (data: CountdownEventData) => void
   onTick?: (data: CountdownEventData) => void
-  targetUpdateRate?: number
 }
 ```
 
@@ -299,15 +301,15 @@ const pauseButton = document.getElementById('pause')
 const resetButton = document.getElementById('reset')
 
 startButton.onclick = () => {
-  if (timer.getState() === CountdownState.IDLE) {
+  if (timer.state === CountdownState.IDLE) {
     timer.start()
-  } else if (timer.getState() === CountdownState.PAUSED) {
+  } else if (timer.state === CountdownState.PAUSED) {
     timer.resume()
   }
 }
 
 pauseButton.onclick = () => {
-  if (timer.getState() === CountdownState.RUNNING) {
+  if (timer.state === CountdownState.RUNNING) {
     timer.pause()
   }
 }
@@ -343,9 +345,9 @@ timer.pause() // Now it pauses
 ## Performance Considerations
 
 - The timer uses high-precision timing with automatic adjustment for drift
-- Default update rate is 50ms for smooth UI updates
-- You can adjust `targetUpdateRate` in options for different performance needs
+- Default internal update rate is optimized for smooth UI updates
 - The timer automatically cleans up resources when destroyed
+- High-precision timing prevents drift and ensures accuracy
 
 ## Browser Compatibility
 

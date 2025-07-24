@@ -42,15 +42,15 @@ const timer = new TimekeeperCountdown(60, {
 
 // Button handlers
 document.getElementById('start').onclick = () => {
-  if (timer.getState() === CountdownState.IDLE) {
+  if (timer.state === CountdownState.IDLE) {
     timer.start()
-  } else if (timer.getState() === CountdownState.PAUSED) {
+  } else if (timer.state === CountdownState.PAUSED) {
     timer.resume()
   }
 }
 
 document.getElementById('pause').onclick = () => {
-  if (timer.getState() === CountdownState.RUNNING) {
+  if (timer.state === CountdownState.RUNNING) {
     timer.pause()
   }
 }
@@ -245,7 +245,7 @@ class TimerDashboard {
 
   startAll() {
     this.timers.forEach(timer => {
-      if (timer.getState() === CountdownState.IDLE) {
+      if (timer.state === CountdownState.IDLE) {
         timer.start()
       }
     })
@@ -253,7 +253,7 @@ class TimerDashboard {
 
   pauseAll() {
     this.timers.forEach(timer => {
-      if (timer.getState() === CountdownState.RUNNING) {
+      if (timer.state === CountdownState.RUNNING) {
         timer.pause()
       }
     })
@@ -305,7 +305,7 @@ window.addEventListener('beforeunload', () => {
 
 ## Performance Tips
 
-- Use appropriate `targetUpdateRate` for your use case (default: 50ms)
+- The library uses optimized internal timing for smooth updates
 - Always call `destroy()` when components unmount to prevent memory leaks
 - Consider using a single timer for multiple displays instead of multiple timers when possible
 - For high-frequency updates, batch DOM updates using `requestAnimationFrame`
