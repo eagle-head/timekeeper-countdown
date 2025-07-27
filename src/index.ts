@@ -1,33 +1,14 @@
-// Main exports
-export { TimekeeperCountdown } from './core/timekeeper-countdown'
+// Main orchestrator - primary export
+export { Countdown } from './countdown';
 
-// Types
-export type {
-  CountdownTime,
-  CountdownStateType,
-  CountdownEventData,
-  CountdownEventType,
-  CountdownEventListener,
-  TimekeeperCountdownOptions,
-} from './core/types'
+// State machine and states
+export { StateMachine, TimerState } from './state-machine';
+export type { TimerState as TimerStateType } from './state-machine';
 
-// Utils
-export {
-  getDays,
-  getHours,
-  getMinutes,
-  getSeconds,
-  getCountdownTime,
-} from './utils/time'
+// Core timer functionality
+export { Timer } from './timer';
 
-export { validateInitialSeconds } from './utils/validation'
-
-// Constants
-export {
-  MIN_SECONDS,
-  MAX_SECONDS,
-  SECONDS_IN_A_MINUTE,
-  SECONDS_IN_AN_HOUR,
-  SECONDS_IN_A_DAY,
-  CountdownState,
-} from './utils/constants'
+// Utilities
+export { Formatter } from './formatter';
+export { TimerLogger, LogLevel, ErrorCategory, ErrorSeverity } from './logger';
+export type { LogContext } from './logger';
