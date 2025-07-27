@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 2.0.2
+
+### Patch Changes
+
+- Fix destroy() method to properly transition to STOPPED state instead of bypassing state machine
+
 ## 2.0.1
 
 ### Patch Changes
