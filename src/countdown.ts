@@ -1,12 +1,10 @@
 import { Timer } from "./timer";
 import { StateMachine, TimerState } from "./state-machine";
 import { Formatter } from "./formatter";
-import { TimerLogger, ErrorCategory, ErrorSeverity } from "./logger";
 
 export interface CountdownOptions {
   onUpdate?: (minutes: string, seconds: string) => void;
   onStateChange?: (state: TimerState) => void;
-  debug?: boolean;
 }
 
 export interface CountdownInstance {
@@ -29,8 +27,7 @@ export function Countdown(
   initialSeconds: number,
   options: CountdownOptions = {}
 ): CountdownInstance {
-  const { onUpdate, onStateChange, debug = false } = options;
-  const logger = TimerLogger(debug);
+  const { onUpdate, onStateChange } = options;
   const formatter = Formatter();
 
   // Validation
@@ -50,7 +47,7 @@ export function Countdown(
     throw new Error("onUpdate must be a function");
   }
 
-  const stateMachine = StateMachine(debug, {
+  const stateMachine = StateMachine({
     onStateChange: (state) => {
       if (onStateChange) {
         onStateChange(state);
@@ -61,49 +58,31 @@ export function Countdown(
   const updateUI = (totalSeconds: number) => {
     if (onUpdate && typeof onUpdate === "function") {
       try {
-        // Validação defensiva do totalSeconds
+        // Defensive validation of totalSeconds
         const safeTotalSeconds = typeof totalSeconds === "number" && 
                                 Number.isFinite(totalSeconds) && 
                                 totalSeconds >= 0 ? totalSeconds : 0;
         
         const { minutes, seconds } = formatter.formatTime(safeTotalSeconds);
-        logger.uiUpdate(minutes, seconds);
         onUpdate(minutes, seconds);
       } catch (error) {
-        logger.logError(
-          "Error in onUpdate callback", 
-          error instanceof Error ? error : new Error(String(error)),
-          ErrorCategory.UI,
-          ErrorSeverity.HIGH,
-          "CALLBACK_ERROR"
-        );
+        // Silently ignore errors in callbacks
       }
     }
   };
 
   const timer = Timer(initialSeconds, {
     onTick: (totalSeconds) => {
-      logger.intervalEvent("tick", { totalSeconds });
       updateUI(totalSeconds);
     },
     onComplete: () => {
-      logger.debug("Timer completed");
       stateMachine.complete();
       updateUI(0);
     },
-    onError: (error) => {
-      logger.logError(
-        "Timer execution error", 
-        error instanceof Error ? error : new Error(String(error)),
-        ErrorCategory.INTERVAL,
-        ErrorSeverity.CRITICAL,
-        "TIMER_EXECUTION_ERROR"
-      );
+    onError: () => {
       stateMachine.stop();
     },
   });
-
-  logger.info(`Creating countdown with ${initialSeconds} seconds`);
 
   function start(): void {
     try {
@@ -112,13 +91,7 @@ export function Countdown(
         updateUI(timer.getTotalSeconds());
       }
     } catch (error) {
-      logger.logError(
-        "Error starting countdown", 
-        error instanceof Error ? error : new Error(String(error)),
-        ErrorCategory.STATE,
-        ErrorSeverity.HIGH,
-        "START_ERROR"
-      );
+      // Silently handle errors
     }
   }
 
@@ -129,10 +102,7 @@ export function Countdown(
         stateMachine.pause();
       }
     } catch (error) {
-      logger.error("Error in pause function", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Não re-lança para evitar crash
+      // Silently handle errors
     }
   }
 
@@ -143,10 +113,7 @@ export function Countdown(
         updateUI(timer.getTotalSeconds());
       }
     } catch (error) {
-      logger.error("Error in resume function", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Não re-lança para evitar crash
+      // Silently handle errors
     }
   }
 
@@ -155,17 +122,13 @@ export function Countdown(
       timer.reset();
       stateMachine.reset();
       updateUI(timer.getTotalSeconds());
-      logger.functionResult("reset", "success");
     } catch (error) {
-      logger.error("Error in reset function", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Tenta um reset mais básico em caso de erro
+      // Try basic reset on error
       try {
         timer.stop();
         updateUI(0);
       } catch {
-        // Se falhar completamente, apenas log
+        // If completely fails, just ignore
       }
     }
   }
@@ -176,17 +139,13 @@ export function Countdown(
       stateMachine.stop();
       timer.setSeconds(0);
       updateUI(0);
-      logger.functionResult("stop", "success");
     } catch (error) {
-      logger.error("Error in stop function", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Tenta um stop mais básico em caso de erro
+      // Try basic stop on error
       try {
         timer.stop();
         updateUI(0);
       } catch {
-        // Se falhar completamente, apenas log
+        // If completely fails, just ignore
       }
     }
   }
@@ -195,16 +154,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const seconds = formatter.formatSeconds(totalSeconds);
-      logger.debug("getSeconds() called", {
-        totalSeconds,
-        returning: seconds,
-      });
       return seconds;
     } catch (error) {
-      logger.error("Error in getSeconds", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -212,16 +164,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const minutes = formatter.formatMinutes(totalSeconds);
-      logger.debug("getMinutes() called", {
-        totalSeconds,
-        returning: minutes,
-      });
       return minutes;
     } catch (error) {
-      logger.error("Error in getMinutes", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -229,16 +174,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const hours = formatter.formatHours(totalSeconds);
-      logger.debug("getHours() called", {
-        totalSeconds,
-        returning: hours,
-      });
       return hours;
     } catch (error) {
-      logger.error("Error in getHours", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -246,16 +184,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const days = formatter.formatDays(totalSeconds);
-      logger.debug("getDays() called", {
-        totalSeconds,
-        returning: days,
-      });
       return days;
     } catch (error) {
-      logger.error("Error in getDays", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -263,16 +194,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const weeks = formatter.formatWeeks(totalSeconds);
-      logger.debug("getWeeks() called", {
-        totalSeconds,
-        returning: weeks,
-      });
       return weeks;
     } catch (error) {
-      logger.error("Error in getWeeks", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -280,16 +204,9 @@ export function Countdown(
     try {
       const totalSeconds = timer.getTotalSeconds();
       const years = formatter.formatYears(totalSeconds);
-      logger.debug("getYears() called", {
-        totalSeconds,
-        returning: years,
-      });
       return years;
     } catch (error) {
-      logger.error("Error in getYears", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return "00"; // Valor seguro
+      return "00"; // Safe value
     }
   }
 
@@ -297,28 +214,20 @@ export function Countdown(
     try {
       return stateMachine.getCurrentState();
     } catch (error) {
-      logger.error("Error in getCurrentState", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return TimerState.IDLE; // Valor seguro
+      return TimerState.IDLE; // Safe value
     }
   }
 
   function destroy(): void {
     try {
-      logger.info("Destroying countdown timer");
       timer.destroy();
       stateMachine.destroy();
-      logger.debug("Countdown timer destroyed");
     } catch (error) {
-      logger.error("Error in destroy", {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      // Tenta cleanup mínimo em caso de erro
+      // Try minimal cleanup on error
       try {
         timer.stop();
       } catch {
-        // Se falhar, apenas ignora
+        // If fails, just ignore
       }
     }
   }

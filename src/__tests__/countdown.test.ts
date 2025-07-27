@@ -40,7 +40,7 @@ describe('Countdown - Happy Path', () => {
     it('should create a countdown with options', () => {
       const onUpdate = vi.fn()
       const onStateChange = vi.fn()
-      const countdown = Countdown(60, { onUpdate, onStateChange, debug: true })
+      const countdown = Countdown(60, { onUpdate, onStateChange })
       expect(countdown).toBeDefined()
     })
   })
@@ -434,66 +434,44 @@ describe('Countdown - Error Handling', () => {
 
   describe('Callback error handling', () => {
     it('should handle error in onUpdate callback', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const onUpdate = vi.fn(() => {
         throw new Error('onUpdate error')
       })
-      const countdown = Countdown(60, { onUpdate, debug: true })
+      const countdown = Countdown(60, { onUpdate })
 
       // Start countdown to trigger onUpdate
       countdown.start()
 
-      // Should not throw, error should be caught and logged
+      // Should not throw, error should be caught internally
       expect(() => vi.advanceTimersByTime(1100)).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      // Check that error was logged properly
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Error in onUpdate callback'))
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should handle non-Error thrown in onUpdate callback', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const onUpdate = vi.fn(() => {
         throw 'string error'
       })
-      const countdown = Countdown(60, { onUpdate, debug: true })
+      const countdown = Countdown(60, { onUpdate })
 
       countdown.start()
 
       expect(() => vi.advanceTimersByTime(1100)).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Error in onUpdate callback'))
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should handle onStateChange callback errors', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       const onStateChange = vi.fn(() => {
         throw new Error('onStateChange error')
       })
-      const countdown = Countdown(60, { onStateChange, debug: true })
+      const countdown = Countdown(60, { onStateChange })
 
       // Should not throw when starting
       expect(() => countdown.start()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Error in onStateChange callback'))
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
     })
   })
 
   describe('Timer error handling', () => {
     it('should handle timer execution errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Create a countdown that will trigger onError callback
       const countdown = Countdown(60, {
-        debug: true,
         onUpdate: () => {
           // Force an error during the timer tick
           throw new Error('Update processing error')
@@ -503,19 +481,12 @@ describe('Countdown - Error Handling', () => {
       countdown.start()
 
       // This should trigger the error in onUpdate, which gets caught
-      vi.advanceTimersByTime(1100)
-
-      // Check that error was logged
-      expect(consoleErrorSpy).toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
+      expect(() => vi.advanceTimersByTime(1100)).not.toThrow()
     })
   })
 
   describe('Method error handling using mocks', () => {
     it('should handle errors in timer methods', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // We'll test error handling by mocking the timer module
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -532,21 +503,15 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked timer
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should handle start error
       expect(() => countdown.start()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Error starting countdown'))
-      expect(errorCall).toBeDefined()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle errors in state machine methods', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock the state machine module
       vi.doMock('../state-machine', () => ({
         StateMachine: vi.fn(() => ({
@@ -568,19 +533,15 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked state machine
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should handle pause error
       expect(() => countdown.pause()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
 
     it('should handle errors in formatter methods', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock the formatter module to throw errors
       vi.doMock('../formatter', () => ({
         Formatter: vi.fn(() => ({
@@ -598,19 +559,15 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked formatter
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should return safe value when formatter throws
       expect(countdown.getSeconds()).toBe('00')
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../formatter')
     })
 
     it('should handle errors in timer reset method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer with reset that throws
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -626,19 +583,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw
       expect(() => countdown.reset()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle errors in timer stop method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer with stop that throws
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -654,19 +607,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw
       expect(() => countdown.stop()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle errors in timer destroy method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer with destroy that throws
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -682,21 +631,17 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw
       expect(() => countdown.destroy()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
   })
 
   describe('Getter error handling', () => {
     it('should return safe values when getters throw errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Test each getter method with formatter errors
       const getterTests = [
         { method: 'getMinutes', formatMethod: 'formatMinutes' },
@@ -751,7 +696,7 @@ describe('Countdown - Error Handling', () => {
         }))
 
         const { Countdown: MockedCountdown } = await import('../countdown')
-        const countdown = MockedCountdown(60, { debug: true })
+        const countdown = MockedCountdown(60)
 
         // Should return safe value
         expect((countdown as CountdownInstance)[test.method as keyof CountdownInstance]()).toBe('00')
@@ -759,16 +704,9 @@ describe('Countdown - Error Handling', () => {
         vi.doUnmock('../formatter')
         vi.resetModules()
       }
-
-      // Verify errors were logged
-      expect(consoleErrorSpy).toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
     })
 
     it('should return safe value when getCurrentState throws', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Import original to get TimerState
       const original = await import('../state-machine')
 
@@ -793,13 +731,11 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should return safe value
       expect(countdown.getCurrentState()).toBe(TimerState.IDLE)
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
   })
@@ -807,7 +743,7 @@ describe('Countdown - Error Handling', () => {
   describe('Edge case error handling', () => {
     it('should handle invalid totalSeconds in updateUI', () => {
       const onUpdate = vi.fn()
-      const countdown = Countdown(60, { onUpdate, debug: true })
+      const countdown = Countdown(60, { onUpdate })
 
       // The countdown already has defensive programming for invalid values
       // The formatTime function will handle NaN, negative, and Infinity values
@@ -820,8 +756,6 @@ describe('Countdown - Error Handling', () => {
     })
 
     it('should handle cascade errors in reset method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to throw on both reset and stop (fallback)
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -839,19 +773,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw even with cascade errors
       expect(() => countdown.reset()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle cascade errors in stop method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock multiple timer methods to throw
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -869,19 +799,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw even with cascade errors
       expect(() => countdown.stop()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle cascade errors in destroy method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock both destroy and stop (fallback) to throw
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -899,19 +825,17 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw even with cascade errors in cleanup
       expect(() => countdown.destroy()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle defensive programming for invalid totalSeconds', () => {
       const onUpdate = vi.fn()
-      const countdown = Countdown(60, { onUpdate, debug: true })
+      const countdown = Countdown(60, { onUpdate })
 
       // The updateUI function has defensive programming that ensures
       // totalSeconds is always a valid number >= 0
@@ -926,13 +850,10 @@ describe('Countdown - Error Handling', () => {
     })
 
     it('should handle timer onError callback by simulating timer error', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Create a countdown that will trigger error in timer through onUpdate callback
       const countdown = Countdown(60, {
-        debug: true,
         onUpdate: () => {
-          // This error should be caught and logged, but doesn't trigger timer onError
+          // This error should be caught internally, but doesn't trigger timer onError
           throw new Error('Update callback error')
         },
       })
@@ -940,19 +861,10 @@ describe('Countdown - Error Handling', () => {
       countdown.start()
 
       // Advance time to trigger the onUpdate error
-      vi.advanceTimersByTime(1100)
-
-      // Should have logged the callback error
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Error in onUpdate callback'))
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
+      expect(() => vi.advanceTimersByTime(1100)).not.toThrow()
     })
 
     it('should handle timer onError callback with Error object', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock the timer module to trigger onError callback with Error object
       vi.doMock('../timer', () => ({
         Timer: vi.fn((initialSeconds, events) => {
@@ -974,25 +886,20 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked timer
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       countdown.start()
 
       // Allow async timer error to execute
       await vi.runAllTimersAsync()
 
-      // Verify error was logged with correct details
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Timer execution error'))
-      expect(errorCall).toBeDefined()
+      // Timer error should be handled without throwing
+      expect(() => countdown.getCurrentState()).not.toThrow()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle timer onError callback with non-Error object', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock the timer module to trigger onError callback with non-Error object
       vi.doMock('../timer', () => ({
         Timer: vi.fn((initialSeconds, events) => {
@@ -1014,19 +921,16 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked timer
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       countdown.start()
 
       // Allow async timer error to execute
       await vi.runAllTimersAsync()
 
-      // Verify error was logged and non-Error was converted to Error
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      const errorCall = consoleErrorSpy.mock.calls.find(call => call[0].includes('Timer execution error'))
-      expect(errorCall).toBeDefined()
+      // Timer error should be handled without throwing
+      expect(() => countdown.getCurrentState()).not.toThrow()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
@@ -1054,7 +958,7 @@ describe('Countdown - Error Handling', () => {
 
       // Re-import with mocked timer
       const { Countdown: MockedCountdown, TimerState } = await import('../countdown')
-      const countdown = MockedCountdown(60, { onStateChange, debug: true })
+      const countdown = MockedCountdown(60, { onStateChange })
 
       countdown.start()
       expect(onStateChange).toHaveBeenCalledWith(TimerState.RUNNING)
@@ -1070,8 +974,6 @@ describe('Countdown - Error Handling', () => {
     })
 
     it('should handle non-Error exceptions in resume method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock state machine to throw a non-Error object
       vi.doMock('../state-machine', async importOriginal => {
         const actual = (await importOriginal()) as StateMachineModule
@@ -1097,26 +999,15 @@ describe('Countdown - Error Handling', () => {
       })
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.resume()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      // Check that the error was logged with String(error) conversion
-      const errorCall = consoleErrorSpy.mock.calls.find(
-        call =>
-          call[0].includes('Error in resume function') && call[1]?.error === 'string error instead of Error object'
-      )
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
 
     it('should handle non-Error exceptions in start method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock state machine to throw a non-Error object in canStart
       vi.doMock('../state-machine', async importOriginal => {
         const actual = (await importOriginal()) as StateMachineModule
@@ -1141,19 +1032,15 @@ describe('Countdown - Error Handling', () => {
       })
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.start()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
 
     it('should handle non-Error exceptions in pause method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock state machine to throw a non-Error object in canPause
       vi.doMock('../state-machine', async importOriginal => {
         const actual = (await importOriginal()) as StateMachineModule
@@ -1178,19 +1065,15 @@ describe('Countdown - Error Handling', () => {
       })
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.pause()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
 
     it('should handle non-Error exceptions in reset method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to throw a non-Error object in reset
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -1206,19 +1089,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.reset()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle non-Error exceptions in stop method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to throw a non-Error object in stop
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -1234,19 +1113,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.stop()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle non-Error exceptions in destroy method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to throw a non-Error object in destroy
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -1262,19 +1137,15 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
-      // Should not throw and should log the non-Error object
+      // Should not throw
       expect(() => countdown.destroy()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle non-Error exceptions in getter methods', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to throw a non-Error object in getTotalSeconds
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -1290,7 +1161,7 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Test all getter methods - they should return safe values and not throw
       expect(countdown.getSeconds()).toBe('00')
@@ -1300,16 +1171,10 @@ describe('Countdown - Error Handling', () => {
       expect(countdown.getWeeks()).toBe('00')
       expect(countdown.getYears()).toBe('00')
 
-      // Should have logged errors for each getter call
-      expect(consoleErrorSpy).toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
     })
 
     it('should handle non-Error exceptions in getCurrentState method', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock state machine to throw a non-Error object in getCurrentState
       vi.doMock('../state-machine', async importOriginal => {
         const actual = (await importOriginal()) as StateMachineModule
@@ -1334,19 +1199,17 @@ describe('Countdown - Error Handling', () => {
       })
 
       const { Countdown: MockedCountdown, TimerState } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should return safe value and not throw
       expect(countdown.getCurrentState()).toBe(TimerState.IDLE)
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../state-machine')
     })
 
     it('should handle invalid totalSeconds in updateUI defensive check', () => {
       const onUpdate = vi.fn()
-      const countdown = Countdown(60, { onUpdate, debug: true })
+      const countdown = Countdown(60, { onUpdate })
 
       // Access the internal updateUI function by triggering start
       countdown.start()
@@ -1385,7 +1248,7 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { onUpdate, debug: true })
+      const countdown = MockedCountdown(60, { onUpdate })
 
       countdown.start()
 
@@ -1411,7 +1274,7 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { onUpdate, debug: true })
+      const countdown = MockedCountdown(60, { onUpdate })
 
       countdown.start()
 
@@ -1437,7 +1300,7 @@ describe('Countdown - Error Handling', () => {
       }))
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { onUpdate, debug: true })
+      const countdown = MockedCountdown(60, { onUpdate })
 
       countdown.start()
 
@@ -1448,8 +1311,6 @@ describe('Countdown - Error Handling', () => {
     })
 
     it('should handle Error object in resume method catch block', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       // Mock timer to succeed but state machine to throw Error
       vi.doMock('../timer', () => ({
         Timer: vi.fn(() => ({
@@ -1487,19 +1348,11 @@ describe('Countdown - Error Handling', () => {
       })
 
       const { Countdown: MockedCountdown } = await import('../countdown')
-      const countdown = MockedCountdown(60, { debug: true })
+      const countdown = MockedCountdown(60)
 
       // Should not throw and should handle the error
       expect(() => countdown.resume()).not.toThrow()
-      expect(consoleErrorSpy).toHaveBeenCalled()
 
-      // Check that the Error object was handled correctly (line 131)
-      const errorCall = consoleErrorSpy.mock.calls.find(
-        call => call[0].includes('Error in resume function') && call[1]?.error === 'Resume state machine error'
-      )
-      expect(errorCall).toBeDefined()
-
-      consoleErrorSpy.mockRestore()
       vi.doUnmock('../timer')
       vi.doUnmock('../state-machine')
     })

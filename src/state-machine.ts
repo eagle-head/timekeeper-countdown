@@ -1,5 +1,3 @@
-import { TimerLogger } from "./logger";
-
 export const TimerState = Object.freeze({
   IDLE: "IDLE",
   RUNNING: "RUNNING",
@@ -28,11 +26,8 @@ interface StateMachineInstance {
   destroy: () => void;
 }
 
-export function StateMachine(debug: boolean = false, events?: StateEvents): StateMachineInstance {
-  // Validação defensiva de parâmetros
-  const safeDebug = typeof debug === "boolean" ? debug : false;
-
-  // Validação dos eventos se fornecidos
+export function StateMachine(events?: StateEvents): StateMachineInstance {
+  // Validate events if provided
   if (events !== undefined) {
     if (typeof events !== "object" || events === null) {
       throw new Error("events must be an object");
@@ -46,50 +41,31 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
     }
   }
 
-  const logger = TimerLogger(safeDebug);
   let currentState: TimerState = TimerState.IDLE;
 
   function transitionTo(newState: TimerState): boolean {
-    // Validação defensiva do estado
+    // Defensive validation of state
     if (!Object.values(TimerState).includes(newState)) {
-      logger.logValidationError(
-        "Invalid state value provided",
-        "state",
-        newState,
-        "INVALID_STATE_VALUE"
-      );
       return false;
     }
 
-    // Se tentando transicionar para o mesmo estado, não faz nada
+    // If trying to transition to same state, do nothing
     if (currentState === newState) {
-      logger.debug(`Already in state ${newState}, ignoring transition`);
       return true;
     }
 
-    // Verifica se a transição é válida (excluindo transição para o mesmo estado)
+    // Check if transition is valid (excluding transition to same state)
     if (!isValidTransition(currentState, newState)) {
-      logger.logValidationError(
-        `Invalid state transition from ${currentState} to ${newState}`,
-        "transition",
-        { from: currentState, to: newState },
-        "INVALID_STATE_TRANSITION"
-      );
       return false;
     }
 
-    const previousState = currentState;
     currentState = newState;
-    logger.logStateTransition(previousState, newState);
 
-    // Chamada segura do callback
+    // Safe callback call
     try {
       events?.onStateChange?.(newState);
     } catch (error) {
-      logger.error("Error in onStateChange callback", {
-        error: error instanceof Error ? error.message : String(error),
-        state: newState,
-      });
+      // Silently ignore callback errors
     }
 
     return true;
@@ -119,10 +95,7 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
   }
 
   function start(): boolean {
-    logger.functionCall("start", currentState, {});
-
     if (currentState !== TimerState.IDLE) {
-      logger.functionResult("start", "ignored", `state: ${currentState}`);
       return false;
     }
 
@@ -130,10 +103,7 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
   }
 
   function resume(): boolean {
-    logger.functionCall("resume", currentState, {});
-
     if (currentState !== TimerState.PAUSED) {
-      logger.functionResult("resume", "ignored", `state: ${currentState}`);
       return false;
     }
 
@@ -141,10 +111,7 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
   }
 
   function pause(): boolean {
-    logger.functionCall("pause", currentState, {});
-
     if (currentState !== TimerState.RUNNING) {
-      logger.functionResult("pause", "ignored", `state: ${currentState}`);
       return false;
     }
 
@@ -152,22 +119,18 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
   }
 
   function reset(): boolean {
-    logger.functionCall("reset", currentState, {});
     return transitionTo(TimerState.IDLE);
   }
 
   function stop(): boolean {
-    logger.functionCall("stop", currentState, {});
     return transitionTo(TimerState.STOPPED);
   }
 
   function complete(): boolean {
-    logger.debug("Timer completed, transitioning to stopped");
     return transitionTo(TimerState.STOPPED);
   }
 
   function destroy(): void {
-    logger.debug("Destroying state machine");
     currentState = TimerState.IDLE;
   }
 

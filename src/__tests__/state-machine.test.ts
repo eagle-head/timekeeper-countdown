@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { StateMachine, TimerState } from '../state-machine'
 
 // Get the actual StateEvents interface by extracting parameter type
-type StateEvents = NonNullable<Parameters<typeof StateMachine>[1]>
+type StateEvents = NonNullable<Parameters<typeof StateMachine>[0]>
 
 // Test types for invalid parameter testing
 type StateMachineWithPrivates = ReturnType<typeof StateMachine> & {
@@ -17,55 +17,55 @@ describe('StateMachine', () => {
     describe('Events Parameter Type Validation', () => {
       it('should throw error when events is not an object (string)', () => {
         expect(() => {
-          StateMachine(false, 'invalid' as unknown as StateEvents)
+          StateMachine('invalid' as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should throw error when events is not an object (number)', () => {
         expect(() => {
-          StateMachine(false, 123 as unknown as StateEvents)
+          StateMachine(123 as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should throw error when events is not an object (boolean)', () => {
         expect(() => {
-          StateMachine(false, true as unknown as StateEvents)
+          StateMachine(true as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should accept array as events parameter', () => {
         expect(() => {
-          StateMachine(false, [] as unknown as StateEvents)
+          StateMachine([] as unknown as StateEvents)
         }).not.toThrow()
       })
 
       it('should throw error when events is not an object (function)', () => {
         expect(() => {
-          StateMachine(false, (() => {}) as unknown as StateEvents)
+          StateMachine((() => {}) as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should throw error when events is null', () => {
         expect(() => {
-          StateMachine(false, null as unknown as StateEvents)
+          StateMachine(null as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should accept undefined events', () => {
         expect(() => {
-          StateMachine(false, undefined)
+          StateMachine(undefined)
         }).not.toThrow()
       })
 
       it('should accept empty events object', () => {
         expect(() => {
-          StateMachine(false, {})
+          StateMachine({})
         }).not.toThrow()
       })
 
       it('should accept events object with additional properties', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             someOtherProp: 'value',
           } as unknown as StateEvents)
         }).not.toThrow()
@@ -75,7 +75,7 @@ describe('StateMachine', () => {
     describe('OnStateChange Function Type Validation', () => {
       it('should throw error when onStateChange is not a function (string)', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: 'invalid',
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -83,13 +83,13 @@ describe('StateMachine', () => {
 
       it('should throw error when onStateChange is not a function (number)', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: 123 } as unknown as StateEvents)
+          StateMachine({ onStateChange: 123 } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
       })
 
       it('should throw error when onStateChange is not a function (boolean)', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: true,
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -97,19 +97,19 @@ describe('StateMachine', () => {
 
       it('should throw error when onStateChange is not a function (object)', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: {} } as unknown as StateEvents)
+          StateMachine({ onStateChange: {} } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
       })
 
       it('should throw error when onStateChange is not a function (array)', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: [] } as unknown as StateEvents)
+          StateMachine({ onStateChange: [] } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
       })
 
       it('should throw error when onStateChange is null', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: null,
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -117,25 +117,25 @@ describe('StateMachine', () => {
 
       it('should accept undefined onStateChange', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: undefined })
+          StateMachine({ onStateChange: undefined })
         }).not.toThrow()
       })
 
       it('should accept function for onStateChange', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: () => {} })
+          StateMachine({ onStateChange: () => {} })
         }).not.toThrow()
       })
 
       it('should accept arrow function for onStateChange', () => {
         expect(() => {
-          StateMachine(false, { onStateChange: state => console.log(state) })
+          StateMachine({ onStateChange: state => console.log(state) })
         }).not.toThrow()
       })
 
       it('should accept regular function for onStateChange', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: function (state) {
               console.log(state)
             },
@@ -145,7 +145,7 @@ describe('StateMachine', () => {
 
       it('should accept async function for onStateChange', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: async state => {
               console.log(state)
             },
@@ -158,13 +158,13 @@ describe('StateMachine', () => {
       it('should validate events object first, then onStateChange', () => {
         // events validation should fail before onStateChange validation
         expect(() => {
-          StateMachine(false, 'invalid' as unknown as StateEvents)
+          StateMachine('invalid' as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should pass events validation but fail onStateChange validation', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: 'invalid',
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -172,21 +172,21 @@ describe('StateMachine', () => {
 
       it('should pass both validations with valid object and function', () => {
         expect(() => {
-          const sm = StateMachine(false, { onStateChange: () => {} })
+          const sm = StateMachine({ onStateChange: () => {} })
           expect(sm.getCurrentState()).toBeDefined()
         }).not.toThrow()
       })
 
       it('should pass both validations with valid object and undefined onStateChange', () => {
         expect(() => {
-          const sm = StateMachine(false, { onStateChange: undefined })
+          const sm = StateMachine({ onStateChange: undefined })
           expect(sm.getCurrentState()).toBeDefined()
         }).not.toThrow()
       })
 
       it('should pass validation with object containing onStateChange and other properties', () => {
         expect(() => {
-          const sm = StateMachine(false, {
+          const sm = StateMachine({
             onStateChange: () => {},
             otherProp: 'value',
           } as { onStateChange: () => void; otherProp: string })
@@ -201,7 +201,7 @@ describe('StateMachine', () => {
         eventsObj.onStateChange = () => {}
 
         expect(() => {
-          StateMachine(false, eventsObj)
+          StateMachine(eventsObj)
         }).not.toThrow()
       })
 
@@ -212,7 +212,7 @@ describe('StateMachine', () => {
         const eventsObj = new EventsClass()
 
         expect(() => {
-          StateMachine(false, eventsObj)
+          StateMachine(eventsObj)
         }).not.toThrow()
       })
 
@@ -220,7 +220,7 @@ describe('StateMachine', () => {
         const eventsObj = Object.freeze({ onStateChange: () => {} })
 
         expect(() => {
-          StateMachine(false, eventsObj)
+          StateMachine(eventsObj)
         }).not.toThrow()
       })
 
@@ -228,7 +228,7 @@ describe('StateMachine', () => {
         const eventsObj = Object.seal({ onStateChange: () => {} })
 
         expect(() => {
-          StateMachine(false, eventsObj)
+          StateMachine(eventsObj)
         }).not.toThrow()
       })
 
@@ -240,7 +240,7 @@ describe('StateMachine', () => {
         }
 
         expect(() => {
-          StateMachine(false, eventsObj)
+          StateMachine(eventsObj)
         }).not.toThrow()
       })
 
@@ -256,7 +256,7 @@ describe('StateMachine', () => {
         }
 
         expect(() => {
-          StateMachine(false, eventsObj as unknown as StateEvents)
+          StateMachine(eventsObj as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
       })
     })
@@ -264,19 +264,19 @@ describe('StateMachine', () => {
     describe('Primitive Type Edge Cases', () => {
       it('should handle Symbol as events', () => {
         expect(() => {
-          StateMachine(false, Symbol('test') as unknown as StateEvents)
+          StateMachine(Symbol('test') as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should handle BigInt as events', () => {
         expect(() => {
-          StateMachine(false, BigInt(123) as unknown as StateEvents)
+          StateMachine(BigInt(123) as unknown as StateEvents)
         }).toThrow('events must be an object')
       })
 
       it('should handle Symbol as onStateChange', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: Symbol('test'),
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -284,7 +284,7 @@ describe('StateMachine', () => {
 
       it('should handle BigInt as onStateChange', () => {
         expect(() => {
-          StateMachine(false, {
+          StateMachine({
             onStateChange: BigInt(123),
           } as unknown as StateEvents)
         }).toThrow('events.onStateChange must be a function')
@@ -293,24 +293,19 @@ describe('StateMachine', () => {
   })
 
   describe('Constructor Initialization', () => {
-    it('should create state machine with default debug false and no events', () => {
+    it('should create state machine with no events', () => {
       const sm = StateMachine()
       expect(sm.getCurrentState()).toBe(TimerState.IDLE)
     })
 
-    it('should create state machine with debug enabled', () => {
-      const sm = StateMachine(true)
+    it('should create state machine with undefined events', () => {
+      const sm = StateMachine(undefined)
       expect(sm.getCurrentState()).toBe(TimerState.IDLE)
     })
 
     it('should create state machine with valid events object', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
-      expect(sm.getCurrentState()).toBe(TimerState.IDLE)
-    })
-
-    it('should handle non-boolean debug parameter', () => {
-      const sm = StateMachine('invalid' as unknown as boolean)
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
       expect(sm.getCurrentState()).toBe(TimerState.IDLE)
     })
   })
@@ -339,7 +334,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning from IDLE to RUNNING', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
 
@@ -363,7 +358,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning from RUNNING to PAUSED', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
       mockOnStateChange.mockClear()
@@ -390,7 +385,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning from PAUSED to RUNNING', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
       sm.pause()
@@ -446,7 +441,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning to STOPPED', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
       mockOnStateChange.mockClear()
@@ -503,7 +498,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning to IDLE', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
       mockOnStateChange.mockClear()
@@ -557,7 +552,7 @@ describe('StateMachine', () => {
 
     it('should call onStateChange callback when transitioning to STOPPED', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.start()
       mockOnStateChange.mockClear()
@@ -593,7 +588,7 @@ describe('StateMachine', () => {
   describe('Same State Transition Handling', () => {
     it('should handle transition to same state in IDLE', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       const result = sm.reset() // IDLE to IDLE
 
@@ -604,7 +599,7 @@ describe('StateMachine', () => {
 
     it('should handle transition to same state in STOPPED', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       sm.stop()
       mockOnStateChange.mockClear()
@@ -662,7 +657,7 @@ describe('StateMachine', () => {
   describe('Multi-Step State Workflows', () => {
     it('should handle full start-pause-resume-stop workflow', () => {
       const mockOnStateChange = vi.fn()
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       // Start
       expect(sm.start()).toBe(true)
@@ -735,7 +730,7 @@ describe('StateMachine', () => {
     })
 
     it('should not call callback when onStateChange is undefined', () => {
-      const sm = StateMachine(false, {})
+      const sm = StateMachine({})
 
       // Should not throw error
       expect(() => sm.start()).not.toThrow()
@@ -746,7 +741,7 @@ describe('StateMachine', () => {
       const mockOnStateChange = vi.fn().mockImplementation(() => {
         throw new Error('Callback error')
       })
-      const sm = StateMachine(false, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       // Should not throw error even if callback throws
       expect(() => sm.start()).not.toThrow()
@@ -846,7 +841,7 @@ describe('StateMachine', () => {
 
       let validationCalled = false
 
-      const sm = StateMachine(true) // Enable debug to see validation error in output
+      const sm = StateMachine() // Create state machine
 
       // Use vi.spyOn instead of direct manipulation
       vi.spyOn(Object, 'values').mockImplementation((obj: unknown) => {
@@ -878,7 +873,7 @@ describe('StateMachine', () => {
   describe('Invalid State Transition Detection', () => {
     it('should detect and log invalid state transitions', () => {
       // Another approach: test the validation by manipulating the valid transitions
-      const sm = StateMachine(true)
+      const sm = StateMachine()
 
       // Start to get to RUNNING state
       sm.start()
@@ -932,7 +927,7 @@ describe('StateMachine', () => {
 
     it('should handle transition validation edge cases', () => {
       // Most direct approach: manipulate the validTransitions lookup
-      const sm = StateMachine(true)
+      const sm = StateMachine()
 
       // Start to get to RUNNING
       sm.start()
@@ -974,7 +969,7 @@ describe('StateMachine', () => {
         throw 'string error' // This is not an Error instance
       })
 
-      const sm = StateMachine(true, { onStateChange: mockOnStateChange })
+      const sm = StateMachine({ onStateChange: mockOnStateChange })
 
       // This should trigger the callback, which will throw a string
       // The catch block should handle it and use String(error) instead of error.message
@@ -998,7 +993,7 @@ describe('StateMachine', () => {
           throw error
         })
 
-        const sm = StateMachine(true, { onStateChange: mockOnStateChange })
+        const sm = StateMachine({ onStateChange: mockOnStateChange })
 
         // Should handle non-Error thrown values using String(error)
         sm.start()
@@ -1012,7 +1007,7 @@ describe('StateMachine', () => {
       // Test line 103: validTransitions[from]?.includes(to) ?? false
       // We need to test when validTransitions[from] is undefined
 
-      const sm = StateMachine(true)
+      const sm = StateMachine()
 
       // Start first to get a valid state machine
       sm.start()
@@ -1083,7 +1078,7 @@ describe('StateMachine', () => {
         throw new Error('Real error message')
       })
 
-      const sm1 = StateMachine(true, { onStateChange: errorCallback })
+      const sm1 = StateMachine({ onStateChange: errorCallback })
       sm1.start()
 
       expect(errorCallback).toHaveBeenCalledWith(TimerState.RUNNING)
@@ -1093,7 +1088,7 @@ describe('StateMachine', () => {
         throw 'Not an Error object'
       })
 
-      const sm2 = StateMachine(true, { onStateChange: nonErrorCallback })
+      const sm2 = StateMachine({ onStateChange: nonErrorCallback })
       sm2.start()
 
       expect(nonErrorCallback).toHaveBeenCalledWith(TimerState.RUNNING)
