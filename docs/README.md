@@ -63,8 +63,8 @@ countdown.getCurrentState() // "IDLE" | "RUNNING" | "PAUSED" | "STOPPED"
 
 Since `timekeeper-countdown` is framework-agnostic, you can easily integrate it with any framework. Check out our complete examples in the [docs folder](./docs/):
 
-- 📖 **[Getting Started Guide](docs/getting-started.md)** - Basic usage and concepts
-- 📖 **[Framework Examples](docs/examples.md)** - React, Vue, Angular, Svelte implementations
+- 📖 **[Getting Started Guide](getting-started.md)** - Basic usage and concepts
+- 📖 **[Framework Examples](examples.md)** - React, Vue, Angular, Svelte implementations
 
 ### Quick Implementation Examples
 
@@ -321,8 +321,8 @@ For older browser support, use a bundler with appropriate polyfills.
 
 Check out the complete working examples:
 
-- **[Getting Started](docs/getting-started.md)** - Installation and basic usage
-- **[Framework Examples](docs/examples.md)** - Full implementations for React, Vue, Angular, Svelte
+- **[Getting Started](getting-started.md)** - Installation and basic usage
+- **[Framework Examples](examples.md)** - Full implementations for React, Vue, Angular, Svelte
 
 ## Contributing
 
@@ -336,6 +336,6 @@ MIT © [Eduardo Kohn](https://www.linkedin.com/in/eduardo-kohn-56817b195/)
 
 <div align="center">
 
-**[📖 Documentation](docs/getting-started.md)** • **[📖 Examples](docs/examples.md)**
+**[📖 Documentation](getting-started.md)** • **[📖 Examples](examples.md)**
 
 </div>
