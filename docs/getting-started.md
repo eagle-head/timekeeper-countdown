@@ -1,54 +1,168 @@
 # Getting Started
 
-Welcome to the **Timekeeper Countdown** library! This guide will walk you through the process of getting the library installed and integrated into your project.
-
-## Introduction
-
-**Timekeeper Countdown** is a powerful yet simple countdown timer library for React and React Native. It offers easy-to-use functions to start, pause, reset, resume, and restart countdowns with support for time units like days, hours, minutes, and seconds.
-
-If you're building a task timer, event countdown, or just need to keep track of time, this library is perfect for you!
+> 🚀 **Framework Agnostic** - Works with Vanilla JS, React, Angular, Vue, Svelte, or any JavaScript framework
 
 ## Installation
-
-To install the library, use one of the following commands:
 
 ```bash
 npm install timekeeper-countdown
 ```
 
-This will add the library to your project's dependencies.
+## Quick Start
 
-## Basic Usage
+### Basic Timer (5 minutes)
 
-Here’s a simple example of how to use the countdown timer in your React component:
+```javascript
+import { Countdown } from 'timekeeper-countdown'
 
-```typescript
-import { useCountdown } from "timekeeper-countdown";
+const timer = Countdown(300, {
+  onUpdate: (minutes, seconds) => {
+    console.log(`${minutes}:${seconds}`)
+  },
+})
 
-const CountdownTimer = () => {
-  const { days, hours, minutes, seconds, start, pause, reset } =
-    useCountdown(3600); // 1 hour countdown
-
-  return (
-    <div>
-      <h1>Countdown Timer</h1>
-      <div>
-        {days} Days {hours} Hours {minutes} Minutes {seconds} Seconds
-      </div>
-      <button onClick={start}>Start</button>
-      <button onClick={pause}>Pause</button>
-      <button onClick={reset}>Reset</button>
-    </div>
-  );
-};
+timer.start()
 ```
 
-In this example, we initialize the timer with `3600` seconds (1 hour), and the user can start, pause, or reset the countdown.
+### Complete Example
+
+```javascript
+import { Countdown, TimerState } from 'timekeeper-countdown'
+
+// Create 10-minute countdown
+const timer = Countdown(600, {
+  onUpdate: (minutes, seconds) => {
+    document.getElementById('display').textContent = `${minutes}:${seconds}`
+  },
+  onStateChange: state => {
+    console.log(`Timer state: ${state}`)
+  },
+  debug: true, // Enable logging
+})
+
+// Control the timer
+timer.start() // Begin countdown
+timer.pause() // Pause timer
+timer.resume() // Resume from pause
+timer.reset() // Reset to initial time
+timer.stop() // Stop and go to 0
+
+// Get current values
+console.log(timer.getMinutes()) // "10"
+console.log(timer.getSeconds()) // "00"
+console.log(timer.getCurrentState()) // "RUNNING"
+
+// Cleanup when done
+timer.destroy()
+```
+
+## Core Concepts
+
+### Timer States
+
+The timer has 4 possible states:
+
+- `IDLE` - Initial state, ready to start
+- `RUNNING` - Timer is counting down
+- `PAUSED` - Timer is paused, can be resumed
+- `STOPPED` - Timer has been stopped or completed
+
+### Time Input
+
+Always provide time in **seconds**:
+
+```javascript
+const timer1 = Countdown(60) // 1 minute
+const timer2 = Countdown(300) // 5 minutes
+const timer3 = Countdown(3600) // 1 hour
+const timer4 = Countdown(86400) // 1 day
+```
+
+### Callbacks
+
+Two main callbacks for reacting to timer changes:
+
+```javascript
+const timer = Countdown(300, {
+  // Called every second with formatted time
+  onUpdate: (minutes, seconds) => {
+    updateUI(minutes, seconds)
+  },
+
+  // Called when timer state changes
+  onStateChange: state => {
+    handleStateChange(state)
+  },
+})
+```
+
+### Methods
+
+Control your timer with these methods:
+
+| Method      | Description           | When Available |
+| ----------- | --------------------- | -------------- |
+| `start()`   | Start the countdown   | When IDLE      |
+| `pause()`   | Pause the timer       | When RUNNING   |
+| `resume()`  | Resume from pause     | When PAUSED    |
+| `reset()`   | Reset to initial time | Any state      |
+| `stop()`    | Stop and set to 0     | Any state      |
+| `destroy()` | Cleanup resources     | Any state      |
+
+### Getting Values
+
+Retrieve formatted time values:
+
+```javascript
+timer.getSeconds() // "05" - seconds part
+timer.getMinutes() // "04" - minutes part
+timer.getHours() // "02" - hours part
+timer.getDays() // "01" - days part
+timer.getWeeks() // "00" - weeks part
+timer.getYears() // "00" - years part
+```
+
+## Memory Management
+
+**⚠️ Always call `destroy()` when done:**
+
+```javascript
+// Vanilla JS
+window.addEventListener('beforeunload', () => {
+  timer.destroy()
+})
+
+// React
+useEffect(() => {
+  return () => timer.destroy()
+}, [])
+
+// Angular
+ngOnDestroy() {
+  timer.destroy()
+}
+```
+
+## Error Handling
+
+The library includes built-in validation:
+
+```javascript
+// These will throw errors
+Countdown(-5) // Negative time
+Countdown(1.5) // Non-integer
+Countdown('300') // Non-number
+Countdown(null) // Invalid type
+
+// Safe usage
+try {
+  const timer = Countdown(300)
+  timer.start()
+} catch (error) {
+  console.error('Timer error:', error.message)
+}
+```
 
 ## Next Steps
 
-Once you're comfortable with the basics, you can explore the following sections:
-
-- [API Reference](api-reference.md#api-reference): Learn more about the available functions, such as `useCountdown`.
-- [Advanced Usage](advanced-usage.md#advanced-usage): Discover how to customize time formats or handle time events.
-- [Examples](examples.md#examples): Check out different configurations and use cases for the library.
+- [Framework Examples](./examples.md) - React, Angular, Vue, Svelte integrations

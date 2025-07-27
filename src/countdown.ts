@@ -3,13 +3,13 @@ import { StateMachine, TimerState } from "./state-machine";
 import { Formatter } from "./formatter";
 import { TimerLogger, ErrorCategory, ErrorSeverity } from "./logger";
 
-interface CountdownOptions {
+export interface CountdownOptions {
   onUpdate?: (minutes: string, seconds: string) => void;
   onStateChange?: (state: TimerState) => void;
   debug?: boolean;
 }
 
-interface CountdownInstance {
+export interface CountdownInstance {
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -340,4 +340,4 @@ export function Countdown(
   };
 }
 
-export { TimerState, type CountdownInstance };
+export { TimerState };

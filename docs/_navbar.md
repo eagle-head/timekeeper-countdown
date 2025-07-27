@@ -1,5 +1,3 @@
-* [Home](/)
-* [API Reference](api-reference.md)
-* [Examples](examples.md)
-* [Changelog](CHANGELOG.md)
-* [FAQ](faq.md)
+- [Home](../README.md)
+- [Getting Started](getting-started.md)
+- [Examples](examples.md)

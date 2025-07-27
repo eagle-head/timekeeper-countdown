@@ -7,9 +7,9 @@ Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript w
 - 🪶 **Ultra-lightweight** - Only ~3KB minified + gzipped
 - 🚀 **Zero Dependencies** - No external runtime dependencies
 - 🎯 **TypeScript First** - Built with TypeScript, works with plain JavaScript
-- 🔄 **State Machine** - Predictable state transitions (IDLE → RUNNING → PAUSED → COMPLETED)
+- 🔄 **State Machine** - Predictable state transitions (IDLE → RUNNING → PAUSED → STOPPED)
 - ⚡ **Framework Agnostic** - Works with any framework or vanilla JS
-- 📚 **Rich Documentation** - Complete integration guides for React, Vue, Angular
+- 📚 **Rich Documentation** - Complete integration guides for React, Vue, Angular, Svelte
 - 🌳 **Tree-Shakable** - Import only what you need
 - 📦 **Modern Formats** - ESM and CJS support
 
@@ -26,15 +26,15 @@ That's it! No peer dependencies, no framework requirements. Just install and use
 ### Vanilla JavaScript/TypeScript
 
 ```typescript
-import { TimekeeperCountdown } from 'timekeeper-countdown'
+import { Countdown } from 'timekeeper-countdown'
 
 // Create a 5-minute countdown
-const countdown = new TimekeeperCountdown(300, {
-  onTick: (data) => {
-    console.log(`${data.minutes}:${data.seconds.toString().padStart(2, '0')}`)
+const countdown = Countdown(300, {
+  onUpdate: (minutes, seconds) => {
+    console.log(`${minutes}:${seconds}`)
   },
-  onComplete: () => {
-    console.log('🎉 Time\'s up!')
+  onStateChange: (state) => {
+    console.log(`State changed to: ${state}`)
   }
 })
 
@@ -43,70 +43,74 @@ countdown.start()   // Start timer
 countdown.pause()   // Pause timer  
 countdown.resume()  // Resume from pause
 countdown.reset()   // Reset to initial time
-countdown.restart() // Reset and start immediately
+countdown.stop()    // Stop and set to 00:00
+```
+
+### Getting Time Values
+
+```typescript
+// All getter methods return formatted strings
+countdown.getMinutes() // "05"
+countdown.getSeconds() // "00"
+countdown.getHours()   // "00"
+countdown.getDays()    // "00"
+countdown.getWeeks()   // "00"
+countdown.getYears()   // "00"
+countdown.getCurrentState() // "IDLE" | "RUNNING" | "PAUSED" | "STOPPED"
 ```
 
 ### Framework Integration
 
-Since `timekeeper-countdown` is framework-agnostic, you create your own integration layer. We provide complete implementation guides:
+Since `timekeeper-countdown` is framework-agnostic, you can easily integrate it with any framework. Check out our complete examples in the [docs folder](./docs/):
 
-#### 📖 **[React Integration Guide](docs/react-integration.md)**
-Learn how to create a `useTimekeeper` hook with full TypeScript support.
-
-#### 📖 **[Vue Integration Guide](docs/vue-integration.md)**  
-Create a `useTimekeeper` composable for Vue 3 with Composition API.
-
-#### 📖 **[Angular Integration Guide](docs/angular-integration.md)**
-Build a `TimekeeperService` with RxJS observables and dependency injection.
+- 📖 **[Getting Started Guide](docs/getting-started.md)** - Basic usage and concepts
+- 📖 **[Framework Examples](docs/examples.md)** - React, Vue, Angular, Svelte implementations
 
 ### Quick Implementation Examples
 
 <details>
-<summary><strong>React Hook (5 minutes to implement)</strong></summary>
+<summary><strong>React Hook Example</strong></summary>
 
 ```typescript
-// hooks/useTimekeeper.ts
-import { useEffect, useRef, useState } from 'react'
-import { TimekeeperCountdown } from 'timekeeper-countdown'
+import { useState, useEffect, useRef } from 'react'
+import { Countdown, TimerState } from 'timekeeper-countdown'
 
-export function useTimekeeper(initialSeconds: number) {
-  const countdownRef = useRef<TimekeeperCountdown | null>(null)
-  const [state, setState] = useState({
-    totalSeconds: initialSeconds,
-    days: 0, hours: 0, minutes: 0, seconds: 0,
-    state: 'IDLE' as const
-  })
+function useCountdown(initialSeconds) {
+  const [time, setTime] = useState({ minutes: '00', seconds: '00' })
+  const [state, setState] = useState(TimerState.IDLE)
+  const countdownRef = useRef(null)
 
   useEffect(() => {
-    countdownRef.current = new TimekeeperCountdown(initialSeconds, {
-      onTick: (data) => setState(data),
-      onStart: (data) => setState(prev => ({ ...prev, state: data.state })),
-      onPause: (data) => setState(prev => ({ ...prev, state: data.state })),
-      onComplete: (data) => setState(prev => ({ ...prev, state: data.state })),
+    countdownRef.current = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => setTime({ minutes, seconds }),
+      onStateChange: setState
     })
 
     return () => countdownRef.current?.destroy()
   }, [initialSeconds])
 
   return {
-    ...state,
+    time,
+    state,
     start: () => countdownRef.current?.start(),
     pause: () => countdownRef.current?.pause(),
+    resume: () => countdownRef.current?.resume(),
     reset: () => countdownRef.current?.reset(),
+    stop: () => countdownRef.current?.stop()
   }
 }
-```
 
-Usage:
-```jsx
+// Usage
 function Timer() {
-  const { minutes, seconds, start, pause, state } = useTimekeeper(300)
+  const { time, state, start, pause, resume, reset } = useCountdown(300)
   
   return (
     <div>
-      <div>{minutes}:{seconds.toString().padStart(2, '0')}</div>
-      <button onClick={start} disabled={state === 'RUNNING'}>Start</button>
-      <button onClick={pause} disabled={state !== 'RUNNING'}>Pause</button>
+      <div>{time.minutes}:{time.seconds}</div>
+      <button onClick={start} disabled={state === TimerState.RUNNING}>Start</button>
+      <button onClick={pause} disabled={state !== TimerState.RUNNING}>Pause</button>
+      <button onClick={resume} disabled={state !== TimerState.PAUSED}>Resume</button>
+      <button onClick={reset}>Reset</button>
     </div>
   )
 }
@@ -114,163 +118,99 @@ function Timer() {
 </details>
 
 <details>
-<summary><strong>Vue Composable (5 minutes to implement)</strong></summary>
+<summary><strong>Vue Composable Example</strong></summary>
 
 ```typescript
-// composables/useTimekeeper.ts
-import { ref, onUnmounted } from 'vue'
-import { TimekeeperCountdown } from 'timekeeper-countdown'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Countdown, TimerState } from 'timekeeper-countdown'
 
-export function useTimekeeper(initialSeconds: number) {
-  const countdown = ref<TimekeeperCountdown | null>(null)
-  const totalSeconds = ref(initialSeconds)
-  const days = ref(0)
-  const hours = ref(0) 
-  const minutes = ref(0)
-  const seconds = ref(0)
-  const state = ref<'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'>('IDLE')
+export function useCountdown(initialSeconds) {
+  const time = ref({ minutes: '00', seconds: '00' })
+  const state = ref(TimerState.IDLE)
+  let countdown = null
 
-  // Initialize
-  countdown.value = new TimekeeperCountdown(initialSeconds, {
-    onTick: (data) => {
-      totalSeconds.value = data.totalSeconds
-      days.value = data.days
-      hours.value = data.hours
-      minutes.value = data.minutes  
-      seconds.value = data.seconds
-      state.value = data.state
-    },
-    onStart: (data) => state.value = data.state,
-    onPause: (data) => state.value = data.state,
-    onComplete: (data) => state.value = data.state,
+  const createCountdown = () => {
+    countdown = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => {
+        time.value = { minutes, seconds }
+      },
+      onStateChange: (newState) => {
+        state.value = newState
+      }
+    })
+  }
+
+  onMounted(() => {
+    createCountdown()
   })
 
-  onUnmounted(() => countdown.value?.destroy())
-
-  return {
-    totalSeconds, days, hours, minutes, seconds, state,
-    start: () => countdown.value?.start(),
-    pause: () => countdown.value?.pause(), 
-    reset: () => countdown.value?.reset(),
-  }
-}
-```
-
-Usage:
-```vue
-<template>
-  <div>
-    <div>{{ minutes }}:{{ seconds.toString().padStart(2, '0') }}</div>
-    <button @click="start" :disabled="state === 'RUNNING'">Start</button>
-    <button @click="pause" :disabled="state !== 'RUNNING'">Pause</button>
-  </div>
-</template>
-
-<script setup>
-import { useTimekeeper } from './composables/useTimekeeper'
-const { minutes, seconds, start, pause, state } = useTimekeeper(300)
-</script>
-```
-</details>
-
-<details>
-<summary><strong>Svelte Store (5 minutes to implement)</strong></summary>
-
-```typescript
-// stores/timekeeper.ts
-import { writable, derived } from 'svelte/store'
-import { TimekeeperCountdown } from 'timekeeper-countdown'
-
-export function createTimekeeperStore(initialSeconds: number) {
-  const countdown = new TimekeeperCountdown(initialSeconds)
-  
-  // Create writable store for timer data
-  const timerData = writable({
-    totalSeconds: initialSeconds,
-    days: 0,
-    hours: 0,
-    minutes: Math.floor(initialSeconds / 60),
-    seconds: initialSeconds % 60,
-    state: 'IDLE' as const
+  onUnmounted(() => {
+    countdown?.destroy()
   })
-  
-  // Setup event listeners
-  countdown.on('tick', (data) => timerData.set(data))
-  countdown.on('start', (data) => timerData.set(data))
-  countdown.on('pause', (data) => timerData.set(data))
-  countdown.on('complete', (data) => timerData.set(data))
-  
+
   return {
-    subscribe: timerData.subscribe,
-    start: () => countdown.start(),
-    pause: () => countdown.pause(),
-    resume: () => countdown.resume(),
-    reset: () => countdown.reset(),
-    destroy: () => countdown.destroy()
+    time,
+    state,
+    start: () => countdown?.start(),
+    pause: () => countdown?.pause(),
+    resume: () => countdown?.resume(),
+    reset: () => countdown?.reset(),
+    stop: () => countdown?.stop()
   }
 }
-```
-
-Usage:
-```svelte
-<script>
-  import { createTimekeeperStore } from './stores/timekeeper'
-  import { onDestroy } from 'svelte'
-  
-  const timer = createTimekeeperStore(300)
-  const { minutes, seconds, state } = timer
-  
-  onDestroy(() => timer.destroy())
-</script>
-
-<div>
-  <div>{$minutes}:{$seconds.toString().padStart(2, '0')}</div>
-  <button on:click={timer.start} disabled={$state === 'RUNNING'}>Start</button>
-  <button on:click={timer.pause} disabled={$state !== 'RUNNING'}>Pause</button>
-</div>
 ```
 </details>
 
 ## Core API
 
-### TimekeeperCountdown Class
+### Countdown Function
 
 ```typescript
-class TimekeeperCountdown {
-  constructor(
-    initialSeconds: number,
-    options?: {
-      autoStart?: boolean
-      onTick?: (data: CountdownEventData) => void
-      onStart?: (data: CountdownEventData) => void  
-      onPause?: (data: CountdownEventData) => void
-      onResume?: (data: CountdownEventData) => void
-      onReset?: (data: CountdownEventData) => void
-      onRestart?: (data: CountdownEventData) => void
-      onComplete?: (data: CountdownEventData) => void
-    }
-  )
+import { Countdown } from 'timekeeper-countdown'
 
-  // Properties (getters)
-  readonly totalSeconds: number
-  readonly days: number
-  readonly hours: number      // 0-23  
-  readonly minutes: number    // 0-59
-  readonly seconds: number    // 0-59
-  readonly state: 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
-  readonly time: CountdownTime // All time properties in one object
+const countdown = Countdown(
+  initialSeconds: number,
+  options?: {
+    onUpdate?: (minutes: string, seconds: string) => void
+    onStateChange?: (state: TimerState) => void
+    debug?: boolean
+  }
+)
+```
 
-  // Methods
-  start(): boolean
-  pause(): boolean  
-  resume(): boolean
-  reset(newSeconds?: number): boolean
-  restart(newSeconds?: number): boolean
-  destroy(): void
+### CountdownInstance Methods
 
-  // Event methods
-  on(event: CountdownEventType, listener: CountdownEventListener): void
-  off(event: CountdownEventType, listener: CountdownEventListener): void
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `start()` | Start the countdown | `void` |
+| `pause()` | Pause the countdown | `void` |
+| `resume()` | Resume from paused state | `void` |
+| `reset()` | Reset to initial time | `void` |
+| `stop()` | Stop and set to 00:00 | `void` |
+| `destroy()` | Clean up resources | `void` |
+
+### Getter Methods
+
+All getter methods return zero-padded strings:
+
+| Method | Description | Example Return |
+|--------|-------------|----------------|
+| `getSeconds()` | Get seconds component (0-59) | `"05"` |
+| `getMinutes()` | Get minutes component | `"04"` |
+| `getHours()` | Get hours component | `"02"` |
+| `getDays()` | Get days component | `"01"` |
+| `getWeeks()` | Get weeks component | `"00"` |
+| `getYears()` | Get years component | `"00"` |
+| `getCurrentState()` | Get current state | `"RUNNING"` |
+
+### Timer States
+
+```typescript
+export enum TimerState {
+  IDLE = "IDLE",         // Initial state, ready to start
+  RUNNING = "RUNNING",   // Countdown is active
+  PAUSED = "PAUSED",     // Countdown is paused
+  STOPPED = "STOPPED"    // Countdown completed or manually stopped
 }
 ```
 
@@ -280,31 +220,14 @@ The countdown follows a predictable finite state machine:
 
 ```
 IDLE ──start()──→ RUNNING ──pause()──→ PAUSED
- ↑                   │                   │
- │                   │                   │
- └──reset()──────────┘                   │
- ↑                   │                   │
- │                   ↓                   │
- └──────────── COMPLETED ←──resume()─────┘
-                     ↑
+ ↑                   │                    │
+ │                   │                    │
+ └──reset()──────────┴────────────────────┘
                      │
-                auto-complete
-               (when seconds = 0)
-```
-
-### Events & Data
-
-Every event receives a `CountdownEventData` object:
-
-```typescript
-interface CountdownEventData {
-  totalSeconds: number  // Total seconds remaining
-  days: number         // Days component  
-  hours: number        // Hours component (0-23)
-  minutes: number      // Minutes component (0-59)
-  seconds: number      // Seconds component (0-59)
-  state: CountdownStateType // Current state
-}
+                     ↓
+                  STOPPED
+               (manual stop or
+              timer completed)
 ```
 
 ## Advanced Usage
@@ -312,126 +235,68 @@ interface CountdownEventData {
 ### Multiple Countdown Instances
 
 ```typescript
+import { Countdown } from 'timekeeper-countdown'
+
 // Create multiple independent countdowns
-const workTimer = new TimekeeperCountdown(25 * 60) // 25 minutes
-const breakTimer = new TimekeeperCountdown(5 * 60)  // 5 minutes
-
-workTimer.on('complete', () => {
-  console.log('Work completed! Time for a break.')
-  breakTimer.start()
-})
-
-breakTimer.on('complete', () => {
-  console.log('Break over! Back to work.')
-  workTimer.restart()
-})
-```
-
-### Dynamic Countdown Updates
-
-```typescript
-const countdown = new TimekeeperCountdown(300, {
-  onTick: (data) => {
-    // Update UI
-    document.getElementById('timer').textContent = 
-      `${data.minutes}:${data.seconds.toString().padStart(2, '0')}`
-    
-    // Warning at 10 seconds
-    if (data.totalSeconds <= 10) {
-      document.body.classList.add('warning')
+const workTimer = Countdown(25 * 60, { // 25 minutes
+  onUpdate: (min, sec) => updateWorkDisplay(min, sec),
+  onStateChange: (state) => {
+    if (state === 'STOPPED') {
+      console.log('Work session completed!')
+      breakTimer.start()
     }
-  },
-  onComplete: () => {
-    // Play sound, show notification, etc.
-    new Audio('/alarm.mp3').play()
+  }
+})
+
+const breakTimer = Countdown(5 * 60, { // 5 minutes
+  onUpdate: (min, sec) => updateBreakDisplay(min, sec),
+  onStateChange: (state) => {
+    if (state === 'STOPPED') {
+      console.log('Break time over!')
+    }
+  }
+})
+
+workTimer.start()
+```
+
+### With Debug Logging
+
+```typescript
+const countdown = Countdown(300, {
+  debug: true, // Enable console logging
+  onUpdate: (minutes, seconds) => {
+    console.log(`Time: ${minutes}:${seconds}`)
   }
 })
 ```
 
-### Persistence & Recovery
+### Memory Management
+
+Always call `destroy()` when you're done with a countdown to prevent memory leaks:
 
 ```typescript
-// Save state to localStorage
-const countdown = new TimekeeperCountdown(300, {
-  onTick: (data) => {
-    localStorage.setItem('countdown-state', JSON.stringify({
-      totalSeconds: data.totalSeconds,
-      state: data.state
-    }))
-  }
+// In vanilla JS
+window.addEventListener('beforeunload', () => {
+  countdown.destroy()
 })
 
-// Restore on page load
-const saved = localStorage.getItem('countdown-state')
-if (saved) {
-  const { totalSeconds, state } = JSON.parse(saved)
-  countdown.reset(totalSeconds)
-  if (state === 'RUNNING') countdown.start()
+// In React
+useEffect(() => {
+  const countdown = Countdown(300, options)
+  return () => countdown.destroy()
+}, [])
+
+// In Vue
+onUnmounted(() => {
+  countdown.destroy()
+})
+
+// In Angular
+ngOnDestroy() {
+  this.countdown.destroy()
 }
 ```
-
-## Utility Functions
-
-The library also exports utility functions for time calculations:
-
-```typescript
-import { 
-  getDays, 
-  getHours, 
-  getMinutes, 
-  getSeconds,
-  getCountdownTime,
-  validateInitialSeconds
-} from 'timekeeper-countdown'
-
-// Individual calculations
-const days = getDays(90061)        // 1 day
-const hours = getHours(90061)      // 1 hour  
-const minutes = getMinutes(90061)  // 1 minute
-const seconds = getSeconds(90061)  // 1 second
-
-// All at once
-const time = getCountdownTime(90061)
-// { totalSeconds: 90061, days: 1, hours: 1, minutes: 1, seconds: 1 }
-
-// Validation
-const validSeconds = validateInitialSeconds(300) // 300 (valid)
-validateInitialSeconds(0) // throws Error
-```
-
-## Framework Integration Philosophy
-
-**Why don't we provide built-in framework adapters?**
-
-1. **Smaller Bundle** - You only get what you need (~3KB vs ~12KB+ with adapters)
-2. **No Dependencies** - Zero peer dependencies means no version conflicts  
-3. **Maximum Flexibility** - Implement exactly what your app needs
-4. **Better Learning** - Understanding the integration makes you a better developer
-5. **Future Proof** - Works with any framework, including ones that don't exist yet
-
-**Implementation is easy** - Our guides show you exactly how to build the perfect adapter for your use case, usually in under 10 minutes.
-
-## Examples & Demos
-
-Check out the `/examples` directory:
-
-- **Vanilla** - Basic HTML/JS integration (`/examples/vanilla/basic.html`)
-- **Framework Integrations** - TypeScript examples for React, Vue, Angular, and Svelte (`/examples/integrations/`)
-
-## Migration Guide
-
-### From v0.x (React-only)
-
-```typescript
-// Old version (React only)
-import { useCountdown } from 'timekeeper-countdown'
-
-// Current version (Framework agnostic)
-import { TimekeeperCountdown } from 'timekeeper-countdown'
-// + implement your own hook (see React guide)
-```
-
-The core functionality is identical, but now you have full control over the integration layer.
 
 ## TypeScript Support
 
@@ -439,12 +304,9 @@ This library is built with TypeScript and provides complete type definitions:
 
 ```typescript
 import type { 
-  CountdownTime,
-  CountdownStateType, 
-  CountdownEventData,
-  CountdownEventType,
-  CountdownEventListener,
-  TimekeeperCountdownOptions
+  CountdownOptions,
+  CountdownInstance,
+  TimerState
 } from 'timekeeper-countdown'
 ```
 
@@ -454,6 +316,13 @@ import type {
 - **Node.js** - Version 16+
 
 For older browser support, use a bundler with appropriate polyfills.
+
+## Examples & Demos
+
+Check out the complete working examples:
+
+- **[Getting Started](docs/getting-started.md)** - Installation and basic usage
+- **[Framework Examples](docs/examples.md)** - Full implementations for React, Vue, Angular, Svelte
 
 ## Contributing
 
@@ -467,6 +336,6 @@ MIT © [Eduardo Kohn](https://www.linkedin.com/in/eduardo-kohn-56817b195/)
 
 <div align="center">
 
-**[📖 React Guide](docs/react-integration.md)** • **[📖 Vue Guide](docs/vue-integration.md)** • **[📖 Angular Guide](docs/angular-integration.md)**
+**[📖 Documentation](docs/getting-started.md)** • **[📖 Examples](docs/examples.md)**
 
 </div>

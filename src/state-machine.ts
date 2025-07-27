@@ -190,7 +190,6 @@ export function StateMachine(debug: boolean = false, events?: StateEvents): Stat
 export type StateMachineModule = {
   TimerState: typeof TimerState;
   StateMachine: typeof StateMachine;
-  StateMachineInstance: typeof StateMachineInstance;
 };
 
 export { type StateMachineInstance };

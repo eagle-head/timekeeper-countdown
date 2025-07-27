@@ -1,145 +1,347 @@
 # Examples
 
-This section provides practical examples of how to use the **Timekeeper Countdown** library. The examples cover basic, advanced, and custom use cases, demonstrating the flexibility of the library.
+## Framework Integration
 
-## Available Examples
+### Vanilla JavaScript
 
-- **Vanilla JavaScript**: Complete HTML example showing core library usage (`examples/vanilla/basic.html`)
-- **Framework Integrations**: TypeScript examples for React, Vue, Angular, and Svelte (`examples/integrations/`)
+#### Basic Usage
 
-## File Structure
+```javascript
+import { Countdown, TimerState } from 'timekeeper-countdown'
 
-```
-examples/
-├── integrations/           # Framework integration examples
-│   ├── react.ts           # React hook implementation
-│   ├── vue.ts             # Vue composable implementation  
-│   ├── angular.ts         # Angular service implementation
-│   └── svelte.ts          # Svelte store implementation
-└── vanilla/               # Pure JavaScript/HTML examples
-    └── basic.html         # Complete working HTML example
-```
+// Create a 5-minute countdown (300 seconds)
+const timer = Countdown(300, {
+  onUpdate: (minutes, seconds) => {
+    console.log(`${minutes}:${seconds}`)
+  },
+  onStateChange: state => {
+    console.log(`State: ${state}`)
+  },
+})
 
-Each integration file in `examples/integrations/` provides a complete, ready-to-use implementation for the respective framework, along with usage examples and TypeScript definitions.
+// Control the timer
+timer.start() // Start countdown
+timer.pause() // Pause timer
+timer.resume() // Resume from pause
+timer.reset() // Reset to initial time
+timer.stop() // Stop timer
 
-## Basic Countdown
+// Get current values
+timer.getMinutes() // "05"
+timer.getSeconds() // "00"
+timer.getCurrentState() // "RUNNING"
 
-A simple countdown timer starting from a specified number of seconds. It covers the basic functions like starting, pausing, and resetting the countdown.
-
-### Key Features:
-
-- Initialize the countdown with a specific time.
-- Basic control buttons: Start, Pause, Reset.
-
-### Code Example:
-
-```typescript
-import React from "react";
-import { useCountdown } from "timekeeper-countdown";
-
-const BasicCountdown = () => {
-  const { seconds, start, pause, reset, state } = useCountdown(60);
-
-  return (
-    <div>
-      <h1>Basic Countdown</h1>
-      <div>Seconds: {seconds}</div>
-      <div>State: {state}</div>
-      <button onClick={start}>Start</button>
-      <button onClick={pause}>Pause</button>
-      <button onClick={() => reset()}>Reset</button>
-    </div>
-  );
-};
-
-export default BasicCountdown;
+// Cleanup when done
+timer.destroy()
 ```
 
-## Advanced Countdown
+#### Simple DOM Example
 
-This example demonstrates a more advanced countdown timer that includes days, hours, minutes, and seconds. It also introduces how to handle countdown completion events.
+```html
+<div id="timer">05:00</div>
+<button onclick="timer.start()">Start</button>
+<button onclick="timer.pause()">Pause</button>
+<button onclick="timer.reset()">Reset</button>
 
-### Key Features:
+<script type="module">
+  import { Countdown } from 'timekeeper-countdown'
 
-- Countdown formatted in days, hours, minutes, and seconds.
-- Handling timer completion with custom logic (e.g., displaying an alert).
-- Ability to reset the countdown to a different time dynamically.
+  const timer = Countdown(300, {
+    onUpdate: (minutes, seconds) => {
+      document.getElementById('timer').textContent = `${minutes}:${seconds}`
+    },
+  })
 
-### Code Example:
+  // Make timer globally available for buttons
+  window.timer = timer
+</script>
+```
 
-```typescript
-import React, { useEffect } from "react";
-import { useCountdown, CountdownState } from "timekeeper-countdown";
+### React
 
-const AdvancedCountdown = () => {
-  const { days, hours, minutes, seconds, start, pause, reset, state } =
-    useCountdown(5 * 24 * 3600); // 5 days
+```javascript
+import { useState, useEffect, useRef } from 'react'
+import { Countdown, TimerState } from 'timekeeper-countdown'
+
+function useCountdown(initialSeconds, options = {}) {
+  const [time, setTime] = useState({ minutes: '00', seconds: '00' })
+  const [state, setState] = useState(TimerState.IDLE)
+  const countdownRef = useRef(null)
 
   useEffect(() => {
-    if (state === CountdownState.COMPLETED) {
-      alert("Countdown completed!");
+    countdownRef.current = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => setTime({ minutes, seconds }),
+      onStateChange: setState,
+      ...options,
+    })
+
+    // ⚠️ IMPORTANT: Cleanup to prevent memory leaks
+    return () => {
+      if (countdownRef.current) {
+        countdownRef.current.destroy()
+      }
     }
-  }, [state]);
+  }, [initialSeconds])
+
+  // 🔄 Additional cleanup when page is reloaded
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      countdownRef.current?.destroy()
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
+  const controls = {
+    start: () => countdownRef.current?.start(),
+    pause: () => countdownRef.current?.pause(),
+    resume: () => countdownRef.current?.resume(),
+    reset: () => countdownRef.current?.reset(),
+    stop: () => countdownRef.current?.stop(),
+  }
+
+  return { time, state, controls }
+}
+
+// Uso
+function Timer() {
+  const { time, state, controls } = useCountdown(300) // 5 minutos
 
   return (
     <div>
-      <h1>Advanced Countdown</h1>
       <div>
-        Time Remaining: {days} Days {hours} Hours {minutes} Minutes {seconds}{" "}
-        Seconds
+        {time.minutes}:{time.seconds}
       </div>
-      <div>State: {state}</div>
-      <button onClick={start}>Start</button>
-      <button onClick={pause}>Pause</button>
-      <button onClick={() => reset(60)}>Reset to 60 seconds</button>
+      <button onClick={controls.start}>Start</button>
+      <button onClick={controls.pause}>Pause</button>
+      <button onClick={controls.reset}>Reset</button>
     </div>
-  );
-};
-
-export default AdvancedCountdown;
+  )
+}
 ```
 
-## Custom Reset and Restart
-
-An example focused on customizing the behavior of the reset and restart actions, allowing the user to reset or restart the countdown with new values.
-
-### Key Features:
-
-- Customize the reset and restart behavior with user-defined initial times.
-- Control countdown state programmatically to fit specific use cases.
-
-### Code Example:
+### Angular
 
 ```typescript
-import React from "react";
-import { useCountdown } from "timekeeper-countdown";
+import { Injectable, Component, OnDestroy, HostListener } from '@angular/core'
+import { BehaviorSubject } from 'rxjs'
+import { Countdown, TimerState, CountdownInstance } from 'timekeeper-countdown'
 
-const CustomResetRestart = () => {
-  const { seconds, start, pause, reset, restart, state } = useCountdown(120);
+@Injectable()
+export class CountdownService implements OnDestroy {
+  private countdown: CountdownInstance | null = null
 
-  return (
+  time$ = new BehaviorSubject({ minutes: '00', seconds: '00' })
+  state$ = new BehaviorSubject<TimerState>(TimerState.IDLE)
+
+  constructor() {
+    // 🔄 Cleanup when page is reloaded/closed
+    window.addEventListener('beforeunload', () => this.cleanup())
+    window.addEventListener('unload', () => this.cleanup())
+  }
+
+  createCountdown(initialSeconds: number, options = {}) {
+    this.countdown = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => this.time$.next({ minutes, seconds }),
+      onStateChange: state => this.state$.next(state),
+      ...options,
+    })
+  }
+
+  start() {
+    this.countdown?.start()
+  }
+  pause() {
+    this.countdown?.pause()
+  }
+  resume() {
+    this.countdown?.resume()
+  }
+  reset() {
+    this.countdown?.reset()
+  }
+  stop() {
+    this.countdown?.stop()
+  }
+
+  private cleanup() {
+    if (this.countdown) {
+      this.countdown.destroy()
+      this.countdown = null
+    }
+  }
+
+  // ⚠️ IMPORTANT: Angular automatic cleanup
+  ngOnDestroy() {
+    this.cleanup()
+  }
+}
+
+// Componente
+@Component({
+  selector: 'app-timer',
+  template: `
     <div>
-      <h1>Custom Reset and Restart</h1>
-      <div>Seconds: {seconds}</div>
-      <div>State: {state}</div>
-      <button onClick={start}>Start</button>
-      <button onClick={pause}>Pause</button>
-      <button onClick={() => reset(90)}>Reset to 90 seconds</button>
-      <button onClick={() => restart(150)}>Restart with 150 seconds</button>
+      <div>{{ (countdownService.time$ | async)?.minutes }}:{{ (countdownService.time$ | async)?.seconds }}</div>
+      <button (click)="countdownService.start()">Start</button>
+      <button (click)="countdownService.pause()">Pause</button>
+      <button (click)="countdownService.reset()">Reset</button>
     </div>
-  );
-};
+  `,
+  providers: [CountdownService],
+})
+export class TimerComponent implements OnDestroy {
+  constructor(public countdownService: CountdownService) {
+    this.countdownService.createCountdown(300) // 5 minutos
+  }
 
-export default CustomResetRestart;
+  // 🔄 Additional cleanup in component when leaving page
+  @HostListener('window:beforeunload')
+  onBeforeUnload() {
+    this.countdownService.ngOnDestroy()
+  }
+
+  ngOnDestroy() {
+    // Service already does cleanup, but ensures here too
+    this.countdownService.ngOnDestroy()
+  }
+}
 ```
 
-## Framework Integration Examples
+### Vue
 
-For detailed framework-specific examples, see the integration guides:
+```vue
+<script setup>
+import { ref, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
+import { Countdown, TimerState } from 'timekeeper-countdown'
 
-- **React**: See [React Integration Guide](react-integration.md) for hooks and component examples
-- **Vue**: See [Vue Integration Guide](vue-integration.md) for composables and component examples  
-- **Angular**: See [Angular Integration Guide](angular-integration.md) for service and component examples
-- **Svelte**: See [Svelte Integration Guide](svelte-integration.md) for store and component examples
+function useCountdown(initialSeconds, options = {}) {
+  const time = ref({ minutes: '00', seconds: '00' })
+  const state = ref(TimerState.IDLE)
+  let countdown = null
 
-Each integration file in `examples/integrations/` provides the core integration logic that can be copied directly into your project.
+  const createCountdown = () => {
+    countdown = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => {
+        time.value = { minutes, seconds }
+      },
+      onStateChange: newState => {
+        state.value = newState
+      },
+      ...options,
+    })
+  }
+
+  const cleanup = () => {
+    if (countdown) {
+      countdown.destroy()
+      countdown = null
+    }
+  }
+
+  const controls = {
+    start: () => countdown?.start(),
+    pause: () => countdown?.pause(),
+    resume: () => countdown?.resume(),
+    reset: () => countdown?.reset(),
+    stop: () => countdown?.stop(),
+  }
+
+  onMounted(() => {
+    createCountdown()
+
+    // 🔄 Cleanup when page is reloaded/closed
+    window.addEventListener('beforeunload', cleanup)
+    window.addEventListener('unload', cleanup)
+  })
+
+  // ⚠️ IMPORTANT: Vue automatic cleanup
+  onBeforeUnmount(cleanup)
+  onUnmounted(() => {
+    cleanup()
+    window.removeEventListener('beforeunload', cleanup)
+    window.removeEventListener('unload', cleanup)
+  })
+
+  return { time, state, controls }
+}
+
+// Uso no componente
+const { time, state, controls } = useCountdown(300) // 5 minutos
+</script>
+
+<template>
+  <div>
+    <div>{{ time.minutes }}:{{ time.seconds }}</div>
+    <button @click="controls.start()">Start</button>
+    <button @click="controls.pause()">Pause</button>
+    <button @click="controls.reset()">Reset</button>
+  </div>
+</template>
+```
+
+### Svelte
+
+```svelte
+<script>
+  import { onMount, onDestroy } from 'svelte'
+  import { Countdown, TimerState } from 'timekeeper-countdown'
+
+  export let initialSeconds = 300
+
+  let time = { minutes: '00', seconds: '00' }
+  let state = TimerState.IDLE
+  let countdown = null
+
+  const createCountdown = () => {
+    countdown = Countdown(initialSeconds, {
+      onUpdate: (minutes, seconds) => {
+        time = { minutes, seconds }
+      },
+      onStateChange: (newState) => {
+        state = newState
+      }
+    })
+  }
+
+  const cleanup = () => {
+    if (countdown) {
+      countdown.destroy()
+      countdown = null
+    }
+  }
+
+  const controls = {
+    start: () => countdown?.start(),
+    pause: () => countdown?.pause(),
+    resume: () => countdown?.resume(),
+    reset: () => countdown?.reset(),
+    stop: () => countdown?.stop()
+  }
+
+  onMount(() => {
+    createCountdown()
+
+    // 🔄 Cleanup when page is reloaded/closed
+    const handleBeforeUnload = () => cleanup()
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('unload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('unload', handleBeforeUnload)
+    }
+  })
+
+  // ⚠️ IMPORTANT: Svelte automatic cleanup
+  onDestroy(cleanup)
+</script>
+
+<div>
+  <div>{time.minutes}:{time.seconds}</div>
+  <button on:click={controls.start}>Start</button>
+  <button on:click={controls.pause}>Pause</button>
+  <button on:click={controls.reset}>Reset</button>
+</div>
+```
