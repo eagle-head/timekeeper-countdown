@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 2.0.1
+
+### Patch Changes
+
+- Optimize bundle size by removing CJS format and improving build configuration
+
 ## 2.0.0
 
 ### Major Changes
