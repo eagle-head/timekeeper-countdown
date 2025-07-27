@@ -4,21 +4,16 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   clean: true,
-  sourcemap: true,
-  minify: true, // Enable minification for production
+  sourcemap: false,
+  minify: true,
   splitting: false,
   treeshake: true,
-  outExtension({ format }) {
-    return {
-      js: format === 'cjs' ? '.cjs' : '.js',
-    }
-  },
+  target: 'es2022',
   esbuildOptions(options) {
-    options.banner = {
-      js: '// timekeeper-countdown v2.0.0 - Framework-agnostic countdown timer',
-    }
+    options.mangleProps = /^_/
+    options.drop = ['console', 'debugger']
   },
 })
