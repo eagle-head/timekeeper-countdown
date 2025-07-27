@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { Formatter } from '../formatter'
 
 describe('Formatter', () => {
@@ -179,12 +179,9 @@ describe('Formatter', () => {
 
       // Test with a value that becomes non-finite after calculation
       // This should trigger the catch block in safeFormat
-      const mockValue = {
-        toString: () => {
-          throw new Error('Mock error')
-        },
-        valueOf: () => 42,
-      }
+      // Mock value that throws error on toString - testing error handling
+      // Since we can't directly pass the mock object through the public API,
+      // this test documents the intended behavior
 
       // Since we can't directly pass the mock object through the public API,
       // we'll test with edge cases that might trigger the catch block

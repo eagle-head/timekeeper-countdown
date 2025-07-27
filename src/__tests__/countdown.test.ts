@@ -867,7 +867,7 @@ describe('Countdown - Error Handling', () => {
     it('should handle timer onError callback with Error object', async () => {
       // Mock the timer module to trigger onError callback with Error object
       vi.doMock('../timer', () => ({
-        Timer: vi.fn((initialSeconds, events) => {
+        Timer: vi.fn((_, events) => {
           const timerInstance = {
             start: vi.fn(() => {
               // Simulate timer error by calling onError callback
@@ -902,7 +902,7 @@ describe('Countdown - Error Handling', () => {
     it('should handle timer onError callback with non-Error object', async () => {
       // Mock the timer module to trigger onError callback with non-Error object
       vi.doMock('../timer', () => ({
-        Timer: vi.fn((initialSeconds, events) => {
+        Timer: vi.fn((_, events) => {
           const timerInstance = {
             start: vi.fn(() => {
               // Simulate timer error with non-Error object
@@ -939,7 +939,7 @@ describe('Countdown - Error Handling', () => {
 
       // Mock the timer module to trigger onError callback
       vi.doMock('../timer', () => ({
-        Timer: vi.fn((initialSeconds, events) => {
+        Timer: vi.fn((_, events) => {
           const timerInstance = {
             start: vi.fn(() => {
               // Simulate timer error

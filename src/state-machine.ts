@@ -64,7 +64,7 @@ export function StateMachine(events?: StateEvents): StateMachineInstance {
     // Safe callback call
     try {
       events?.onStateChange?.(newState);
-    } catch (error) {
+    } catch {
       // Silently ignore callback errors
     }
 

@@ -65,7 +65,7 @@ export function Countdown(
         
         const { minutes, seconds } = formatter.formatTime(safeTotalSeconds);
         onUpdate(minutes, seconds);
-      } catch (error) {
+      } catch {
         // Silently ignore errors in callbacks
       }
     }
@@ -90,7 +90,7 @@ export function Countdown(
         stateMachine.start();
         updateUI(timer.getTotalSeconds());
       }
-    } catch (error) {
+    } catch {
       // Silently handle errors
     }
   }
@@ -101,7 +101,7 @@ export function Countdown(
         timer.stop();
         stateMachine.pause();
       }
-    } catch (error) {
+    } catch {
       // Silently handle errors
     }
   }
@@ -112,7 +112,7 @@ export function Countdown(
         stateMachine.resume();
         updateUI(timer.getTotalSeconds());
       }
-    } catch (error) {
+    } catch {
       // Silently handle errors
     }
   }
@@ -122,7 +122,7 @@ export function Countdown(
       timer.reset();
       stateMachine.reset();
       updateUI(timer.getTotalSeconds());
-    } catch (error) {
+    } catch {
       // Try basic reset on error
       try {
         timer.stop();
@@ -139,7 +139,7 @@ export function Countdown(
       stateMachine.stop();
       timer.setSeconds(0);
       updateUI(0);
-    } catch (error) {
+    } catch {
       // Try basic stop on error
       try {
         timer.stop();
@@ -155,7 +155,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const seconds = formatter.formatSeconds(totalSeconds);
       return seconds;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -165,7 +165,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const minutes = formatter.formatMinutes(totalSeconds);
       return minutes;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -175,7 +175,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const hours = formatter.formatHours(totalSeconds);
       return hours;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -185,7 +185,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const days = formatter.formatDays(totalSeconds);
       return days;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -195,7 +195,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const weeks = formatter.formatWeeks(totalSeconds);
       return weeks;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -205,7 +205,7 @@ export function Countdown(
       const totalSeconds = timer.getTotalSeconds();
       const years = formatter.formatYears(totalSeconds);
       return years;
-    } catch (error) {
+    } catch {
       return "00"; // Safe value
     }
   }
@@ -213,7 +213,7 @@ export function Countdown(
   function getCurrentState(): TimerState {
     try {
       return stateMachine.getCurrentState();
-    } catch (error) {
+    } catch {
       return TimerState.IDLE; // Safe value
     }
   }
@@ -222,7 +222,7 @@ export function Countdown(
     try {
       timer.destroy();
       stateMachine.destroy();
-    } catch (error) {
+    } catch {
       // Try minimal cleanup on error
       try {
         timer.stop();
