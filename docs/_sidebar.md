@@ -1,4 +1,4 @@
-- [Home](../README.md)
+- [Home](README.md)
 - [Getting Started](getting-started.md)
   - [Installation](getting-started.md#installation)
   - [Basic Usage](getting-started.md#basic-usage)

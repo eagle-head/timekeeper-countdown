@@ -1,3 +1,3 @@
-- [Home](../README.md)
+- [Home](README.md)
 - [Getting Started](getting-started.md)
 - [Examples](examples.md)
