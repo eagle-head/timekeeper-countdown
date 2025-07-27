@@ -131,7 +131,7 @@ export function StateMachine(events?: StateEvents): StateMachineInstance {
   }
 
   function destroy(): void {
-    currentState = TimerState.IDLE;
+    transitionTo(TimerState.STOPPED);
   }
 
   return {

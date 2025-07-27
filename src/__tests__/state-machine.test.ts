@@ -564,24 +564,26 @@ describe('StateMachine', () => {
   })
 
   describe('Destroy Method', () => {
-    it('should reset state to IDLE from any state', () => {
+    it('should transition state to STOPPED from any state', () => {
       const sm = StateMachine()
 
       // Test from RUNNING
       sm.start()
       sm.destroy()
-      expect(sm.getCurrentState()).toBe(TimerState.IDLE)
+      expect(sm.getCurrentState()).toBe(TimerState.STOPPED)
 
       // Test from PAUSED
+      sm.reset()
       sm.start()
       sm.pause()
       sm.destroy()
-      expect(sm.getCurrentState()).toBe(TimerState.IDLE)
+      expect(sm.getCurrentState()).toBe(TimerState.STOPPED)
 
       // Test from STOPPED
+      sm.reset()
       sm.stop()
       sm.destroy()
-      expect(sm.getCurrentState()).toBe(TimerState.IDLE)
+      expect(sm.getCurrentState()).toBe(TimerState.STOPPED)
     })
   })
 
