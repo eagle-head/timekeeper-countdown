@@ -1,5 +1,11 @@
 # timekeeper-countdown
 
+## 2.0.0
+
+### Major Changes
+
+- Complete rewrite with simplified API and improved performance
+
 ## 1.0.2
 
 ### Patch Changes
