@@ -63,3 +63,6 @@ pids
 
 # Yarn Integrity file
 .yarn-integrity
+
+# AI
+AGENTS.md
