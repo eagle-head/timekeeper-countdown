@@ -1,255 +1,94 @@
 # Getting Started
 
-Welcome to the **Timekeeper Countdown** library! This guide will walk you through the process of getting the library installed and integrated into your project.
+Welcome to **Timekeeper Countdown**! This guide walks through installing the packages, creating your first timer, and understanding the basics of the API.
 
 ## Introduction
 
-**Timekeeper Countdown** is a powerful yet simple countdown timer library for JavaScript and TypeScript. It's framework-agnostic, meaning it works with any JavaScript framework (React, Vue, Angular, Svelte) or vanilla JavaScript. The library offers easy-to-use functions to start, pause, reset, resume, and restart countdowns with support for time units like days, hours, minutes, and seconds.
+The project is split into a tiny, framework-agnostic core (`@timekeeper-countdown/core`) and an optional React adapter (`@timekeeper-countdown/react`). The engine exposes a predictable state machine and snapshot data so you can render any UI you like.
 
-If you're building a task timer, event countdown, or just need to keep track of time, this library is perfect for you!
+Core capabilities include:
+
+- Start, pause, resume, reset, and stop controls
+- Derived time parts (seconds → minutes/hours/days/weeks/years)
+- Deterministic state transitions (`IDLE`, `RUNNING`, `PAUSED`, `STOPPED`)
+- Optional formatting helpers that convert seconds or snapshots into padded strings
 
 ## Installation
 
-To install the library, use one of the following commands:
+Install only the packages you plan to use.
+
+### Core Engine
 
 ```bash
-npm install timekeeper-countdown
+npm install @timekeeper-countdown/core
 ```
+
+### React Hook (optional)
 
 ```bash
-yarn add timekeeper-countdown
+npm install @timekeeper-countdown/core @timekeeper-countdown/react
 ```
 
-```bash
-pnpm add timekeeper-countdown
-```
+> The React adapter lists `react` and `react-dom` as peer dependencies. Your application is responsible for providing them.
 
-This will add the library to your project's dependencies.
+No extra build steps are needed—the published bundles are ESM and ship their own `.d.ts` types.
 
-## Basic Usage
+## Basic Usage (Vanilla JavaScript)
 
-Here's a simple example of how to use the countdown timer with vanilla JavaScript:
+The simplest way to get started is with the high-level `Countdown` helper. It wraps the engine, subscribes to state changes, and formats minutes/seconds for you.
 
-```javascript
-import { TimekeeperCountdown, CountdownState } from 'timekeeper-countdown'
+```ts
+import { Countdown, TimerState } from '@timekeeper-countdown/core'
 
-// Create a 1-hour countdown timer
-const timer = new TimekeeperCountdown(3600, {
-  onTick: (data) => {
-    console.log(`Time remaining: ${data.hours}h ${data.minutes}m ${data.seconds}s`)
-    
-    // Update your UI here
-    document.getElementById('display').textContent = 
-      `${data.hours}:${data.minutes.toString().padStart(2, '0')}:${data.seconds.toString().padStart(2, '0')}`
+const countdown = Countdown(300, {
+  onUpdate: (minutes, seconds) => {
+    document.querySelector('#display')!.textContent = `${minutes}:${seconds}`
   },
-  onComplete: () => {
-    console.log('Countdown finished!')
-    alert('Time is up!')
-  }
+  onStateChange: (state) => {
+    document.body.dataset.timerState = state
+  },
 })
 
-// Control the timer
-document.getElementById('start').onclick = () => timer.start()
-document.getElementById('pause').onclick = () => timer.pause()
-document.getElementById('resume').onclick = () => timer.resume()
-document.getElementById('reset').onclick = () => timer.reset()
+document.querySelector('#start')!.addEventListener('click', () => countdown.start())
+document.querySelector('#pause')!.addEventListener('click', () => countdown.pause())
+document.querySelector('#resume')!.addEventListener('click', () => countdown.resume())
+document.querySelector('#reset')!.addEventListener('click', () => countdown.reset())
+document.querySelector('#stop')!.addEventListener('click', () => countdown.stop())
 ```
 
-## Framework Integration
+The returned instance exposes the following safe methods:
 
-The library is designed to be framework-agnostic, so you can easily integrate it with any framework:
+- `start()`, `pause()`, `resume()`, `reset(newInitialSeconds?)`, `stop()`, `destroy()`
+- `getSnapshot()` → latest `CountdownSnapshot`
+- `getCurrentState()` → current `TimerState`
+- `getSeconds()`/`getMinutes()`/`getHours()` etc. → zero-padded strings derived from the snapshot
 
-### React Hook Example
+Calling `reset()` with a new value immediately updates the timer without starting it. Use `stop()` to force the countdown to zero and transition to `STOPPED`.
 
-```typescript
-import { useEffect, useRef, useState } from 'react'
-import { TimekeeperCountdown, CountdownState, CountdownTime } from 'timekeeper-countdown'
+## Accessing Full Snapshots
 
-export function useCountdownTimer(initialSeconds: number) {
-  const timerRef = useRef<TimekeeperCountdown | null>(null)
-  const [time, setTime] = useState<CountdownTime>({ 
-    days: 0, hours: 0, minutes: 0, seconds: initialSeconds, totalSeconds: initialSeconds 
-  })
-  const [state, setState] = useState<string>(CountdownState.IDLE)
+If you need the raw numbers—or want to manage subscriptions manually—drop down to the `CountdownEngine`:
 
-  useEffect(() => {
-    timerRef.current = new TimekeeperCountdown(initialSeconds, {
-      onTick: (data) => {
-        setTime(data)
-        setState(data.state)
-      },
-      onComplete: (data) => {
-        setTime(data)
-        setState(data.state)
-      }
-    })
+```ts
+import { CountdownEngine } from '@timekeeper-countdown/core'
 
-    return () => timerRef.current?.destroy()
-  }, [initialSeconds])
+const engine = CountdownEngine(90, {
+  onSnapshot: (snapshot) => {
+    console.log(snapshot.totalSeconds, snapshot.parts.minutes)
+  },
+  onStateChange: (state) => console.log('state changed:', state),
+})
 
-  return {
-    ...time,
-    state,
-    start: () => timerRef.current?.start(),
-    pause: () => timerRef.current?.pause(),
-    resume: () => timerRef.current?.resume(),
-    reset: (newSeconds?: number) => timerRef.current?.reset(newSeconds)
-  }
-}
-
-// Usage in component
-const CountdownComponent = () => {
-  const { days, hours, minutes, seconds, state, start, pause, reset } = useCountdownTimer(3600)
-
-  return (
-    <div>
-      <h2>Countdown Timer</h2>
-      <div>
-        {days}d {hours}h {minutes}m {seconds}s
-      </div>
-      <div>State: {state}</div>
-      <button onClick={start} disabled={state === CountdownState.RUNNING}>
-        Start
-      </button>
-      <button onClick={pause} disabled={state !== CountdownState.RUNNING}>
-        Pause
-      </button>
-      <button onClick={() => reset()}>Reset</button>
-    </div>
-  )
-}
+engine.start()
 ```
 
-### Vue Composable Example
-
-```typescript
-import { ref, onUnmounted } from 'vue'
-import { TimekeeperCountdown, CountdownState } from 'timekeeper-countdown'
-
-export function useCountdownTimer(initialSeconds: number) {
-  const timer = ref<TimekeeperCountdown | null>(null)
-  const time = ref({ days: 0, hours: 0, minutes: 0, seconds: initialSeconds, totalSeconds: initialSeconds })
-  const state = ref(CountdownState.IDLE)
-
-  timer.value = new TimekeeperCountdown(initialSeconds, {
-    onTick: (data) => {
-      time.value = data
-      state.value = data.state
-    }
-  })
-
-  onUnmounted(() => timer.value?.destroy())
-
-  return {
-    time,
-    state,
-    start: () => timer.value?.start(),
-    pause: () => timer.value?.pause(),
-    reset: () => timer.value?.reset()
-  }
-}
-```
-
-## Key Features
-
-- **Framework Agnostic**: Works with any JavaScript framework or vanilla JS
-- **TypeScript Support**: Full TypeScript definitions included
-- **Finite State Machine**: Predictable state transitions and error prevention
-- **High Precision**: Accurate timing with automatic drift correction
-- **Event System**: Listen to timer events (start, pause, complete, tick, etc.)
-- **Small Bundle Size**: ~3KB minified and gzipped
-- **Zero Dependencies**: No external dependencies
-
-## Core Concepts
-
-### Timer States
-
-The timer operates with four distinct states:
-
-- **IDLE**: Ready to start
-- **RUNNING**: Countdown in progress  
-- **PAUSED**: Temporarily stopped
-- **COMPLETED**: Countdown finished
-
-### Timer Methods
-
-- `start()`: Begin the countdown
-- `pause()`: Temporarily stop the countdown
-- `resume()`: Continue from paused state
-- `reset(newSeconds?)`: Reset to initial time or new time
-- `restart(newSeconds?)`: Reset and immediately start
-- `state`: Get current timer state (getter)
-- `totalSeconds`: Get remaining seconds (getter)
-- `time`: Get time broken into units (getter)
-- `destroy()`: Clean up the timer instance
+`CountdownSnapshot` includes `totalSeconds`, the original `initialSeconds`, pre-computed `parts`, boolean helpers (`isRunning`, `isCompleted`), and the current `state`.
 
 ## Next Steps
 
-Once you're comfortable with the basics, you can explore the following sections:
+- [API Reference](api-reference.md) for every method, option, and type
+- [Vanilla Integration Guide](vanilla-integration.md) for full DOM examples
+- [React Integration Guide](react-integration.md) if you are using React components
+- [Advanced Usage](advanced-usage.md) to learn about custom time providers, testing utilities, and formatting strategies
 
-- **[API Reference](api-reference.md)**: Complete documentation of all methods and options
-- **[Examples](examples.md)**: Practical examples and code snippets
-- **[Framework Integration Guides](react-integration.md)**: Detailed guides for React, Vue, Angular, and Svelte
-- **[Advanced Usage](advanced-usage.md)**: Advanced patterns and techniques
-- **[FAQ](faq.md)**: Common questions and troubleshooting
-
-## Quick Start Templates
-
-### HTML + JavaScript
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Countdown Timer</title>
-</head>
-<body>
-    <div id="timer-display">05:00</div>
-    <button id="start">Start</button>
-    <button id="pause">Pause</button>
-    <button id="reset">Reset</button>
-
-    <script type="module">
-        import { TimekeeperCountdown, CountdownState } from './node_modules/timekeeper-countdown/dist/index.js'
-        
-        const timer = new TimekeeperCountdown(300, { // 5 minutes
-            onTick: (data) => {
-                document.getElementById('timer-display').textContent = 
-                    `${data.minutes.toString().padStart(2, '0')}:${data.seconds.toString().padStart(2, '0')}`
-            }
-        })
-
-        document.getElementById('start').onclick = () => timer.start()
-        document.getElementById('pause').onclick = () => timer.pause()
-        document.getElementById('reset').onclick = () => timer.reset()
-    </script>
-</body>
-</html>
-```
-
-### Node.js
-
-```javascript
-import { TimekeeperCountdown } from 'timekeeper-countdown'
-
-const timer = new TimekeeperCountdown(10, {
-  onTick: (data) => {
-    console.log(`${data.totalSeconds} seconds remaining`)
-  },
-  onComplete: () => {
-    console.log('Timer finished!')
-    process.exit(0)
-  }
-})
-
-timer.start()
-```
-
-## Browser and Environment Support
-
-- **Browsers**: All modern browsers (Chrome, Firefox, Safari, Edge)
-- **Node.js**: Version 16 and above
-- **TypeScript**: Full type definitions included
-- **Module Systems**: ESM and CommonJS support
-
-The library automatically detects the environment and uses the appropriate timer functions, making it work seamlessly in both browser and Node.js environments.
+When you are ready to ship, run `npm run build --workspaces` from the project root to create fresh `dist/` bundles.

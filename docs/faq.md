@@ -1,43 +1,43 @@
 # FAQ
 
-This section answers frequently asked questions about the **Timekeeper Countdown** library. If you have further questions, feel free to consult the documentation or raise an issue on the GitHub repository.
+Common questions about **Timekeeper Countdown**.
 
-### 1. **What is the purpose of the Timekeeper Countdown library?**
+### 1. What packages do I need?
 
-The library provides an easy-to-use countdown timer class for JavaScript/TypeScript projects. It allows you to easily create countdowns with various control options like start, pause, reset, restart, and more.
+Install `@timekeeper-countdown/core` for the engine. Add `@timekeeper-countdown/react` only if you want the React hook—React stays a peer dependency of your app, not of the library.
 
-### 2. **Can I use this library with React Native?**
+### 2. What states does the timer expose?
 
-Yes, the **Timekeeper Countdown** library is framework-agnostic and works with React, Vue, Angular, Svelte, and vanilla JavaScript, making it versatile for any web or mobile application.
+The finite-state machine cycles through `IDLE`, `RUNNING`, `PAUSED`, and `STOPPED`. When `totalSeconds` reaches `0` and the machine stops, `snapshot.isCompleted` becomes `true`.
 
-### 3. **How do I change the initial time after starting the countdown?**
+### 3. How do I change the remaining time while the timer is running?
 
-You can change the initial countdown time using the `restart` or `reset` methods, which allow you to restart or reset the countdown with a new value.
+Use `reset(newInitialSeconds)` on the high-level `Countdown` helper or `setSeconds(value)` on `CountdownEngine`. Both methods validate the input and emit fresh snapshots.
 
-### 4. **What happens when the countdown reaches zero?**
+### 4. Is there a minimum or maximum duration?
 
-When the countdown reaches zero, the internal state switches to `COMPLETED`. You can handle this state by triggering custom events, like showing an alert or performing an action when the countdown completes.
+Durations must be finite, non-negative integers within JavaScript’s safe integer range (`0` to `Number.MAX_SAFE_INTEGER`). There is no artificial cap like “99 days”.
 
-### 5. **How do I format the countdown time in days, hours, minutes, and seconds?**
+### 5. Does the library depend on React or other frameworks?
 
-The `TimekeeperCountdown` class provides `days`, `hours`, `minutes`, and `seconds` properties for convenience, allowing you to format the countdown easily in any unit of time.
+No. The core package has zero runtime dependencies. The React adapter simply wraps the engine and declares `react`/`react-dom` as peer dependencies.
 
-### 6. **Can I customize the behavior of the reset and restart functions?**
+### 6. How accurate is the countdown?
 
-Yes, the `reset` and `restart` functions accept optional values that allow you to customize the time to reset or restart the countdown.
+The engine uses `performance.now()` when available (fallback to `Date.now()`) and polls every 100 ms by default. Each tick recalculates elapsed time based on the clock, so short pauses or tab throttling are corrected automatically.
 
-### 7. **Is there a maximum or minimum limit for the countdown time?**
+### 7. Can I use it in Node.js?
 
-Yes, the library enforces a minimum value of 1 second and a maximum of 99 days (8,553,600 seconds). The input is automatically validated to stay within these limits.
+Yes. Node.js ≥ 16 is supported out of the box. Pass your own `timeProvider` if you want to sync with server time or a custom scheduler.
 
-### 8. **Can I use multiple countdowns in a single component?**
+### 8. How do I format the remaining time?
 
-Absolutely. You can create multiple instances of the `TimekeeperCountdown` class to handle multiple countdowns simultaneously.
+Use the helpers from `@timekeeper-countdown/core/format` (`formatTime`, `formatMinutes`, `formatHours`, etc.). They accept either raw seconds or any snapshot-like object.
 
-### 9. **How does the library handle timer accuracy?**
+### 9. How do I test components that rely on the countdown?
 
-The countdown timer uses JavaScript's `setInterval` with a 1-second interval. For most use cases, this is accurate enough. However, for very high-precision timing, it’s recommended to handle timing through server-side solutions.
+Import the utilities from `@timekeeper-countdown/core/testing`. `createFakeTimeProvider` lets you advance time deterministically, and the assertion helpers validate snapshots without real timers.
 
-### 10. **Does the library support countdown completion callbacks?**
+### 10. Do I need to call `destroy()` manually?
 
-Yes, you can monitor the `CountdownState.COMPLETED` state and trigger callbacks or perform actions when the countdown reaches zero.
+If you instantiate `CountdownEngine` yourself, call `destroy()` when the timer is no longer needed to release intervals and observers. The React hook handles cleanup automatically during `useEffect` teardown.

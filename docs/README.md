@@ -1,46 +1,58 @@
 # Timekeeper Countdown ⏳
 
-Welcome to the **Timekeeper Countdown** documentation! This library helps you easily implement countdown timers in any JavaScript/TypeScript application. Whether you need a timer for tasks, events, or custom applications, this library provides flexibility and ease of use.
+**Timekeeper Countdown** is a lightweight countdown engine written in TypeScript. The core package ships with zero runtime dependencies and exposes a predictable finite-state machine that you can control from vanilla JavaScript, Node.js, or any framework. A first-party React hook lives in a separate package so React stays a peer dependency of the consumer, not of the engine.
 
-## Overview
+## Highlights
 
-The **Timekeeper Countdown** library offers:
+- Framework-agnostic core with an optional React adapter (`@timekeeper-countdown/react`)
+- Deterministic state machine with four states: `IDLE`, `RUNNING`, `PAUSED`, `STOPPED`
+- Snapshot-based API that always reflects the remaining time in multiple units
+- Built-in formatting helpers (`@timekeeper-countdown/core/format`) for quick UI rendering
+- Published bundle weighs ~20 KB minified (core + React adapter) with zero direct deps
+- Testing utilities (`@timekeeper-countdown/core/testing`) for fake clocks and snapshot assertions
 
-- Countdown control functions: start, pause, reset, restart, and resume.
-- Tracking across multiple units: days, hours, minutes, and seconds.
-- Full support for all frameworks (React, Vue, Angular, Svelte, etc.).
-- Customizable time formats and behaviors.
-- Uses a well-defined **finite state machine** to manage countdown states, ensuring better control and clarity over transitions like `IDLE`, `RUNNING`, `PAUSED`, and `COMPLETED`.
+## Quick Peek
 
-## Get Started
+```ts
+import { Countdown, TimerState } from '@timekeeper-countdown/core'
 
-Ready to begin? Head over to the [Getting Started](getting-started.md#getting-started) guide for setup instructions and a quick introduction.
+const countdown = Countdown(90, {
+  onUpdate: (minutes, seconds) => {
+    document.querySelector('#display')!.textContent = `${minutes}:${seconds}`
+  },
+  onStateChange: (state) => {
+    if (state === TimerState.STOPPED) {
+      console.log('Countdown finished!')
+    }
+  },
+})
 
-## What’s Next?
+countdown.start()
+```
 
-### API Reference
+Need more control? Use the lower-level `CountdownEngine` to access full snapshots, subscribe to updates, or plug in a custom time provider.
 
-- Explore the [API Reference](api-reference.md#api-reference) to see all available methods and properties.
+## Packages in This Repo
 
-### Advanced Customizations
+- `@timekeeper-countdown/core`: countdown engine, formatting helpers, and testing utilities
+- `@timekeeper-countdown/react`: `useCountdown` hook built on top of the core engine (declares `react` + `react-dom` as peer dependencies)
 
-- Learn about [Custom Time Formats](advanced-usage.md#custom-time-formats) and how to fit countdown timers into your specific needs.
-- Read about [Handling Time Events](advanced-usage.md#handling-time-events) for complex time-based applications.
+Install only what you need:
 
-### Examples
+```bash
+npm install @timekeeper-countdown/core
+# and optionally
+npm install @timekeeper-countdown/react
+```
 
-- Check out [Basic Countdown](examples.md#basic-countdown), [Advanced Countdown](examples.md#advanced-countdown), and [Custom Reset and Restart](examples.md#custom-reset-and-restart) to see how everything works in practice.
+## Documentation Map
 
-## Need Help?
+- [Getting Started](getting-started.md) – installation, core usage, and basic DOM integration
+- [API Reference](api-reference.md) – complete API surface for core, format helpers, and testing utilities
+- [Advanced Usage](advanced-usage.md) – custom time providers, snapshots, and formatting patterns
+- [Examples](examples.md) – ready-to-run snippets for vanilla and React apps
+- [React Integration](react-integration.md) – guide to the `useCountdown` hook
+- [Vanilla Integration](vanilla-integration.md) – wiring the engine into plain HTML/JS projects
+- [FAQ](faq.md) – answers to common questions and troubleshooting tips
 
-Visit our [GitHub repository](https://github.com/eagle-head/timekeeper-countdown) for support, feature requests, or to contribute!
-
-<div style="text-align: center; margin-top: 100px; font-size: 12px">
-  <p>
-    Happy coding with <strong>Timekeeper Countdown</strong> ⏳
-  </p>
-  <p>
-    Powered by <a href="https://www.linkedin.com/in/eduardo-kohn-56817b195/" target="_blank">
-    Eduardo Kohn</a>
-  </p>
-</div>
+Have ideas or found a bug? [Open an issue](https://github.com/eagle-head/timekeeper-countdown/issues) or submit a PR.

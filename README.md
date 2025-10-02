@@ -9,7 +9,7 @@ Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript w
 - 🎯 **TypeScript First** - Built with TypeScript, works with plain JavaScript
 - 🔄 **State Machine** - Predictable state transitions (IDLE → RUNNING → PAUSED → STOPPED)
 - ⚡ **Framework Agnostic** - Works with any framework or vanilla JS
-- 📚 **Rich Documentation** - Complete integration guides for React, Vue, Angular, Svelte
+- 📚 **Rich Documentation** - Complete integration guides for vanilla JS and React
 - 🌳 **Tree-Shakable** - Import only what you need
 - 📦 **Modern Formats** - ESM and CJS support
 
@@ -64,7 +64,7 @@ countdown.getCurrentState() // "IDLE" | "RUNNING" | "PAUSED" | "STOPPED"
 Since `timekeeper-countdown` is framework-agnostic, you can easily integrate it with any framework. Check out our complete examples in the [docs folder](./docs/):
 
 - 📖 **[Getting Started Guide](docs/getting-started.md)** - Basic usage and concepts
-- 📖 **[Framework Examples](docs/examples.md)** - React, Vue, Angular, Svelte implementations
+- 📖 **[Framework Examples](docs/examples.md)** - React implementation and vanilla patterns
 
 ### Quick Implementation Examples
 
@@ -113,50 +113,6 @@ function Timer() {
       <button onClick={reset}>Reset</button>
     </div>
   )
-}
-```
-</details>
-
-<details>
-<summary><strong>Vue Composable Example</strong></summary>
-
-```typescript
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Countdown, TimerState } from 'timekeeper-countdown'
-
-export function useCountdown(initialSeconds) {
-  const time = ref({ minutes: '00', seconds: '00' })
-  const state = ref(TimerState.IDLE)
-  let countdown = null
-
-  const createCountdown = () => {
-    countdown = Countdown(initialSeconds, {
-      onUpdate: (minutes, seconds) => {
-        time.value = { minutes, seconds }
-      },
-      onStateChange: (newState) => {
-        state.value = newState
-      }
-    })
-  }
-
-  onMounted(() => {
-    createCountdown()
-  })
-
-  onUnmounted(() => {
-    countdown?.destroy()
-  })
-
-  return {
-    time,
-    state,
-    start: () => countdown?.start(),
-    pause: () => countdown?.pause(),
-    resume: () => countdown?.resume(),
-    reset: () => countdown?.reset(),
-    stop: () => countdown?.stop()
-  }
 }
 ```
 </details>
@@ -287,15 +243,7 @@ useEffect(() => {
   return () => countdown.destroy()
 }, [])
 
-// In Vue
-onUnmounted(() => {
-  countdown.destroy()
-})
-
-// In Angular
-ngOnDestroy() {
-  this.countdown.destroy()
-}
+// When using other frameworks, wrap `destroy()` in the respective lifecycle hook.
 ```
 
 ## TypeScript Support
@@ -322,7 +270,7 @@ For older browser support, use a bundler with appropriate polyfills.
 Check out the complete working examples:
 
 - **[Getting Started](docs/getting-started.md)** - Installation and basic usage
-- **[Framework Examples](docs/examples.md)** - Full implementations for React, Vue, Angular, Svelte
+- **[Framework Examples](docs/examples.md)** - React implementation and vanilla patterns
 
 ## Contributing
 

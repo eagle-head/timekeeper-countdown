@@ -1,0 +1,86 @@
+{
+  "name": "@timekeeper-countdown/core",
+  "version": "2.0.3",
+  "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
+  "keywords": [
+    "countdown",
+    "timer",
+    "javascript",
+    "typescript",
+    "vanilla",
+    "framework-agnostic",
+    "zero-dependencies",
+    "state-machine",
+    "react",
+    "vue",
+    "angular",
+    "svelte"
+  ],
+  "author": "Eduardo Kohn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eagle-head/timekeeper-countdown.git"
+  },
+  "homepage": "https://eagle-head.github.io/timekeeper-countdown/",
+  "bugs": {
+    "url": "https://github.com/eagle-head/timekeeper-countdown/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./format": {
+      "types": "./dist/format.d.ts",
+      "import": "./dist/format.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "prepublishOnly": "npm run build && npm run test && npm run typecheck"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "rxjs": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  }
+}

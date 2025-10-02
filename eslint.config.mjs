@@ -10,7 +10,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-inferrable-types': 'off'
+      '@typescript-eslint/no-inferrable-types': 'off',
+      '@typescript-eslint/semi': ['error', 'always']
     }
   },
   {
@@ -22,6 +23,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/',
+      '**/dist/**',
       'node_modules/',
       '*.js',
       '*.mjs',

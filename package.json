@@ -1,61 +1,25 @@
 {
-  "name": "timekeeper-countdown",
-  "version": "2.0.3",
-  "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
-  "keywords": [
-    "countdown",
-    "timer",
-    "javascript",
-    "typescript",
-    "vanilla",
-    "framework-agnostic",
-    "zero-dependencies",
-    "state-machine",
-    "react",
-    "vue",
-    "angular",
-    "svelte"
-  ],
-  "author": "Eduardo Kohn",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/eagle-head/timekeeper-countdown.git"
-  },
-  "homepage": "https://eagle-head.github.io/timekeeper-countdown/",
-  "bugs": {
-    "url": "https://github.com/eagle-head/timekeeper-countdown/issues"
-  },
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
+  "name": "timekeeper-countdown-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write src/**/*.ts",
-    "format:check": "prettier --check src/**/*.ts",
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "test:ui": "npm run test:ui --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "format": "npm run format --workspaces",
+    "format:check": "npm run format:check --workspaces",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "npm run build && changeset publish",
-    "prepublishOnly": "npm run build && npm run test && npm run typecheck"
+    "release": "npm run build --workspaces && changeset publish",
+    "prepublishOnly": "npm run prepublishOnly --workspaces"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
@@ -71,27 +35,7 @@
     "typescript-eslint": "^8.38.0",
     "vitest": "^1.2.2"
   },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "vue": {
-      "optional": true
-    },
-    "@angular/core": {
-      "optional": true
-    },
-    "rxjs": {
-      "optional": true
-    },
-    "svelte": {
-      "optional": true
-    }
-  },
   "engines": {
-    "node": ">=16"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "node": ">=18"
   }
 }

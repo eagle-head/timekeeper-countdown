@@ -1,354 +1,244 @@
 # API Reference
 
-This section covers the API of the **Timekeeper Countdown** library. It includes detailed documentation for the main class, types, utilities, and methods you can use to control your countdown timer.
+This reference covers the full surface of the core engine, helper modules, testing utilities, and the React adapter. The project is delivered as two packages:
 
-## Core Concepts
+- `@timekeeper-countdown/core` – countdown engine, formatter helpers, and test utilities
+- `@timekeeper-countdown/react` – React hook built on top of the core engine
 
-The **Timekeeper Countdown** library is designed with a strong emphasis on clear state management, inspired by the concept of a finite-state machine (FSM). This allows the library to have well-defined states for the countdown timer, ensuring that every action performed on the timer is consistent and predictable.
+All exports use ESM syntax and include TypeScript definitions.
 
-### Finite-State Machine (FSM) Design
+## Core Entry Point (`@timekeeper-countdown/core`)
 
-The timer operates in four core states:
-
-- **IDLE**: The countdown timer is ready but not yet started. From this state, the timer can be started.
-- **RUNNING**: The countdown is in progress. It can be paused or reset while in this state.
-- **PAUSED**: The countdown has been temporarily stopped but can be resumed or reset.
-- **COMPLETED**: The countdown has finished. The only valid action from this state is to reset or restart the timer.
-
-### Why FSM Makes This Library Robust
-
-1. **Error Prevention**: Actions are only valid when the timer is in the appropriate state, preventing common timing errors.
-2. **Predictability**: State transitions are consistent and well-defined.
-3. **Clear Interface**: Each action corresponds to a specific state transition.
-4. **Scalability**: The FSM model can be easily extended for future features.
-
-## TimekeeperCountdown Class
-
-The `TimekeeperCountdown` class is the main API for creating and managing countdown timers.
-
-### Constructor
-
-```typescript
-import { TimekeeperCountdown } from 'timekeeper-countdown'
-
-const timer = new TimekeeperCountdown(initialSeconds, options?)
+```ts
+import {
+  Countdown,
+  CountdownEngine,
+  TimerState,
+  type CountdownInstance,
+  type CountdownOptions,
+  type CountdownEngineInstance,
+  type CountdownEngineOptions,
+  type CountdownSnapshot,
+  type CountdownParts,
+} from '@timekeeper-countdown/core'
 ```
+
+### `Countdown(initialSeconds, options?)`
+
+High-level helper that wraps the engine, performs input validation, and emits formatted strings for minutes/seconds.
 
 #### Parameters
 
-- **initialSeconds** (`number`): The initial number of seconds for the countdown timer. Must be between 1 and 8,553,600 (99 days).
-- **options** (`TimekeeperCountdownOptions`, optional): Configuration options for the timer.
+- `initialSeconds: number` – non-negative integer; validated against `Number.MAX_SAFE_INTEGER`
+- `options?: CountdownOptions`
+  - `onUpdate?: (minutes: string, seconds: string) => void` – receives zero-padded strings (e.g. `"03"`, `"09"`)
+  - `onStateChange?: (state: TimerState) => void`
 
-#### Options
+Both callbacks are optional. They are executed inside `try/catch` so consumer errors do not break the countdown loop.
 
-```typescript
-interface TimekeeperCountdownOptions {
-  autoStart?: boolean
-  onStart?: (data: CountdownEventData) => void
-  onPause?: (data: CountdownEventData) => void
-  onResume?: (data: CountdownEventData) => void
-  onReset?: (data: CountdownEventData) => void
-  onRestart?: (data: CountdownEventData) => void
-  onComplete?: (data: CountdownEventData) => void
-  onTick?: (data: CountdownEventData) => void
+#### Returns: `CountdownInstance`
+
+```ts
+interface CountdownInstance {
+  start(): void
+  pause(): void
+  resume(): void
+  reset(nextInitialSeconds?: number): void
+  stop(): void
+  destroy(): void
+  getSnapshot(): CountdownSnapshot
+  getCurrentState(): TimerState
+  getSeconds(): string
+  getMinutes(): string
+  getHours(): string
+  getDays(): string
+  getWeeks(): string
+  getYears(): string
 }
 ```
 
-### Methods
+- `start`, `pause`, `resume`, `reset`, `stop`, `destroy` swallow internal engine errors to match legacy behaviour
+- `reset(nextInitialSeconds?)` accepts a new initial value (validated like the constructor)
+- `getSnapshot()` always returns the latest snapshot produced by the engine
 
-#### start()
-Starts the countdown timer. Only valid when state is `IDLE` or after reset.
+### `CountdownEngine(initialSeconds, options?)`
 
-```typescript
-timer.start()
+Lower-level engine that exposes the entire state machine, raw numbers, and subscription API.
+
+#### Parameters
+
+- `initialSeconds: number`
+- `options?: CountdownEngineOptions`
+  - `onSnapshot?: (snapshot: CountdownSnapshot) => void`
+  - `onStateChange?: (state: TimerState, snapshot: CountdownSnapshot) => void`
+  - `onError?: (error: Error) => void`
+  - `timeProvider?: TimeProvider | (() => number)` – inject a custom clock (see [`createFakeTimeProvider`](#testing-utilities))
+  - `tickIntervalMs?: number` – polling interval for the internal scheduler (defaults to `100`)
+
+#### Returns: `CountdownEngineInstance`
+
+```ts
+interface CountdownEngineInstance {
+  start(): boolean
+  pause(): boolean
+  resume(): boolean
+  reset(nextInitialSeconds?: number): boolean
+  stop(): boolean
+  setSeconds(value: number): void
+  getSnapshot(): CountdownSnapshot
+  subscribe(listener: (snapshot: CountdownSnapshot) => void): { unsubscribe(): void }
+  destroy(): void
+}
 ```
 
-#### pause()
-Pauses the running countdown. Only valid when state is `RUNNING`.
+- `start/pause/resume/reset/stop` return `false` when the transition is invalid for the current state
+- `setSeconds` immediately replaces the remaining time and updates the snapshot (without starting the timer)
+- `subscribe` instantly invokes the listener with the current snapshot and returns an `unsubscribe` handle
 
-```typescript
-timer.pause()
-```
+### `CountdownSnapshot`
 
-#### resume()
-Resumes a paused countdown. Only valid when state is `PAUSED`.
-
-```typescript
-timer.resume()
-```
-
-#### reset(newInitialSeconds?)
-Resets the timer to initial state. Optionally accepts new initial seconds.
-
-```typescript
-timer.reset() // Reset to original initial seconds
-timer.reset(1800) // Reset to 30 minutes
-```
-
-#### restart(newInitialSeconds?)
-Convenience method that resets and immediately starts the timer.
-
-```typescript
-timer.restart() // Restart with original initial seconds
-timer.restart(600) // Restart with 10 minutes
-```
-
-#### state
-Getter that returns the current state of the timer.
-
-```typescript
-const state = timer.state // 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
-```
-
-#### totalSeconds
-Getter that returns the total seconds remaining in the countdown.
-
-```typescript
-const seconds = timer.totalSeconds
-```
-
-#### time
-Getter that returns the current time broken down into units.
-
-```typescript
-const time = timer.time
-// Returns: { days: number, hours: number, minutes: number, seconds: number, totalSeconds: number }
-```
-
-#### on(event, listener)
-Adds an event listener for timer events.
-
-```typescript
-timer.on('tick', (data) => {
-  console.log(`Time remaining: ${data.totalSeconds}`)
-})
-```
-
-#### off(event, listener)
-Removes an event listener.
-
-```typescript
-timer.off('tick', tickHandler)
-```
-
-#### destroy()
-Cleans up the timer instance, removing all event listeners and stopping any active timers.
-
-```typescript
-timer.destroy()
-```
-
-## Event System
-
-The timer emits various events during its lifecycle:
-
-### Event Types
-
-```typescript
-type CountdownEventType = 
-  | 'start'
-  | 'pause'
-  | 'resume'
-  | 'reset'
-  | 'complete'
-  | 'tick'
-```
-
-### Event Data
-
-All events receive a `CountdownEventData` object:
-
-```typescript
-interface CountdownEventData {
-  state: CountdownStateType
+```ts
+interface CountdownSnapshot {
+  initialSeconds: number
   totalSeconds: number
-  days: number
-  hours: number
-  minutes: number
-  seconds: number
+  parts: CountdownParts
+  state: TimerState
+  isRunning: boolean
+  isCompleted: boolean
 }
 ```
 
-### Event Examples
+- `parts` breaks time into `years`, `weeks`, `days`, `hours`, `minutes`, `seconds`, `totalDays`, `totalHours`, and `totalMinutes`
+- `isCompleted` is `true` only when `totalSeconds === 0` and the state machine has transitioned to `TimerState.STOPPED`
 
-```typescript
-// Listen to multiple events
-timer.on('start', () => console.log('Timer started!'))
-timer.on('complete', () => console.log('Countdown finished!'))
-timer.on('tick', (data) => {
-  console.log(`${data.minutes}:${data.seconds.toString().padStart(2, '0')}`)
-})
-```
+### `TimerState`
 
-## Utility Functions
-
-### Time Utilities
-
-```typescript
-import {
-  getDays,
-  getHours,
-  getMinutes,
-  getSeconds,
-  getCountdownTime
-} from 'timekeeper-countdown'
-
-// Convert total seconds to time units
-const totalSeconds = 3661
-const days = getDays(totalSeconds) // 0
-const hours = getHours(totalSeconds) // 1
-const minutes = getMinutes(totalSeconds) // 1
-const seconds = getSeconds(totalSeconds) // 1
-
-// Get all units at once
-const time = getCountdownTime(totalSeconds)
-// { days: 0, hours: 1, minutes: 1, seconds: 1, totalSeconds: 3661 }
-```
-
-### Validation Utilities
-
-```typescript
-import { validateInitialSeconds } from 'timekeeper-countdown'
-
-try {
-  const validSeconds = validateInitialSeconds(3600) // Valid
-  const invalid = validateInitialSeconds(-10) // Throws error
-} catch (error) {
-  console.error('Invalid initial seconds:', error.message)
-}
-```
-
-## Constants
-
-```typescript
-import {
-  MIN_SECONDS,        // 1
-  MAX_SECONDS,        // 8553600 (99 days)
-  SECONDS_IN_A_MINUTE,// 60
-  SECONDS_IN_AN_HOUR, // 3600
-  SECONDS_IN_A_DAY,   // 86400
-  CountdownState      // State enum object
-} from 'timekeeper-countdown'
-
-// CountdownState object
-const states = {
+```ts
+const TimerState = {
   IDLE: 'IDLE',
   RUNNING: 'RUNNING',
   PAUSED: 'PAUSED',
-  COMPLETED: 'COMPLETED'
-}
+  STOPPED: 'STOPPED',
+} as const
+
+type TimerState = typeof TimerState[keyof typeof TimerState]
 ```
 
-## TypeScript Types
+Valid transitions:
 
-### Core Types
+- `IDLE → RUNNING | IDLE | STOPPED`
+- `RUNNING → PAUSED | STOPPED | IDLE`
+- `PAUSED → RUNNING | STOPPED | IDLE`
+- `STOPPED → IDLE | STOPPED`
 
-```typescript
-// Time representation
-interface CountdownTime {
-  days: number
-  hours: number
-  minutes: number
-  seconds: number
+### Errors and Validation
+
+- `initialSeconds` must be a finite, non-negative integer ≤ `Number.MAX_SAFE_INTEGER`
+- `timeProvider` must be a function or an object exposing `now(): number`
+- Listener errors are caught and reported through `onError` (engine) or ignored (high-level helper)
+
+## Format Helpers (`@timekeeper-countdown/core/format`)
+
+```ts
+import {
+  Formatter,
+  defaultFormatter,
+  formatTime,
+  formatMinutes,
+  formatSeconds,
+  formatHours,
+  formatDays,
+  formatWeeks,
+  formatYears,
+  type FormatTarget,
+} from '@timekeeper-countdown/core/format'
+```
+
+- Accept raw numbers or any object with a `totalSeconds` property (`CountdownSnapshot`, `CountdownInstance#getSnapshot()` etc.)
+- All helpers return zero-padded strings (e.g. `"05"`)
+- `Formatter()` creates an isolated formatter instance in case you need custom memoization
+
+Example:
+
+```ts
+const { minutes, seconds } = formatTime(snapshot)
+const days = formatDays(snapshot.totalSeconds)
+```
+
+## Testing Utilities (`@timekeeper-countdown/core/testing`)
+
+```ts
+import {
+  createFakeTimeProvider,
+  toTimeProvider,
+  buildSnapshot,
+  buildSnapshotSequence,
+  assertSnapshotState,
+  assertSnapshotCompleted,
+  assertRemainingSeconds,
+  TimerState,
+} from '@timekeeper-countdown/core/testing'
+```
+
+- `createFakeTimeProvider({ startMs?, tickMs?, highResolution? })` – deterministic clock with `advance()`, `set()`, and `reset()` helpers
+- `toTimeProvider(fake)` – converts the fake provider to a `TimeProvider` compatible with `CountdownEngine`
+- `buildSnapshot` / `buildSnapshotSequence` – fabricate snapshot data for tests
+- Assertion helpers throw when the snapshot does not match the expectation
+
+## React Adapter (`@timekeeper-countdown/react`)
+
+```ts
+import {
+  useCountdown,
+  type UseCountdownOptions,
+  type UseCountdownResult,
+  type UseCountdownControls,
+} from '@timekeeper-countdown/react'
+```
+
+### `useCountdown(initialSeconds, options?)`
+
+A React hook that manages a `CountdownEngine` instance for you and keeps the latest snapshot in state.
+
+#### Options
+
+`UseCountdownOptions` extends `CountdownEngineOptions` (minus the callback props) and adds:
+
+- `autoStart?: boolean` – start automatically on mount
+- `onSnapshot?: (snapshot: CountdownSnapshot) => void`
+- `onStateChange?: (state: TimerState, snapshot: CountdownSnapshot) => void`
+- `onError?: (error: Error) => void`
+
+#### Returned shape
+
+```ts
+interface UseCountdownResult extends UseCountdownControls {
+  snapshot: CountdownSnapshot
+  state: TimerState
   totalSeconds: number
-}
-
-// State types
-type CountdownStateType = 'IDLE' | 'RUNNING' | 'PAUSED' | 'COMPLETED'
-
-// Event types
-type CountdownEventType = 'start' | 'pause' | 'resume' | 'reset' | 'complete' | 'tick'
-
-// Event data
-interface CountdownEventData extends CountdownTime {
-  state: CountdownStateType
-}
-
-// Event listener
-type CountdownEventListener = (data: CountdownEventData) => void
-
-// Constructor options
-interface TimekeeperCountdownOptions {
-  autoStart?: boolean
-  onStart?: (data: CountdownEventData) => void
-  onPause?: (data: CountdownEventData) => void
-  onResume?: (data: CountdownEventData) => void
-  onReset?: (data: CountdownEventData) => void
-  onRestart?: (data: CountdownEventData) => void
-  onComplete?: (data: CountdownEventData) => void
-  onTick?: (data: CountdownEventData) => void
+  parts: CountdownSnapshot['parts']
+  isRunning: boolean
+  isCompleted: boolean
 }
 ```
 
-## Example: Complete Timer Implementation
+`UseCountdownControls` exposes the same control methods as the engine (`start`, `pause`, `resume`, `reset`, `stop`, `setSeconds`). All functions are memoised, and the hook disposes the engine on unmount.
 
-```typescript
-import { TimekeeperCountdown, CountdownState } from 'timekeeper-countdown'
+Example:
 
-// Create a 5-minute timer
-const timer = new TimekeeperCountdown(300, {
-  onStart: () => console.log('Timer started'),
-  onComplete: () => alert('Time is up!'),
-  onTick: (data) => {
-    document.getElementById('display').textContent = 
-      `${data.minutes}:${data.seconds.toString().padStart(2, '0')}`
-  }
-})
-
-// Button handlers with state-based logic
-const startButton = document.getElementById('start')
-const pauseButton = document.getElementById('pause')
-const resetButton = document.getElementById('reset')
-
-startButton.onclick = () => {
-  if (timer.state === CountdownState.IDLE) {
-    timer.start()
-  } else if (timer.state === CountdownState.PAUSED) {
-    timer.resume()
-  }
-}
-
-pauseButton.onclick = () => {
-  if (timer.state === CountdownState.RUNNING) {
-    timer.pause()
-  }
-}
-
-resetButton.onclick = () => timer.reset()
-
-// Update button states based on timer state
-timer.on('tick', (data) => {
-  startButton.disabled = data.state === CountdownState.RUNNING
-  pauseButton.disabled = data.state !== CountdownState.RUNNING
-  resetButton.disabled = data.state === CountdownState.IDLE
+```tsx
+const { parts, isRunning, start, pause, reset } = useCountdown(1500, {
+  autoStart: false,
+  onStateChange: (state) => console.log('state:', state),
 })
 ```
 
-## Error Handling
+React Testing Library users can pair the hook with `createFakeTimeProvider` by passing `timeProvider` to the options.
 
-The library validates inputs and state transitions:
+## Environment Notes
 
-```typescript
-try {
-  const timer = new TimekeeperCountdown(-10) // Throws error
-} catch (error) {
-  console.error('Invalid seconds:', error.message)
-}
+- Requires Node.js ≥ 16 or any modern browser with `setInterval`
+- Bundles are ESM; use a bundler or a native `import` in supporting browsers
+- No runtime dependencies; React adapter declares `react`/`react-dom` as peer deps only
 
-// State-based errors are prevented by the FSM
-const timer = new TimekeeperCountdown(60)
-timer.pause() // No effect - timer is not running
-timer.start() // Works
-timer.pause() // Now it pauses
-```
-
-## Performance Considerations
-
-- The timer uses high-precision timing with automatic adjustment for drift
-- Default internal update rate is optimized for smooth UI updates
-- The timer automatically cleans up resources when destroyed
-- High-precision timing prevents drift and ensures accuracy
-
-## Browser Compatibility
-
-The library works in all modern browsers and Node.js environments. It automatically detects and uses the appropriate timer functions (`setTimeout`/`clearTimeout`) for the environment.
+Refer back to the [Advanced Usage](advanced-usage.md) guide for tips on plugging custom time providers, coordinating multiple timers, and formatting snapshots.
