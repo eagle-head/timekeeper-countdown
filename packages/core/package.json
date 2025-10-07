@@ -1,20 +1,16 @@
 {
   "name": "@timekeeper-countdown/core",
-  "version": "2.0.3",
-  "description": "Ultra-lightweight, framework-agnostic countdown timer library. Pure TypeScript with zero dependencies.",
+  "version": "0.0.0",
+  "description": "Lightweight countdown engine that powers the Timekeeper packages. Pure TypeScript with no runtime dependencies.",
   "keywords": [
     "countdown",
     "timer",
     "javascript",
     "typescript",
-    "vanilla",
-    "framework-agnostic",
-    "zero-dependencies",
+    "engine",
     "state-machine",
-    "react",
-    "vue",
-    "angular",
-    "svelte"
+    "snapshot",
+    "scheduler"
   ],
   "author": "Eduardo Kohn",
   "license": "MIT",
@@ -47,6 +43,7 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -61,26 +58,10 @@
     "prepublishOnly": "npm run build && npm run test && npm run typecheck"
   },
   "engines": {
-    "node": ">=16"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "vue": {
-      "optional": true
-    },
-    "@angular/core": {
-      "optional": true
-    },
-    "rxjs": {
-      "optional": true
-    },
-    "svelte": {
-      "optional": true
-    }
+    "node": ">=18"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

@@ -19,7 +19,7 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "npm run build --workspaces && changeset publish",
-    "prepublishOnly": "npm run prepublishOnly --workspaces"
+    "prepublishOnly": "npm run build --workspaces && npm run test --workspaces && npm run typecheck --workspaces"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",

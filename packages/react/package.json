@@ -29,11 +29,10 @@
     "prepublishOnly": "npm run build && npm run test && npm run typecheck"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
+    "react": ">=17.0.0"
   },
   "dependencies": {
-    "@timekeeper-countdown/core": "^2.0.3"
+    "@timekeeper-countdown/core": "^0.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
@@ -42,5 +41,17 @@
     "@types/react-dom": "^18.2.19",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "keywords": [
+    "react",
+    "countdown",
+    "timer",
+    "hook",
+    "typescript"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }
