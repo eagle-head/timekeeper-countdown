@@ -1,5 +1,13 @@
 # @timekeeper-countdown/react
 
+## 0.1.1
+
+### Patch Changes
+
+- Add comprehensive README documentation for core and react packages
+- Updated dependencies
+  - @timekeeper-countdown/core@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
