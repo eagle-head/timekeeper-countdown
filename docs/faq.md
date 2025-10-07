@@ -1,43 +1,43 @@
 # FAQ
 
-Common questions about **Timekeeper Countdown**.
+Common questions about the React release of **Timekeeper Countdown**.
 
-### 1. What packages do I need?
+### 1. Which package should I install?
 
-Install `@timekeeper-countdown/core` for the engine. Add `@timekeeper-countdown/react` only if you want the React hook—React stays a peer dependency of your app, not of the library.
+Install `@timekeeper-countdown/react`. It bundles the countdown engine and exposes the `useCountdown` hook. You do not need to install the core package separately.
 
-### 2. What states does the timer expose?
+### 2. Does the library depend on React?
 
-The finite-state machine cycles through `IDLE`, `RUNNING`, `PAUSED`, and `STOPPED`. When `totalSeconds` reaches `0` and the machine stops, `snapshot.isCompleted` becomes `true`.
+Yes. The published package targets React 17+ and lists `react`/`react-dom` as peer dependencies. Future adapters will target their respective frameworks.
 
-### 3. How do I change the remaining time while the timer is running?
+### 3. What timer states can I expect?
 
-Use `reset(newInitialSeconds)` on the high-level `Countdown` helper or `setSeconds(value)` on `CountdownEngine`. Both methods validate the input and emit fresh snapshots.
+The state machine cycles through `IDLE`, `RUNNING`, `PAUSED`, and `STOPPED`. When `totalSeconds` reaches `0` and the machine transitions to `STOPPED`, `snapshot.isCompleted` becomes `true`.
 
-### 4. Is there a minimum or maximum duration?
+### 4. Can I change the remaining time while the timer is running?
 
-Durations must be finite, non-negative integers within JavaScript’s safe integer range (`0` to `Number.MAX_SAFE_INTEGER`). There is no artificial cap like “99 days”.
+Yes. Use `setSeconds(next)` to adjust the time in place, or `reset(nextInitialSeconds)` to update the starting value and transition back to `IDLE`.
 
-### 5. Does the library depend on React or other frameworks?
+### 5. How accurate is the countdown?
 
-No. The core package has zero runtime dependencies. The React adapter simply wraps the engine and declares `react`/`react-dom` as peer dependencies.
+The engine samples `performance.now()` (falling back to `Date.now()`) and corrects for tab throttling on each tick. Adjust `tickIntervalMs` if you need denser or sparser updates.
 
-### 6. How accurate is the countdown?
+### 6. How do I format the remaining time?
 
-The engine uses `performance.now()` when available (fallback to `Date.now()`) and polls every 100 ms by default. Each tick recalculates elapsed time based on the clock, so short pauses or tab throttling are corrected automatically.
+Import helpers from `@timekeeper-countdown/core/format`, for example `formatTime(snapshot)` or `formatMinutes(snapshot)`. They return zero-padded strings ready for display.
 
-### 7. Can I use it in Node.js?
+### 7. How do I write deterministic tests?
 
-Yes. Node.js ≥ 16 is supported out of the box. Pass your own `timeProvider` if you want to sync with server time or a custom scheduler.
+Use `createFakeTimeProvider` from `@timekeeper-countdown/core/testing-utils` and pass it through the `timeProvider` option. You can then advance the fake clock inside your tests.
 
-### 8. How do I format the remaining time?
+### 8. Will there be official Angular/Vue/Svelte adapters?
 
-Use the helpers from `@timekeeper-countdown/core/format` (`formatTime`, `formatMinutes`, `formatHours`, etc.). They accept either raw seconds or any snapshot-like object.
+Yes. They are on the roadmap and will share the same engine, state machine, and helper modules. Documentation will expand as each adapter ships.
 
-### 9. How do I test components that rely on the countdown?
+### 9. Can I still access the core engine directly?
 
-Import the utilities from `@timekeeper-countdown/core/testing-utils`. `createFakeTimeProvider` lets you advance time deterministically, and the assertion helpers validate snapshots without real timers.
+The engine ships with the React package but is considered internal while we finalise the multi-framework story. Expect breaking changes if you import it directly—stick to `useCountdown` for now.
 
 ### 10. Do I need to call `destroy()` manually?
 
-If you instantiate `CountdownEngine` yourself, call `destroy()` when the timer is no longer needed to release intervals and observers. The React hook handles cleanup automatically during `useEffect` teardown.
+No. The hook tears down the engine automatically in `useEffect` cleanup. Manual cleanup is only necessary if you instantiate the engine yourself (not recommended for the current release).

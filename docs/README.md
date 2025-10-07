@@ -1,58 +1,30 @@
-# Timekeeper Countdown ⏳
+# Timekeeper Countdown Documentation
 
-**Timekeeper Countdown** is a lightweight countdown engine written in TypeScript. The core package ships with zero runtime dependencies and exposes a predictable finite-state machine that you can control from vanilla JavaScript, Node.js, or any framework. A first-party React hook lives in a separate package so React stays a peer dependency of the consumer, not of the engine.
+Welcome! These docs focus on the React hook (`@timekeeper-countdown/react`) that is available today. The hook ships with the shared countdown engine, so everything you learn here transfers to the upcoming Angular, Vue, Svelte, and vanilla adapters that are currently on the roadmap.
 
-## Highlights
+## What ships today?
 
-- Framework-agnostic core with an optional React adapter (`@timekeeper-countdown/react`)
-- Deterministic state machine with four states: `IDLE`, `RUNNING`, `PAUSED`, `STOPPED`
-- Snapshot-based API that always reflects the remaining time in multiple units
-- Built-in formatting helpers (`@timekeeper-countdown/core/format`) for quick UI rendering
-- Published bundle weighs ~20 KB minified (core + React adapter) with zero direct deps
-- Testing utilities (`@timekeeper-countdown/core/testing-utils`) for fake clocks and snapshot assertions
+- `@timekeeper-countdown/react` – exposes the `useCountdown` hook.
+- Shared helpers under `@timekeeper-countdown/core/*` – formatting utilities, fake clocks, and TypeScript types used by the hook.
 
-## Quick Peek
+## What is coming next?
 
-```ts
-import { Countdown, TimerState } from '@timekeeper-countdown/core'
+The core engine already powers the React package. We are stabilising additional adapters so each framework gets a native experience with the same behaviour:
 
-const countdown = Countdown(90, {
-  onUpdate: (minutes, seconds) => {
-    document.querySelector('#display')!.textContent = `${minutes}:${seconds}`
-  },
-  onStateChange: (state) => {
-    if (state === TimerState.STOPPED) {
-      console.log('Countdown finished!')
-    }
-  },
-})
+- `@timekeeper-countdown/angular`
+- `@timekeeper-countdown/vue`
+- `@timekeeper-countdown/svelte`
+- Lightweight vanilla bindings for direct DOM use
 
-countdown.start()
-```
-
-Need more control? Use the lower-level `CountdownEngine` to access full snapshots, subscribe to updates, or plug in a custom time provider.
-
-## Packages in This Repo
-
-- `@timekeeper-countdown/core`: countdown engine, formatting helpers, and testing utilities
-- `@timekeeper-countdown/react`: `useCountdown` hook built on top of the core engine (declares `react` + `react-dom` as peer dependencies)
-
-Install only what you need:
-
-```bash
-npm install @timekeeper-countdown/core
-# and optionally
-npm install @timekeeper-countdown/react
-```
+As these adapters land, guides for them will appear alongside the React content without breaking changes to existing consumers.
 
 ## Documentation Map
 
-- [Getting Started](getting-started.md) – installation, core usage, and basic DOM integration
-- [API Reference](api-reference.md) – complete API surface for core, format helpers, and testing utilities
-- [Advanced Usage](advanced-usage.md) – custom time providers, snapshots, and formatting patterns
-- [Examples](examples.md) – ready-to-run snippets for vanilla and React apps
-- [React Integration](react-integration.md) – guide to the `useCountdown` hook
-- [Vanilla Integration](vanilla-integration.md) – wiring the engine into plain HTML/JS projects
-- [FAQ](faq.md) – answers to common questions and troubleshooting tips
+- [Getting Started](getting-started.md) – install the React package, understand snapshots, and render your first timer.
+- [API Reference](api-reference.md) – complete reference for `useCountdown`, its options, and the data it returns.
+- [Advanced Usage](advanced-usage.md) – custom clocks, coordinating multiple timers, and formatting strategies.
+- [Examples](examples.md) – copy-and-paste React snippets for common scenarios.
+- [Roadmap & Future Adapters](roadmap.md) – overview of what is planned beyond React.
+- [FAQ](faq.md) – answers to common questions.
 
-Have ideas or found a bug? [Open an issue](https://github.com/eagle-head/timekeeper-countdown/issues) or submit a PR.
+Looking for the source? Everything lives in the [`packages/`](../packages) directory. Contributions are welcome!

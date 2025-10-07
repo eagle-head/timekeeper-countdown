@@ -1,98 +1,123 @@
 # Examples
 
-A handful of examples showing different ways to wire **Timekeeper Countdown** into your application.
+Copy-and-paste snippets for `@timekeeper-countdown/react`. When new framework adapters ship we will add dedicated examples for them as well.
 
-## Vanilla: Minutes/Seconds Display
-
-```html
-<button id="start">Start</button>
-<button id="pause">Pause</button>
-<button id="resume">Resume</button>
-<button id="reset">Reset</button>
-<span id="time">05:00</span>
-
-<script type="module">
-  import { Countdown } from 'https://unpkg.com/@timekeeper-countdown/core?module'
-
-  const countdown = Countdown(300, {
-    onUpdate: (minutes, seconds) => {
-      document.querySelector('#time').textContent = `${minutes}:${seconds}`
-    },
-  })
-
-  document.querySelector('#start').addEventListener('click', () => countdown.start())
-  document.querySelector('#pause').addEventListener('click', () => countdown.pause())
-  document.querySelector('#resume').addEventListener('click', () => countdown.resume())
-  document.querySelector('#reset').addEventListener('click', () => countdown.reset())
-</script>
-```
-
-## Engine + Progress Bar
-
-```ts
-import { CountdownEngine } from '@timekeeper-countdown/core'
-
-const engine = CountdownEngine(120, {
-  onSnapshot: ({ totalSeconds, initialSeconds }) => {
-    const percent = 100 - Math.floor((totalSeconds / initialSeconds) * 100)
-    progressBar.style.width = `${percent}%`
-  },
-})
-
-startButton.addEventListener('click', () => engine.start())
-pauseButton.addEventListener('click', () => engine.pause())
-```
-
-## React Hook
+## Basic Timer Card
 
 ```tsx
-import { useCountdown } from '@timekeeper-countdown/react'
-import { formatTime } from '@timekeeper-countdown/core/format'
+import { useCountdown } from '@timekeeper-countdown/react';
+import { formatTime } from '@timekeeper-countdown/core/format';
 
-function PomodoroTimer() {
-  const { snapshot, isRunning, start, pause, reset } = useCountdown(25 * 60)
-  const { minutes, seconds } = formatTime(snapshot)
+export function TimerCard() {
+  const countdown = useCountdown(60);
+  const clock = formatTime(countdown.snapshot);
 
   return (
-    <section>
-      <h2>{minutes}:{seconds}</h2>
-      <button onClick={start} disabled={isRunning}>Start</button>
-      <button onClick={pause} disabled={!isRunning}>Pause</button>
-      <button onClick={() => reset(25 * 60)}>Reset</button>
-    </section>
-  )
+    <div>
+      <p>
+        {clock.minutes}:{clock.seconds}
+      </p>
+      <button onClick={countdown.start} disabled={countdown.isRunning}>
+        Start
+      </button>
+      <button onClick={countdown.pause} disabled={!countdown.isRunning}>
+        Pause
+      </button>
+      <button onClick={countdown.reset}>Reset</button>
+    </div>
+  );
 }
 ```
 
-## Swapping Durations on the Fly
+## Form-Controlled Duration
 
-```ts
-const engine = CountdownEngine(180)
-engine.start()
+```tsx
+import { useState } from 'react';
+import { useCountdown } from '@timekeeper-countdown/react';
 
-// Jump to the last 30 seconds when a user performs an action
-ctaButton.addEventListener('click', () => {
-  engine.setSeconds(30)
-})
+function AdjustableCountdown() {
+  const [seconds, setSeconds] = useState(150);
+  const countdown = useCountdown(seconds, { autoStart: false });
+
+  return (
+    <section>
+      <label>
+        Seconds
+        <input type="number" value={seconds} onChange={event => setSeconds(Number(event.target.value) || 0)} />
+      </label>
+
+      <div>
+        <button onClick={countdown.start}>Start</button>
+        <button onClick={countdown.pause}>Pause</button>
+        <button onClick={() => countdown.reset(seconds)}>Apply</button>
+      </div>
+
+      <p>{countdown.totalSeconds}s remaining</p>
+    </section>
+  );
+}
 ```
 
-## Node.js Script
+## Auto-Chaining Phases
 
-```ts
-import { CountdownEngine, TimerState } from '@timekeeper-countdown/core'
+```tsx
+import { useEffect } from 'react';
+import { useCountdown } from '@timekeeper-countdown/react';
 
-const engine = CountdownEngine(10, {
-  onSnapshot: ({ totalSeconds }) => {
-    process.stdout.write(`\r${totalSeconds.toString().padStart(2, '0')}s remaining`)
-  },
-  onStateChange: (state) => {
-    if (state === TimerState.STOPPED) {
-      process.stdout.write('\nDone!\n')
+function TwoStageFlow() {
+  const intro = useCountdown(15, { autoStart: true });
+  const main = useCountdown(90);
+  const { isCompleted: introCompleted } = intro;
+  const { isRunning: mainRunning, start: startMain } = main;
+
+  useEffect(() => {
+    if (introCompleted && !mainRunning) {
+      startMain();
     }
-  },
-})
+  }, [introCompleted, mainRunning, startMain]);
 
-engine.start()
+  return (
+    <div>
+      <h3>Intro: {intro.totalSeconds}s</h3>
+      <h3>Main Session: {main.totalSeconds}s</h3>
+    </div>
+  );
+}
 ```
 
-Use these snippets as building blocks—the engine is snapshot-first, so you can map it to any UI or workflow.
+## Testing with @testing-library/react
+
+```tsx
+import { useMemo } from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useCountdown } from '@timekeeper-countdown/react';
+import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils';
+
+function InspectableTimer() {
+  const fake = useMemo(() => createFakeTimeProvider({ startMs: 0 }), []);
+  const countdown = useCountdown(5, {
+    timeProvider: toTimeProvider(fake),
+    tickIntervalMs: 5,
+  });
+
+  return (
+    <div>
+      <output>{countdown.totalSeconds}</output>
+      <button onClick={() => fake.advance(1000)}>Advance</button>
+    </div>
+  );
+}
+
+it('advances when the fake clock moves', async () => {
+  render(<InspectableTimer />);
+
+  await userEvent.click(screen.getByRole('button', { name: /advance/i }));
+
+  expect(screen.getByText('4')).toBeInTheDocument();
+});
+```
+
+## Coming Soon
+
+Adapters for Angular, Vue, Svelte, and a vanilla bundle are in development. As they land, this page will grow with side-by-side examples so you can port patterns across frameworks with minimal effort.

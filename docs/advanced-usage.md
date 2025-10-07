@@ -1,137 +1,123 @@
 # Advanced Usage
 
-Dig deeper into **Timekeeper Countdown** by composing the lower-level engine, custom time providers, and formatting helpers.
+Take `useCountdown` beyond the basics. These patterns focus on React today, but the concepts apply to future adapters that will expose similar options.
 
-## Manual Engine Control
+## Coordinate Multiple Timers
 
-`CountdownEngine` gives you complete control over state transitions and subscriptions.
+Each hook call owns its own engine instance. Compose them to implement flows such as Pomodoro sessions or chained phases.
 
-```ts
-import { CountdownEngine, TimerState } from '@timekeeper-countdown/core'
+```tsx
+import { useEffect } from 'react';
+import { useCountdown } from '@timekeeper-countdown/react';
 
-const engine = CountdownEngine(600, {
-  onSnapshot: (snapshot) => console.log('seconds left:', snapshot.totalSeconds),
-  onStateChange: (state, snapshot) => {
-    if (state === TimerState.STOPPED && snapshot.isCompleted) {
-      console.log('Done!')
+export function PomodoroBoard() {
+  const focus = useCountdown(25 * 60);
+  const breakTimer = useCountdown(5 * 60);
+  const { reset: resetBreak, start: startBreak, isRunning: breakRunning } = breakTimer;
+  const { isCompleted: focusCompleted } = focus;
+
+  useEffect(() => {
+    if (focusCompleted && !breakRunning) {
+      resetBreak();
+      startBreak();
     }
-  },
-})
+  }, [focusCompleted, breakRunning, resetBreak, startBreak]);
 
-engine.start()
-```
-
-Use `engine.subscribe(listener)` to attach multiple observers. Each `listener` receives the latest snapshot immediately and whenever the state updates:
-
-```ts
-const subscription = engine.subscribe((snapshot) => {
-  renderProgress(snapshot.totalSeconds)
-})
-
-// Later
-subscription.unsubscribe()
-```
-
-## Injecting a Custom Time Provider
-
-By default the engine polls every 100 ms using `performance.now()` (falling back to `Date.now()`). Provide your own clock for deterministic tests or to hook into an external scheduler.
-
-```ts
-import { CountdownEngine } from '@timekeeper-countdown/core'
-import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils'
-
-const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 })
-
-const engine = CountdownEngine(5, {
-  timeProvider: toTimeProvider(fake),
-  tickIntervalMs: 10,
-})
-
-engine.start()
-
-fake.advance(5000) // jump 5 seconds ahead
-console.log(engine.getSnapshot().totalSeconds) // 0
-```
-
-You can also pass a plain function that returns milliseconds:
-
-```ts
-const engine = CountdownEngine(120, {
-  timeProvider: () => window.myClock.now(),
-})
-```
-
-## Handling Errors
-
-If the internal timer throws, the engine stops, transitions to `STOPPED`, and forwards the error to `onError` (when provided). Keep your handler defensive and consider a retry strategy:
-
-```ts
-const engine = CountdownEngine(30, {
-  onError: (error) => {
-    console.error('Timer failure', error)
-    // Decide whether to resume or notify the user
-  },
-})
-```
-
-## Formatting Strategies
-
-The `@timekeeper-countdown/core/format` entry point offers tiny helpers that avoid repeating `Math.floor` and `padStart` logic.
-
-```ts
-import { formatTime, formatHours, formatDays } from '@timekeeper-countdown/core/format'
-
-function render(snapshot) {
-  const clock = formatTime(snapshot)
-  const hours = formatHours(snapshot)
-  const days = formatDays(snapshot.totalSeconds)
-
-  return `${days}d ${hours}h ${clock.minutes}:${clock.seconds}`
+  return (
+    <div>
+      <TimerCard title="Focus" countdown={focus} />
+      <TimerCard title="Break" countdown={breakTimer} />
+    </div>
+  );
 }
 ```
 
-If you need isolated memoization (for example, in React `useMemo` hooks), instantiate a formatter:
+Passing the entire result object into child components keeps their renders simple and memo-friendly.
 
-```ts
-import { Formatter } from '@timekeeper-countdown/core/format'
+## Inject a Custom Clock
 
-const formatter = Formatter()
-const { minutes, seconds } = formatter.formatTime(snapshot)
+Use a fake or shared time provider to keep multiple timers synchronised or to drive them manually in tests.
+
+```tsx
+import { useCountdown } from '@timekeeper-countdown/react';
+import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils';
+
+const fake = createFakeTimeProvider({ startMs: 0 });
+
+export function DebugTimer() {
+  const countdown = useCountdown(30, {
+    autoStart: true,
+    timeProvider: toTimeProvider(fake),
+    tickIntervalMs: 10,
+  });
+
+  return (
+    <div>
+      <strong>{countdown.totalSeconds}s</strong>
+      <button onClick={() => fake.advance(1000)}>Advance 1s</button>
+    </div>
+  );
+}
 ```
 
-## Coordinating Multiple Timers
+Because the hook reads the fake clock on every tick, advancing it updates state without waiting for `setTimeout`.
 
-Because the engine exposes `setSeconds` and `reset`, you can orchestrate multi-stage flows.
+## Skip Ahead or Extend Sessions
 
-```ts
-const work = CountdownEngine(25 * 60)
-const breakTime = CountdownEngine(5 * 60)
+`setSeconds` modifies the remaining time in-place without triggering a state transition. Combine it with user actions such as "skip" buttons.
 
-work.subscribe((snapshot) => {
-  if (snapshot.isCompleted) {
-    breakTime.reset()
-    breakTime.start()
-  }
-})
+```tsx
+import { useCountdown } from '@timekeeper-countdown/react';
 
-work.start()
+function WebinarCountdown() {
+  const countdown = useCountdown(10 * 60);
+
+  return (
+    <div>
+      <button onClick={() => countdown.setSeconds(30)}>Jump to finale</button>
+      <button onClick={() => countdown.reset(15 * 60)}>Extend 15 minutes</button>
+    </div>
+  );
+}
 ```
 
-Remember to call `destroy()` on each engine when the surrounding component unmounts or when you no longer need the timer.
+`reset` accepts an optional argument for the next initial value, letting you implement presets or dynamic durations.
 
-## Snapshot Utilities for Tests
+## Memoise Derived Data
 
-The `@timekeeper-countdown/core/testing-utils` helpers let you fabricate snapshots or assert state without spinning real timers:
+Snapshots are stable per render, so you can memoise formatting or domain-specific calculations.
 
-```ts
-import {
-  buildSnapshot,
-  assertSnapshotState,
-  TimerState,
-} from '@timekeeper-countdown/core/testing-utils'
+```tsx
+import { useMemo } from 'react';
+import { useCountdown } from '@timekeeper-countdown/react';
+import { formatTime } from '@timekeeper-countdown/core/format';
 
-const snapshot = buildSnapshot({ totalSeconds: 42, state: TimerState.RUNNING })
-assertSnapshotState(snapshot, TimerState.RUNNING)
+function TimerDisplay() {
+  const countdown = useCountdown(600);
+
+  const clock = useMemo(() => formatTime(countdown.snapshot), [countdown.snapshot]);
+
+  return (
+    <span>
+      {clock.minutes}:{clock.seconds}
+    </span>
+  );
+}
 ```
 
-Combine these utilities with a fake time provider to unit test UI layers deterministically.
+When future adapters arrive, they will expose the same `CountdownSnapshot` shape, so these memoisation patterns carry over.
+
+## Handle Errors Gracefully
+
+If the underlying engine reports an error, your `onError` callback runs. This rarely triggers, but it is useful for logging or retry flows.
+
+```ts
+const countdown = useCountdown(120, {
+  onError: error => {
+    console.error('Countdown failure', error);
+    toast.error('We lost track of time. Please try again.');
+  },
+});
+```
+
+Returning to `IDLE` after an error keeps the timer safe to restart.
