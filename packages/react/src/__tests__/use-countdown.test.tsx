@@ -229,7 +229,7 @@ describe('useCountdown', () => {
       };
     };
 
-    engineSpy.mockImplementation((initialSeconds: number, options?: CountdownEngineOptions) => {
+    engineSpy.mockImplementation((_initialSeconds: number, options?: CountdownEngineOptions) => {
       engineOptionsCalls.push(options);
       return createEngineInstance();
     });

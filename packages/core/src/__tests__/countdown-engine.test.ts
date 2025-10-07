@@ -40,6 +40,8 @@ describe('CountdownEngine', () => {
         now += 7;
         return now;
       }),
+      isHighResolution: true,
+      type: 'custom',
     };
 
     const engine = CountdownEngine(5, {
@@ -95,10 +97,10 @@ describe('CountdownEngine', () => {
     const throwingListener = vi.fn(() => {
       throw new Error('listener failure');
     });
-    const safeListener = vi.fn<(snapshot: ReturnType<typeof engine.getSnapshot>) => void>();
+    const safeListener = vi.fn<[ReturnType<typeof engine.getSnapshot>]>();
 
     expect(() => engine.subscribe(throwingListener)).not.toThrow();
-    engine.subscribe(safeListener);
+    engine.subscribe(snapshot => safeListener(snapshot));
 
     expect(engine.start()).toBe(true);
 
@@ -112,7 +114,7 @@ describe('CountdownEngine', () => {
 
     expect(onError).toHaveBeenCalled();
 
-    const receivedStates = safeListener.mock.calls.map(call => call[0].state);
+    const receivedStates = safeListener.mock.calls.map(([snapshot]) => snapshot.state);
     expect(receivedStates).toContain(TimerState.RUNNING);
     expect(receivedStates).toContain(TimerState.STOPPED);
 
