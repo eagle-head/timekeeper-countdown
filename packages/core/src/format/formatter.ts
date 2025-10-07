@@ -1,4 +1,14 @@
 import type { CountdownSnapshot } from '../api/countdown-engine';
+import {
+  SECONDS_PER_MINUTE,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_DAY,
+  SECONDS_PER_WEEK,
+  SECONDS_PER_YEAR,
+  HOURS_PER_DAY,
+  DAYS_PER_WEEK,
+  WEEKS_PER_YEAR,
+} from '../time/constants';
 
 export type FormatTarget = number | Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined;
 
@@ -6,9 +16,11 @@ function extractSeconds(target: FormatTarget): number {
   if (typeof target === 'number') {
     return target;
   }
+
   if (target && typeof target.totalSeconds === 'number') {
     return target.totalSeconds;
   }
+
   return 0;
 }
 
@@ -16,12 +28,15 @@ function sanitizeSeconds(totalSeconds: number): number {
   if (typeof totalSeconds !== 'number' || !Number.isFinite(totalSeconds)) {
     return 0;
   }
+
   if (totalSeconds <= 0) {
     return 0;
   }
+
   if (totalSeconds >= Number.MAX_SAFE_INTEGER) {
     return Number.MAX_SAFE_INTEGER;
   }
+
   return Math.floor(totalSeconds);
 }
 
@@ -30,6 +45,7 @@ function safeFormat(value: number, padLength = 2): string {
     if (!Number.isFinite(value) || value < 0) {
       return '0'.repeat(padLength);
     }
+
     return Math.floor(value).toString().padStart(padLength, '0');
   } catch {
     return '0'.repeat(padLength);
@@ -37,23 +53,23 @@ function safeFormat(value: number, padLength = 2): string {
 }
 
 function computeMinutes(seconds: number) {
-  return Math.floor(seconds / 60);
+  return Math.floor(seconds / SECONDS_PER_MINUTE);
 }
 
 function computeHours(seconds: number) {
-  return Math.floor(seconds / 3600) % 24;
+  return Math.floor(seconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
 }
 
 function computeDays(seconds: number) {
-  return Math.floor(seconds / 86400) % 7;
+  return Math.floor(seconds / SECONDS_PER_DAY) % DAYS_PER_WEEK;
 }
 
 function computeWeeks(seconds: number) {
-  return Math.floor(seconds / 604800) % 52;
+  return Math.floor(seconds / SECONDS_PER_WEEK) % WEEKS_PER_YEAR;
 }
 
 function computeYears(seconds: number) {
-  return Math.floor(seconds / 31536000);
+  return Math.floor(seconds / SECONDS_PER_YEAR);
 }
 
 export function Formatter() {
@@ -63,7 +79,7 @@ export function Formatter() {
     const safeSeconds = getSafeSeconds(target);
     return {
       minutes: safeFormat(computeMinutes(safeSeconds)),
-      seconds: safeFormat(safeSeconds % 60),
+      seconds: safeFormat(safeSeconds % SECONDS_PER_MINUTE),
     };
   };
 
@@ -74,7 +90,7 @@ export function Formatter() {
 
   const formatSeconds = (target: FormatTarget) => {
     const safeSeconds = getSafeSeconds(target);
-    return safeFormat(safeSeconds % 60);
+    return safeFormat(safeSeconds % SECONDS_PER_MINUTE);
   };
 
   const formatHours = (target: FormatTarget) => {

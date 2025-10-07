@@ -1,10 +1,10 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
     format: 'src/format/index.ts',
-    testing: 'testing/index.ts',
+    'testing-utils': 'testing-utils/index.ts',
   },
   format: ['esm'],
   dts: true,
@@ -15,7 +15,7 @@ export default defineConfig({
   treeshake: true,
   target: 'es2022',
   esbuildOptions(options) {
-    options.mangleProps = /^_/
-    options.drop = ['console', 'debugger']
+    options.mangleProps = /^_/;
+    options.drop = ['console', 'debugger'];
   },
-})
+});

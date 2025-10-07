@@ -36,7 +36,7 @@ Use the helpers from `@timekeeper-countdown/core/format` (`formatTime`, `formatM
 
 ### 9. How do I test components that rely on the countdown?
 
-Import the utilities from `@timekeeper-countdown/core/testing`. `createFakeTimeProvider` lets you advance time deterministically, and the assertion helpers validate snapshots without real timers.
+Import the utilities from `@timekeeper-countdown/core/testing-utils`. `createFakeTimeProvider` lets you advance time deterministically, and the assertion helpers validate snapshots without real timers.
 
 ### 10. Do I need to call `destroy()` manually?
 

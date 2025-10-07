@@ -9,7 +9,7 @@
 - Snapshot-based API that always reflects the remaining time in multiple units
 - Built-in formatting helpers (`@timekeeper-countdown/core/format`) for quick UI rendering
 - Published bundle weighs ~20 KB minified (core + React adapter) with zero direct deps
-- Testing utilities (`@timekeeper-countdown/core/testing`) for fake clocks and snapshot assertions
+- Testing utilities (`@timekeeper-countdown/core/testing-utils`) for fake clocks and snapshot assertions
 
 ## Quick Peek
 

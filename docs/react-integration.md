@@ -110,7 +110,7 @@ function MultiTimerDashboard() {
 You can pass a fake or shared time provider to keep timers in sync or to drive them manually in tests.
 
 ```tsx
-import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing'
+import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils'
 
 const fake = createFakeTimeProvider({ startMs: 0 })
 
@@ -137,7 +137,7 @@ When testing components that consume `useCountdown`, inject a deterministic prov
 ```tsx
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing'
+import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils'
 
 it('counts down when the fake clock advances', async () => {
   const fake = createFakeTimeProvider({ startMs: 0 })

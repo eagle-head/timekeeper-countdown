@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { Formatter, formatMinutes as formatMinutesDirect } from '../format/formatter';
+import {
+  Formatter,
+  formatTime as formatTimeDirect,
+  formatMinutes as formatMinutesDirect,
+  formatSeconds as formatSecondsDirect,
+  formatHours as formatHoursDirect,
+  formatDays as formatDaysDirect,
+  formatWeeks as formatWeeksDirect,
+  formatYears as formatYearsDirect,
+} from '../format/formatter';
 import { buildSnapshot } from '../../testing-utils/snapshots';
 
 describe('Formatter', () => {
@@ -340,8 +349,18 @@ describe('Formatter', () => {
     });
 
     it('should support direct helper exports', () => {
+      expect(formatTimeDirect(125)).toEqual({ minutes: '02', seconds: '05' });
       expect(formatMinutesDirect(3600)).toBe('60');
-      expect(formatMinutesDirect(buildSnapshot({ totalSeconds: 90 }))).toBe('01');
+      expect(formatSecondsDirect(65)).toBe('05');
+      expect(formatHoursDirect(90000)).toBe('01');
+      expect(formatDaysDirect(172800)).toBe('02');
+      expect(formatWeeksDirect(1209600)).toBe('02');
+      expect(formatYearsDirect(31536000)).toBe('01');
+
+      const snapshot = buildSnapshot({ totalSeconds: 90 });
+      expect(formatTimeDirect(snapshot)).toEqual({ minutes: '01', seconds: '30' });
+      expect(formatMinutesDirect(snapshot)).toBe('01');
+      expect(formatSecondsDirect(snapshot)).toBe('30');
     });
   });
 });

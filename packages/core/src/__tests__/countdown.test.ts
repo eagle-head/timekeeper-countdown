@@ -193,6 +193,24 @@ describe('Countdown - Happy Path', () => {
       expect(countdown.getYears()).toBe('00');
     });
 
+    it('should expose the latest snapshot through getSnapshot', () => {
+      const countdown = Countdown(5);
+
+      const initialSnapshot = countdown.getSnapshot();
+      expect(initialSnapshot.totalSeconds).toBe(5);
+      expect(initialSnapshot.state).toBe(TimerState.IDLE);
+
+      countdown.start();
+      vi.advanceTimersByTime(1100);
+
+      const runningSnapshot = countdown.getSnapshot();
+      expect(runningSnapshot).not.toBe(initialSnapshot);
+      expect(runningSnapshot.state).toBe(TimerState.RUNNING);
+      expect(runningSnapshot.totalSeconds).toBe(4);
+
+      countdown.destroy();
+    });
+
     it('should return correct time for large values', () => {
       const countdown = Countdown(31536000); // 1 year (365 days)
 

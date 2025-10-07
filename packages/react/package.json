@@ -20,7 +20,7 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -33,7 +33,7 @@
     "react-dom": ">=17.0.0"
   },
   "dependencies": {
-    "@timekeeper-countdown/core": "file:../core"
+    "@timekeeper-countdown/core": "^2.0.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",

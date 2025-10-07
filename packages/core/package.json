@@ -39,9 +39,9 @@
       "types": "./dist/format.d.ts",
       "import": "./dist/format.js"
     },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js"
+    "./testing-utils": {
+      "types": "./dist/testing-utils.d.ts",
+      "import": "./dist/testing-utils.js"
     }
   },
   "files": [
@@ -52,7 +52,7 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

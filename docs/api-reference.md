@@ -126,10 +126,12 @@ type TimerState = typeof TimerState[keyof typeof TimerState]
 
 Valid transitions:
 
-- `IDLE → RUNNING | IDLE | STOPPED`
+- `IDLE → RUNNING`
 - `RUNNING → PAUSED | STOPPED | IDLE`
 - `PAUSED → RUNNING | STOPPED | IDLE`
 - `STOPPED → IDLE | STOPPED`
+
+Calls to `reset()`, `stop()`, `complete()` or `destroy()` while already in `IDLE` are treated as no-ops and return `false`.
 
 ### Errors and Validation
 
@@ -165,7 +167,7 @@ const { minutes, seconds } = formatTime(snapshot)
 const days = formatDays(snapshot.totalSeconds)
 ```
 
-## Testing Utilities (`@timekeeper-countdown/core/testing`)
+## Testing Utilities (`@timekeeper-countdown/core/testing-utils`)
 
 ```ts
 import {
@@ -177,7 +179,7 @@ import {
   assertSnapshotCompleted,
   assertRemainingSeconds,
   TimerState,
-} from '@timekeeper-countdown/core/testing'
+} from '@timekeeper-countdown/core/testing-utils'
 ```
 
 - `createFakeTimeProvider({ startMs?, tickMs?, highResolution? })` – deterministic clock with `advance()`, `set()`, and `reset()` helpers

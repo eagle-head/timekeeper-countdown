@@ -38,7 +38,7 @@ By default the engine polls every 100 ms using `performance.now()` (falling back
 
 ```ts
 import { CountdownEngine } from '@timekeeper-countdown/core'
-import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing'
+import { createFakeTimeProvider, toTimeProvider } from '@timekeeper-countdown/core/testing-utils'
 
 const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 })
 
@@ -121,14 +121,14 @@ Remember to call `destroy()` on each engine when the surrounding component unmou
 
 ## Snapshot Utilities for Tests
 
-The `@timekeeper-countdown/core/testing` helpers let you fabricate snapshots or assert state without spinning real timers:
+The `@timekeeper-countdown/core/testing-utils` helpers let you fabricate snapshots or assert state without spinning real timers:
 
 ```ts
 import {
   buildSnapshot,
   assertSnapshotState,
   TimerState,
-} from '@timekeeper-countdown/core/testing'
+} from '@timekeeper-countdown/core/testing-utils'
 
 const snapshot = buildSnapshot({ totalSeconds: 42, state: TimerState.RUNNING })
 assertSnapshotState(snapshot, TimerState.RUNNING)

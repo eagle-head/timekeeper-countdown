@@ -103,18 +103,19 @@ export function useCountdown(initialSeconds: number, options: UseCountdownOption
     if (!engine) {
       return fallback;
     }
+
     return action(engine);
   }, []);
 
   const start = useCallback(() => invoke(engine => engine.start(), false), [invoke]);
   const pause = useCallback(() => invoke(engine => engine.pause(), false), [invoke]);
   const resume = useCallback(() => invoke(engine => engine.resume(), false), [invoke]);
+  const stop = useCallback(() => invoke(engine => engine.stop(), false), [invoke]);
+  const setSeconds = useCallback((value: number) => invoke(engine => engine.setSeconds(value), undefined), [invoke]);
   const reset = useCallback(
     (nextInitialSeconds?: number) => invoke(engine => engine.reset(nextInitialSeconds), false),
     [invoke]
   );
-  const stop = useCallback(() => invoke(engine => engine.stop(), false), [invoke]);
-  const setSeconds = useCallback((value: number) => invoke(engine => engine.setSeconds(value), undefined), [invoke]);
 
   return {
     snapshot,

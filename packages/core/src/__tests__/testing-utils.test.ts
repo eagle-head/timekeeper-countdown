@@ -47,6 +47,17 @@ describe('Core testing utilities', () => {
       expect(fake.now()).toBe(Number.MAX_SAFE_INTEGER);
     });
 
+    it('should expose getTime as an alias for the current timestamp', () => {
+      const fake = createFakeTimeProvider({ startMs: 150 });
+
+      expect(fake.getTime()).toBe(150);
+      fake.advance(25);
+      expect(fake.getTime()).toBe(175);
+
+      fake.set(310);
+      expect(fake.getTime()).toBe(310);
+    });
+
     it('should adapt fake provider into time provider view', () => {
       const fake = createFakeTimeProvider({ startMs: 250, highResolution: false });
 

@@ -1,6 +1,17 @@
 import { Timer } from '../runtime/timer';
 import { createSafeTimeProvider, type TimeProvider } from '../runtime/time-providers';
 import { StateMachine, TimerState } from '../state/state-machine';
+import {
+  SECONDS_PER_DAY,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+  SECONDS_PER_WEEK,
+  SECONDS_PER_YEAR,
+  DAYS_PER_WEEK,
+  HOURS_PER_DAY,
+  MINUTES_PER_HOUR,
+  WEEKS_PER_YEAR,
+} from '../time/constants';
 
 export interface CountdownParts {
   years: number;
@@ -83,16 +94,16 @@ function resolveTimeProvider(provider?: TimeProvider | (() => number)): () => nu
 
 function computeParts(totalSeconds: number): CountdownParts {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const years = Math.floor(safeSeconds / 31536000);
-  const weeks = Math.floor(safeSeconds / 604800) % 52;
-  const days = Math.floor(safeSeconds / 86400) % 7;
-  const hours = Math.floor(safeSeconds / 3600) % 24;
-  const minutes = Math.floor(safeSeconds / 60) % 60;
-  const seconds = safeSeconds % 60;
+  const years = Math.floor(safeSeconds / SECONDS_PER_YEAR);
+  const weeks = Math.floor(safeSeconds / SECONDS_PER_WEEK) % WEEKS_PER_YEAR;
+  const days = Math.floor(safeSeconds / SECONDS_PER_DAY) % DAYS_PER_WEEK;
+  const hours = Math.floor(safeSeconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
+  const minutes = Math.floor(safeSeconds / SECONDS_PER_MINUTE) % MINUTES_PER_HOUR;
+  const seconds = safeSeconds % SECONDS_PER_MINUTE;
 
-  const totalDays = Math.floor(safeSeconds / 86400);
-  const totalHours = Math.floor(safeSeconds / 3600);
-  const totalMinutes = Math.floor(safeSeconds / 60);
+  const totalDays = Math.floor(safeSeconds / SECONDS_PER_DAY);
+  const totalHours = Math.floor(safeSeconds / SECONDS_PER_HOUR);
+  const totalMinutes = Math.floor(safeSeconds / SECONDS_PER_MINUTE);
 
   return {
     years,
@@ -279,6 +290,7 @@ export function CountdownEngine(
     } catch {
       // ignore listener errors on initial emit
     }
+
     return {
       unsubscribe: () => {
         observers.delete(listener);

@@ -1,3 +1,3 @@
-export * from './fake-time'
-export * from './snapshots'
-export * from './assertions'
+export * from './fake-time';
+export * from './snapshots';
+export * from './assertions';

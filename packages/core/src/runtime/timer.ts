@@ -1,4 +1,8 @@
+import { MILLISECONDS_PER_SECOND } from '../time/constants';
 import { createSafeTimeProvider } from './time-providers';
+
+const MIN_TICK_INTERVAL_MS = 10;
+const DEFAULT_TICK_INTERVAL_MS = 100;
 
 type TimerID = ReturnType<typeof setInterval>;
 
@@ -60,7 +64,7 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
   let pausedDuration = 0;
   let lastReportedSeconds = totalSeconds;
   let initialValue = totalSeconds;
-  const tickInterval = Math.max(10, Math.floor(config.tickIntervalMs ?? 100));
+  const tickInterval = Math.max(MIN_TICK_INTERVAL_MS, Math.floor(config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS));
   const defaultProvider = createSafeTimeProvider();
   const timeProvider = config.timeProvider ?? (() => defaultProvider.now());
 
@@ -72,7 +76,7 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
         // Calculate actual elapsed time using safe time provider
         const currentTime = timeProvider();
         const elapsedMs = currentTime - startTimestamp - pausedDuration;
-        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        const elapsedSeconds = Math.floor(elapsedMs / MILLISECONDS_PER_SECOND);
         const remainingSeconds = Math.max(0, initialValue - elapsedSeconds);
 
         // Update totalSeconds to reflect actual time
@@ -105,7 +109,7 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
       // If resuming, calculate how much time was already spent
       if (startTimestamp !== null && totalSeconds < initialValue) {
         // Resume from pause: adjust paused duration
-        const expectedElapsed = (initialValue - totalSeconds) * 1000;
+        const expectedElapsed = (initialValue - totalSeconds) * MILLISECONDS_PER_SECOND;
         pausedDuration = timeProvider() - startTimestamp - expectedElapsed;
       } else {
         // Fresh start
@@ -162,6 +166,7 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
     if (typeof seconds !== 'number' || !Number.isFinite(seconds)) {
       return;
     }
+
     const safeSeconds = Math.floor(Math.max(0, Math.min(seconds, Number.MAX_SAFE_INTEGER)));
     initialValue = safeSeconds;
     setSeconds(safeSeconds);

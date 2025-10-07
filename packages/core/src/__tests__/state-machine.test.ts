@@ -13,6 +13,7 @@ describe('StateMachine', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
   describe('Constructor Parameter Validation', () => {
     describe('Events Parameter Type Validation', () => {
       it('should throw error when events is not an object (string)', () => {
@@ -398,13 +399,13 @@ describe('StateMachine', () => {
   });
 
   describe('Stop Method - Valid Transitions', () => {
-    it('should transition from IDLE to STOPPED', () => {
+    it('should reject stop when already in IDLE', () => {
       const sm = StateMachine();
 
       const result = sm.stop();
 
-      expect(result).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
+      expect(result).toBe(false);
+      expect(sm.getCurrentState()).toBe(TimerState.IDLE);
     });
 
     it('should transition from RUNNING to STOPPED', () => {
@@ -429,13 +430,14 @@ describe('StateMachine', () => {
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
     });
 
-    it('should transition from STOPPED to STOPPED (same state)', () => {
+    it('should reject stop when already in STOPPED', () => {
       const sm = StateMachine();
+      sm.start();
       sm.stop();
 
       const result = sm.stop();
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
     });
 
@@ -453,12 +455,12 @@ describe('StateMachine', () => {
   });
 
   describe('Reset Method - Valid Transitions', () => {
-    it('should transition from IDLE to IDLE (same state)', () => {
+    it('should reject reset when already in IDLE', () => {
       const sm = StateMachine();
 
       const result = sm.reset();
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.IDLE);
     });
 
@@ -487,6 +489,7 @@ describe('StateMachine', () => {
 
     it('should transition from STOPPED to IDLE', () => {
       const sm = StateMachine();
+      sm.start();
       sm.stop();
 
       const result = sm.reset();
@@ -510,13 +513,13 @@ describe('StateMachine', () => {
   });
 
   describe('Complete Method - Valid Transitions', () => {
-    it('should transition from IDLE to STOPPED', () => {
+    it('should reject complete when already in IDLE', () => {
       const sm = StateMachine();
 
       const result = sm.complete();
 
-      expect(result).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
+      expect(result).toBe(false);
+      expect(sm.getCurrentState()).toBe(TimerState.IDLE);
     });
 
     it('should transition from RUNNING to STOPPED', () => {
@@ -529,24 +532,25 @@ describe('StateMachine', () => {
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
     });
 
-    it('should transition from PAUSED to STOPPED', () => {
+    it('should reject complete when in PAUSED', () => {
       const sm = StateMachine();
       sm.start();
       sm.pause();
 
       const result = sm.complete();
 
-      expect(result).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
+      expect(result).toBe(false);
+      expect(sm.getCurrentState()).toBe(TimerState.PAUSED);
     });
 
-    it('should transition from STOPPED to STOPPED (same state)', () => {
+    it('should reject complete when already in STOPPED', () => {
       const sm = StateMachine();
-      sm.stop();
+      sm.start();
+      sm.complete();
 
       const result = sm.complete();
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
     });
 
@@ -564,7 +568,15 @@ describe('StateMachine', () => {
   });
 
   describe('Destroy Method', () => {
-    it('should transition state to STOPPED from any state', () => {
+    it('should keep state in IDLE when destroy is called before starting', () => {
+      const sm = StateMachine();
+
+      sm.destroy();
+
+      expect(sm.getCurrentState()).toBe(TimerState.IDLE);
+    });
+
+    it('should transition state to STOPPED from active states', () => {
       const sm = StateMachine();
 
       // Test from RUNNING
@@ -581,6 +593,7 @@ describe('StateMachine', () => {
 
       // Test from STOPPED
       sm.reset();
+      sm.start();
       sm.stop();
       sm.destroy();
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
@@ -588,27 +601,28 @@ describe('StateMachine', () => {
   });
 
   describe('Same State Transition Handling', () => {
-    it('should handle transition to same state in IDLE', () => {
+    it('should reject reset when already in IDLE and avoid callbacks', () => {
       const mockOnStateChange = vi.fn();
       const sm = StateMachine({ onStateChange: mockOnStateChange });
 
-      const result = sm.reset(); // IDLE to IDLE
+      const result = sm.reset();
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.IDLE);
-      expect(mockOnStateChange).not.toHaveBeenCalled(); // No callback for same state
+      expect(mockOnStateChange).not.toHaveBeenCalled();
     });
 
-    it('should handle transition to same state in STOPPED', () => {
+    it('should reject transition attempt that keeps STOPPED state', () => {
       const mockOnStateChange = vi.fn();
       const sm = StateMachine({ onStateChange: mockOnStateChange });
 
+      sm.start();
       sm.stop();
       mockOnStateChange.mockClear();
 
       const result = sm.stop(); // STOPPED to STOPPED
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
       expect(mockOnStateChange).not.toHaveBeenCalled(); // No callback for same state
     });
@@ -647,6 +661,7 @@ describe('StateMachine', () => {
 
     it('should correctly report state capabilities in STOPPED', () => {
       const sm = StateMachine();
+      sm.start();
       sm.stop();
 
       expect(sm.canStart()).toBe(false);
@@ -753,7 +768,7 @@ describe('StateMachine', () => {
   });
 
   describe('State Transition Matrix Validation', () => {
-    it('should allow all valid transitions from IDLE', () => {
+    it('should enforce allowed transitions from IDLE', () => {
       const sm = StateMachine();
 
       // IDLE -> RUNNING
@@ -762,14 +777,12 @@ describe('StateMachine', () => {
 
       sm.reset(); // Back to IDLE
 
-      // IDLE -> STOPPED
-      expect(sm.stop()).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
+      // IDLE -> STOPPED (should fail)
+      expect(sm.stop()).toBe(false);
+      expect(sm.getCurrentState()).toBe(TimerState.IDLE);
 
-      sm.reset(); // Back to IDLE
-
-      // IDLE -> IDLE (same state)
-      expect(sm.reset()).toBe(true);
+      // IDLE -> IDLE via reset (should fail)
+      expect(sm.reset()).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.IDLE);
     });
 
@@ -819,88 +832,25 @@ describe('StateMachine', () => {
       expect(sm.getCurrentState()).toBe(TimerState.IDLE);
     });
 
-    it('should allow all valid transitions from STOPPED', () => {
+    it('should allow valid transitions from STOPPED and reject invalid ones', () => {
       const sm = StateMachine();
+      sm.start();
       sm.stop();
 
       // STOPPED -> IDLE
       expect(sm.reset()).toBe(true);
       expect(sm.getCurrentState()).toBe(TimerState.IDLE);
 
+      sm.start();
       sm.stop(); // Back to STOPPED
 
-      // STOPPED -> STOPPED (same state)
-      expect(sm.stop()).toBe(true);
+      // STOPPED -> STOPPED should be rejected
+      expect(sm.stop()).toBe(false);
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
     });
   });
 
-  describe('Invalid State Detection and Logging', () => {
-    it('should detect and log invalid state values', () => {
-      // This test specifically targets lines 40-47 by making Object.values return empty array
-      // This forces the validation if (!Object.values(TimerState).includes(newState)) to be true
-      // thereby executing the logger.logValidationError call and return false
-
-      let validationCalled = false;
-
-      const sm = StateMachine(); // Create state machine
-
-      // Use vi.spyOn instead of direct manipulation
-      vi.spyOn(Object, 'values').mockImplementation((obj: unknown) => {
-        if (obj === TimerState && !validationCalled) {
-          validationCalled = true;
-          return []; // Return empty array, making RUNNING state invalid
-        }
-        // Call original implementation for other objects
-        return Object.getOwnPropertyNames(obj as Record<string, unknown>).map(
-          key => (obj as Record<string, unknown>)[key]
-        );
-      });
-
-      // Try to transition to RUNNING - should fail validation (line 39)
-      // This will execute lines 40-47: logValidationError call and return false
-      const result = sm.start();
-
-      // Verify the validation failed and returned false (line 46)
-      expect(result).toBe(false);
-
-      // Verify state remained unchanged due to validation failure
-      expect(sm.getCurrentState()).toBe(TimerState.IDLE);
-
-      // Verify our override was actually called
-      expect(validationCalled).toBe(true);
-    });
-  });
-
   describe('Invalid State Transition Detection', () => {
-    it('should detect and log invalid state transitions', () => {
-      // Another approach: test the validation by manipulating the valid transitions
-      const sm = StateMachine();
-
-      // Start to get to RUNNING state
-      sm.start();
-
-      // Mock the includes method to simulate invalid transition
-      let validationTriggered = false;
-
-      vi.spyOn(Array.prototype, 'includes').mockImplementation(function (this: unknown[], searchElement: unknown) {
-        // For the validTransitions check in isValidTransition
-        if (this.length === 3 && searchElement === TimerState.STOPPED && !validationTriggered) {
-          validationTriggered = true;
-          return false; // Make RUNNING->STOPPED appear invalid
-        }
-        // Call original implementation
-        return this.indexOf(searchElement) !== -1;
-      });
-
-      // Try to stop - should fail validation and log error
-      const result = sm.stop();
-
-      expect(result).toBe(false);
-      expect(validationTriggered).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.RUNNING);
-    });
-
     it('should reject invalid state transitions correctly', () => {
       // Test the validation logic directly to understand what should be invalid
       const sm = StateMachine();
@@ -910,6 +860,7 @@ describe('StateMachine', () => {
       // STOPPED -> PAUSED (stopped can only go to IDLE or STOPPED)
 
       // Get to STOPPED state first
+      sm.start();
       sm.stop();
       expect(sm.getCurrentState()).toBe(TimerState.STOPPED);
 
@@ -927,37 +878,32 @@ describe('StateMachine', () => {
       expect(sm.resume()).toBe(false); // IDLE -> RUNNING is invalid (resume only works from PAUSED)
     });
 
-    it('should handle transition validation edge cases', () => {
-      // Most direct approach: manipulate the validTransitions lookup
+    it('should allow start only when the machine is idle', () => {
       const sm = StateMachine();
 
-      // Start to get to RUNNING
-      sm.start();
+      expect(sm.start()).toBe(true); // IDLE -> RUNNING
+      expect(sm.start()).toBe(false); // RUNNING -> RUNNING should fail
 
-      let transitionBlocked = false;
+      expect(sm.pause()).toBe(true);
+      expect(sm.start()).toBe(false); // PAUSED -> RUNNING via start should fail
 
-      // We'll mock the includes method more precisely using vi.spyOn
-      vi.spyOn(Array.prototype, 'includes').mockImplementation(function (this: unknown[], searchElement: unknown) {
-        // Target the specific call for RUNNING state transitions
-        if (
-          this.length === 3 &&
-          this[0] === TimerState.PAUSED &&
-          searchElement === TimerState.IDLE &&
-          !transitionBlocked
-        ) {
-          transitionBlocked = true;
-          return false; // Block RUNNING -> IDLE transition
-        }
-        // Call original implementation
-        return this.indexOf(searchElement) !== -1;
-      });
+      expect(sm.reset()).toBe(true);
+      expect(sm.start()).toBe(true); // Back to IDLE -> RUNNING
+    });
 
-      // Try reset which should go RUNNING -> IDLE
-      const result = sm.reset();
+    it('should allow resume only when the machine is paused', () => {
+      const sm = StateMachine();
 
-      expect(result).toBe(false);
-      expect(transitionBlocked).toBe(true);
-      expect(sm.getCurrentState()).toBe(TimerState.RUNNING);
+      expect(sm.resume()).toBe(false); // IDLE -> RUNNING via resume should fail
+
+      expect(sm.start()).toBe(true);
+      expect(sm.resume()).toBe(false); // RUNNING -> RUNNING via resume should fail
+
+      expect(sm.pause()).toBe(true);
+      expect(sm.resume()).toBe(true); // PAUSED -> RUNNING
+
+      expect(sm.stop()).toBe(true);
+      expect(sm.resume()).toBe(false); // STOPPED -> RUNNING via resume should fail
     });
   });
 
@@ -1003,73 +949,6 @@ describe('StateMachine', () => {
         expect(mockOnStateChange).toHaveBeenCalledWith(TimerState.RUNNING);
         expect(sm.getCurrentState()).toBe(TimerState.RUNNING);
       });
-    });
-
-    it('should handle undefined transition validation safely', () => {
-      // Test line 103: validTransitions[from]?.includes(to) ?? false
-      // We need to test when validTransitions[from] is undefined
-
-      const sm = StateMachine();
-
-      // Start first to get a valid state machine
-      sm.start();
-
-      let undefinedAccessTriggered = false;
-
-      // Override hasOwnProperty to simulate missing property using vi.spyOn
-      vi.spyOn(Object.prototype, 'hasOwnProperty').mockImplementation(function (
-        this: Record<string, unknown>,
-        prop: string | number | symbol
-      ) {
-        // If this is checking for a TimerState in validTransitions and we haven't triggered yet
-        if (typeof prop === 'string' && prop.includes('RUNNING') && !undefinedAccessTriggered) {
-          undefinedAccessTriggered = true;
-          return false; // Make it seem like the property doesn't exist
-        }
-        // Call original implementation for other cases
-        return Object.prototype.hasOwnProperty.call(this, prop);
-      });
-
-      // Try a transition - this should hit the ?? false branch
-      sm.pause();
-
-      // The transition might still work due to other mechanisms, but we tested the branch
-    });
-
-    it('should validate transition logic with edge cases', () => {
-      // Test line 103: validTransitions[from]?.includes(to) ?? false
-      // We'll test this by simulating what isValidTransition does internally
-
-      // Create the same validTransitions object as in the code
-      const validTransitions: Record<string, string[]> = {
-        [TimerState.IDLE]: [TimerState.RUNNING, TimerState.IDLE, TimerState.STOPPED],
-        [TimerState.RUNNING]: [TimerState.PAUSED, TimerState.STOPPED, TimerState.IDLE],
-        [TimerState.PAUSED]: [TimerState.RUNNING, TimerState.STOPPED, TimerState.IDLE],
-        [TimerState.STOPPED]: [TimerState.IDLE, TimerState.STOPPED],
-      };
-
-      // Test the exact logic used in line 103
-      // Valid case - should NOT trigger ?? false (normal includes() result)
-      const validResult = validTransitions[TimerState.IDLE]?.includes(TimerState.RUNNING) ?? false;
-      expect(validResult).toBe(true);
-
-      // Invalid 'from' state - should trigger ?? false branch
-      const invalidFromResult =
-        validTransitions['NONEXISTENT' as keyof typeof validTransitions]?.includes(TimerState.RUNNING) ?? false;
-      expect(invalidFromResult).toBe(false); // This tests the ?? false branch
-
-      // Invalid 'to' state with valid 'from' - should NOT trigger ?? false (includes() returns false)
-      const invalidToResult = validTransitions[TimerState.IDLE]?.includes('NONEXISTENT' as TimerState) ?? false;
-      expect(invalidToResult).toBe(false);
-
-      // Test with completely undefined object - should trigger ?? false
-      const undefinedObjectResult = (undefined as unknown as string[])?.includes?.(TimerState.RUNNING) ?? false;
-      expect(undefinedObjectResult).toBe(false);
-
-      // Additional test: property access on undefined should trigger ?? false
-      const undefinedPropertyResult =
-        validTransitions[undefined as unknown as keyof typeof validTransitions]?.includes(TimerState.RUNNING) ?? false;
-      expect(undefinedPropertyResult).toBe(false);
     });
 
     it('should handle both Error and non-Error exception types', () => {

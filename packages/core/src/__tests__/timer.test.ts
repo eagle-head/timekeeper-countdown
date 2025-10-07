@@ -344,6 +344,33 @@ describe('Timer - Happy Path', () => {
       expect(timer.getTotalSeconds()).toBe(30);
     });
 
+    it('should sanitize initial value and synchronize total seconds', () => {
+      const events = {
+        onTick: vi.fn(),
+        onComplete: vi.fn(),
+        onError: vi.fn(),
+      };
+
+      const timer = Timer(10, events);
+
+      timer.setInitialValue(-5);
+
+      expect(timer.getInitialValue()).toBe(0);
+      expect(timer.getTotalSeconds()).toBe(0);
+
+      timer.setInitialValue(42.9);
+
+      expect(timer.getInitialValue()).toBe(42);
+      expect(timer.getTotalSeconds()).toBe(42);
+
+      const oversizedSeconds = Number.MAX_SAFE_INTEGER + 1000;
+
+      timer.setInitialValue(oversizedSeconds);
+
+      expect(timer.getInitialValue()).toBe(Number.MAX_SAFE_INTEGER);
+      expect(timer.getTotalSeconds()).toBe(Number.MAX_SAFE_INTEGER);
+    });
+
     it('should return early when startTimestamp is null during tick', () => {
       const events = {
         onTick: vi.fn(),

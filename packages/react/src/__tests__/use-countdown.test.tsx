@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCountdown } from '../use-countdown';
-import { createFakeTimeProvider } from '@timekeeper-countdown/core/testing';
+import type { UseCountdownControls } from '../use-countdown';
+import { createFakeTimeProvider } from '@timekeeper-countdown/core/testing-utils';
 import { TimerState, CountdownEngine } from '@timekeeper-countdown/core';
+import type { CountdownSnapshot, CountdownEngineOptions, CountdownEngineInstance } from '@timekeeper-countdown/core';
+import * as Core from '@timekeeper-countdown/core';
 
 const advanceTime = (ms: number, options: { tickMs?: number } = {}) => {
   const { tickMs = ms } = options;
@@ -129,11 +132,137 @@ describe('useCountdown', () => {
     expect(result.current.totalSeconds).toBe(5);
 
     act(() => {
+      expect(result.current.start()).toBe(true);
+    });
+
+    await act(async () => {});
+    expect(result.current.isRunning).toBe(true);
+
+    act(() => {
       expect(result.current.stop()).toBe(true);
     });
 
     await act(async () => {});
     expect(result.current.totalSeconds).toBe(0);
     expect(result.current.isCompleted).toBe(true);
+  });
+
+  it('should return fallback values after teardown while keeping handlers wired', async () => {
+    const onSnapshot = vi.fn();
+    const onStateChange = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useCountdown(3, {
+        onSnapshot,
+        onStateChange,
+        tickIntervalMs: 10,
+      })
+    );
+
+    await act(async () => {});
+
+    act(() => {
+      expect(result.current.start()).toBe(true);
+    });
+
+    await act(async () => {});
+
+    expect(onSnapshot).toHaveBeenCalled();
+    expect(onStateChange).toHaveBeenCalledWith(
+      TimerState.RUNNING,
+      expect.objectContaining({ state: TimerState.RUNNING })
+    );
+
+    const controls: UseCountdownControls = { ...result.current };
+
+    act(() => {
+      unmount();
+    });
+
+    expect(controls.start()).toBe(false);
+    expect(controls.pause()).toBe(false);
+    expect(controls.resume()).toBe(false);
+    expect(controls.stop()).toBe(false);
+    expect(controls.reset()).toBe(false);
+    expect(controls.setSeconds(42)).toBeUndefined();
+  });
+
+  it('should forward errors to the provided handler', async () => {
+    const onError = vi.fn();
+    const snapshot: CountdownSnapshot = {
+      initialSeconds: 5,
+      totalSeconds: 5,
+      parts: {
+        years: 0,
+        weeks: 0,
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: 5,
+        totalDays: 0,
+        totalHours: 0,
+        totalMinutes: 0,
+      },
+      state: TimerState.IDLE,
+      isRunning: false,
+      isCompleted: false,
+    };
+
+    const engineOptionsCalls: Array<CountdownEngineOptions | undefined> = [];
+    const engineSpy = vi.spyOn(Core, 'CountdownEngine');
+
+    const createEngineInstance = (): CountdownEngineInstance => {
+      const unsubscribe = vi.fn();
+      return {
+        start: vi.fn(() => true),
+        pause: vi.fn(() => true),
+        resume: vi.fn(() => true),
+        reset: vi.fn(() => true),
+        stop: vi.fn(() => true),
+        setSeconds: vi.fn(),
+        getSnapshot: vi.fn(() => snapshot),
+        subscribe: vi.fn(listener => {
+          listener(snapshot);
+          return { unsubscribe };
+        }),
+        destroy: vi.fn(),
+      };
+    };
+
+    engineSpy.mockImplementation((initialSeconds: number, options?: CountdownEngineOptions) => {
+      engineOptionsCalls.push(options);
+      return createEngineInstance();
+    });
+
+    let unmount: (() => void) | undefined;
+
+    try {
+      ({ unmount } = renderHook(() => useCountdown(5, { onError })));
+
+      await act(async () => {});
+
+      expect(onError).not.toHaveBeenCalled();
+
+      let dispatcher: CountdownEngineOptions['onError'] | undefined;
+      for (let index = engineOptionsCalls.length - 1; index >= 0; index -= 1) {
+        const candidate = engineOptionsCalls[index];
+        if (candidate && typeof candidate.onError === 'function') {
+          dispatcher = candidate.onError;
+          break;
+        }
+      }
+
+      expect(dispatcher).toBeDefined();
+
+      const error = new Error('engine failure');
+      act(() => {
+        dispatcher?.(error);
+      });
+
+      expect(onError).toHaveBeenCalledWith(error);
+    } finally {
+      engineSpy.mockRestore();
+      unmount?.();
+    }
   });
 });

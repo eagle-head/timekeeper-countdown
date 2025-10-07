@@ -46,6 +46,7 @@ export function createSafeTimeProvider(): TimeProvider {
           return;
         }
       }
+
       throw new Error('performance.now() not available or invalid');
     } catch {
       currentProvider = fallbackProvider;

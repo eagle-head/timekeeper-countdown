@@ -7,6 +7,30 @@ export const TimerState = Object.freeze({
 
 export type TimerState = (typeof TimerState)[keyof typeof TimerState];
 
+type TransitionAction = 'start' | 'resume' | 'pause' | 'reset' | 'stop' | 'complete';
+
+type TransitionMap = Record<TimerState, Partial<Record<TransitionAction, TimerState>>>;
+
+const VALID_TRANSITIONS: TransitionMap = {
+  [TimerState.IDLE]: {
+    start: TimerState.RUNNING,
+  },
+  [TimerState.RUNNING]: {
+    pause: TimerState.PAUSED,
+    reset: TimerState.IDLE,
+    stop: TimerState.STOPPED,
+    complete: TimerState.STOPPED,
+  },
+  [TimerState.PAUSED]: {
+    resume: TimerState.RUNNING,
+    reset: TimerState.IDLE,
+    stop: TimerState.STOPPED,
+  },
+  [TimerState.STOPPED]: {
+    reset: TimerState.IDLE,
+  },
+} as const;
+
 interface StateEvents {
   onStateChange?: (to: TimerState) => void;
 }
@@ -40,27 +64,18 @@ export function StateMachine(events?: StateEvents): StateMachineInstance {
 
   let currentState: TimerState = TimerState.IDLE;
 
-  function transitionTo(newState: TimerState): boolean {
-    // Defensive validation of state
-    if (!Object.values(TimerState).includes(newState)) {
+  function performTransition(action: TransitionAction): boolean {
+    const nextState = VALID_TRANSITIONS[currentState]?.[action];
+
+    if (!nextState) {
       return false;
     }
 
-    // If trying to transition to same state, do nothing
-    if (currentState === newState) {
-      return true;
-    }
-
-    // Check if transition is valid (excluding transition to same state)
-    if (!isValidTransition(currentState, newState)) {
-      return false;
-    }
-
-    currentState = newState;
+    currentState = nextState;
 
     // Safe callback call
     try {
-      events?.onStateChange?.(newState);
+      events?.onStateChange?.(nextState);
     } catch {
       // Silently ignore callback errors
     }
@@ -68,55 +83,36 @@ export function StateMachine(events?: StateEvents): StateMachineInstance {
     return true;
   }
 
-  function isValidTransition(from: TimerState, to: TimerState): boolean {
-    const validTransitions: Record<TimerState, TimerState[]> = {
-      [TimerState.IDLE]: [TimerState.RUNNING, TimerState.IDLE, TimerState.STOPPED],
-      [TimerState.RUNNING]: [TimerState.PAUSED, TimerState.STOPPED, TimerState.IDLE],
-      [TimerState.PAUSED]: [TimerState.RUNNING, TimerState.STOPPED, TimerState.IDLE],
-      [TimerState.STOPPED]: [TimerState.IDLE, TimerState.STOPPED],
-    };
-
-    return validTransitions[from].includes(to);
-  }
-
   function start(): boolean {
-    if (currentState !== TimerState.IDLE) {
-      return false;
-    }
-
-    return transitionTo(TimerState.RUNNING);
+    return performTransition('start');
   }
 
   function resume(): boolean {
-    if (currentState !== TimerState.PAUSED) {
-      return false;
-    }
-
-    return transitionTo(TimerState.RUNNING);
+    return performTransition('resume');
   }
 
   function pause(): boolean {
-    if (currentState !== TimerState.RUNNING) {
-      return false;
-    }
-
-    return transitionTo(TimerState.PAUSED);
+    return performTransition('pause');
   }
 
   function reset(): boolean {
-    return transitionTo(TimerState.IDLE);
+    return performTransition('reset');
   }
 
   function stop(): boolean {
-    return transitionTo(TimerState.STOPPED);
+    return performTransition('stop');
   }
 
   function complete(): boolean {
-    return transitionTo(TimerState.STOPPED);
+    return performTransition('complete');
   }
 
   function destroy(): void {
-    transitionTo(TimerState.STOPPED);
+    if (currentState === TimerState.IDLE || currentState === TimerState.STOPPED) {
+      return;
+    }
+
+    performTransition('stop');
   }
 
   return {
@@ -127,9 +123,9 @@ export function StateMachine(events?: StateEvents): StateMachineInstance {
     stop,
     complete,
     getCurrentState: () => currentState,
-    canStart: () => currentState === TimerState.IDLE,
-    canResume: () => currentState === TimerState.PAUSED,
-    canPause: () => currentState === TimerState.RUNNING,
+    canStart: () => Boolean(VALID_TRANSITIONS[currentState]?.start),
+    canResume: () => Boolean(VALID_TRANSITIONS[currentState]?.resume),
+    canPause: () => Boolean(VALID_TRANSITIONS[currentState]?.pause),
     isRunning: () => currentState === TimerState.RUNNING,
     destroy,
   };
