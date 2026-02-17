@@ -1,5 +1,11 @@
 # @timekeeper-countdown/core
 
+## 0.1.2
+
+### Patch Changes
+
+- 0e60b59: Fix formatMinutes to return decomposed value (0-59) instead of total minutes
+
 ## 0.1.1
 
 ### Patch Changes
