@@ -1,5 +1,11 @@
 # @timekeeper-countdown/core
 
+## 0.1.3
+
+### Patch Changes
+
+- ae97ee8: Sync core and react package versions
+
 ## 0.1.2
 
 ### Patch Changes
