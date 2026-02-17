@@ -29,15 +29,18 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./format": {
       "types": "./dist/format.d.ts",
-      "import": "./dist/format.js"
+      "import": "./dist/format.js",
+      "require": "./dist/format.cjs"
     },
     "./testing-utils": {
       "types": "./dist/testing-utils.d.ts",
-      "import": "./dist/testing-utils.js"
+      "import": "./dist/testing-utils.js",
+      "require": "./dist/testing-utils.cjs"
     }
   },
   "files": [
