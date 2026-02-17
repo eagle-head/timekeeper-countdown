@@ -186,7 +186,7 @@ describe('Countdown - Happy Path', () => {
       const countdown = Countdown(93784); // 1 day, 2 hours, 3 minutes, 4 seconds
 
       expect(countdown.getSeconds()).toBe('04');
-      expect(countdown.getMinutes()).toBe('1563');
+      expect(countdown.getMinutes()).toBe('03'); // 1563 total min % 60 = 3
       expect(countdown.getHours()).toBe('02');
       expect(countdown.getDays()).toBe('01');
       expect(countdown.getWeeks()).toBe('00');
@@ -217,7 +217,7 @@ describe('Countdown - Happy Path', () => {
       expect(countdown.getYears()).toBe('01');
       expect(countdown.getDays()).toBe('01'); // 365 days = 1 year + 1 extra day due to modulo calculation
       expect(countdown.getHours()).toBe('00');
-      expect(countdown.getMinutes()).toBe('525600');
+      expect(countdown.getMinutes()).toBe('00'); // 525600 total min % 60 = 0
       expect(countdown.getSeconds()).toBe('00');
     });
 
@@ -390,7 +390,7 @@ describe('Countdown - Happy Path', () => {
     it('should handle large time values correctly', () => {
       const countdown = Countdown(3661); // 1 hour, 1 minute, 1 second
 
-      expect(countdown.getMinutes()).toBe('61');
+      expect(countdown.getMinutes()).toBe('01'); // 61 total min % 60 = 1
       expect(countdown.getSeconds()).toBe('01');
       expect(countdown.getHours()).toBe('01');
     });

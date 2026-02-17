@@ -1,6 +1,7 @@
 import type { CountdownSnapshot } from '../api/countdown-engine';
 import {
   SECONDS_PER_MINUTE,
+  MINUTES_PER_HOUR,
   SECONDS_PER_HOUR,
   SECONDS_PER_DAY,
   SECONDS_PER_WEEK,
@@ -52,8 +53,12 @@ function safeFormat(value: number, padLength = 2): string {
   }
 }
 
-function computeMinutes(seconds: number) {
+function computeTotalMinutes(seconds: number) {
   return Math.floor(seconds / SECONDS_PER_MINUTE);
+}
+
+function computeMinutes(seconds: number) {
+  return computeTotalMinutes(seconds) % MINUTES_PER_HOUR;
 }
 
 function computeHours(seconds: number) {
@@ -78,7 +83,7 @@ export function Formatter() {
   const formatTime = (target: FormatTarget) => {
     const safeSeconds = getSafeSeconds(target);
     return {
-      minutes: safeFormat(computeMinutes(safeSeconds)),
+      minutes: safeFormat(computeTotalMinutes(safeSeconds)),
       seconds: safeFormat(safeSeconds % SECONDS_PER_MINUTE),
     };
   };

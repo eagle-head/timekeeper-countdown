@@ -70,7 +70,7 @@ describe('Formatter', () => {
       expect(formatter.formatMinutes(59)).toBe('00');
       expect(formatter.formatMinutes(60)).toBe('01');
       expect(formatter.formatMinutes(125)).toBe('02');
-      expect(formatter.formatMinutes(3600)).toBe('60');
+      expect(formatter.formatMinutes(3600)).toBe('00'); // 60 min % 60 = 0
     });
 
     it('should handle edge cases', () => {
@@ -237,7 +237,7 @@ describe('Formatter', () => {
 
       expect(formatter.formatDays(totalSeconds)).toBe('01');
       expect(formatter.formatHours(totalSeconds)).toBe('02');
-      expect(formatter.formatMinutes(totalSeconds)).toBe('1563');
+      expect(formatter.formatMinutes(totalSeconds)).toBe('03'); // 1563 min % 60 = 3
       expect(formatter.formatSeconds(totalSeconds)).toBe('04');
     });
   });
@@ -350,7 +350,7 @@ describe('Formatter', () => {
 
     it('should support direct helper exports', () => {
       expect(formatTimeDirect(125)).toEqual({ minutes: '02', seconds: '05' });
-      expect(formatMinutesDirect(3600)).toBe('60');
+      expect(formatMinutesDirect(3600)).toBe('00'); // 60 min % 60 = 0
       expect(formatSecondsDirect(65)).toBe('05');
       expect(formatHoursDirect(90000)).toBe('01');
       expect(formatDaysDirect(172800)).toBe('02');
