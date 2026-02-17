@@ -1,5 +1,11 @@
 # @timekeeper-countdown/core
 
+## 0.1.4
+
+### Patch Changes
+
+- 1724e9b: Add dual CJS+ESM build output for Jest and CJS consumer compatibility
+
 ## 0.1.3
 
 ### Patch Changes
