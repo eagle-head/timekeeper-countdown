@@ -33,7 +33,7 @@
     "react": ">=17.0.0"
   },
   "dependencies": {
-    "@timekeeper-countdown/core": "^0.1.1"
+    "@timekeeper-countdown/core": "^0.1.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
