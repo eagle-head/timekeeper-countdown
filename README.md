@@ -7,18 +7,24 @@ Welcome to the monorepo for **Timekeeper Countdown**. The current public release
 | Package | Description | Status |
 | --- | --- | --- |
 | `@timekeeper-countdown/react` | React hook (`useCountdown`) that exposes the snapshot-driven timer API. | Stable / Published |
-| `@timekeeper-countdown/core` | Countdown engine, formatting helpers, testing utilities. Currently consumed internally by the React package. | Internal (public API under evaluation) |
+| `@timekeeper-countdown/core` | Countdown engine, formatting helpers, testing utilities. Powers the React hook and future framework adapters. | Stable / Published |
 
 Planned adapters (Angular, Vue, Svelte, vanilla) will reuse the same engine; documentation and APIs will expand as each becomes available.
 
 ## Docs
 
-The `docs/` folder contains the Docsify-powered site. It focuses on the React workflow today and outlines the roadmap for upcoming adapters. Run a static server and open `docs/index.html`, or publish the folder to GitHub Pages (a `.nojekyll` flag is included).
+The `docs/` folder contains the [VitePress](https://vitepress.dev/)-powered documentation site. Run the dev server locally:
+
+```bash
+npm run docs:dev
+```
+
+Or build for production with `npm run docs:build`. The site is deployed to GitHub Pages via CI.
 
 Useful entry points:
 
 - `docs/getting-started.md` – install & render your first React timer.
-- `docs/api-reference.md` – hook options, return types, helper modules.
+- `docs/react-integration.md` – hook API and usage patterns.
 - `docs/roadmap.md` – status and plans for additional adapters.
 
 ## Development

@@ -366,15 +366,9 @@ import type {
 
 ## Contributing
 
-Issues and pull requests are welcome. Please review the [repository guidelines](https://github.com/eagle-head/timekeeper-countdown/blob/main/AGENTS.md) for more details and run:
+We welcome contributions! Please read our [Contributing Guide](https://github.com/eagle-head/timekeeper-countdown/blob/main/CONTRIBUTING.md) to get started.
 
-```bash
-npm run lint --workspaces
-npm run test --workspaces
-npm run typecheck --workspaces
-```
-
-before submitting changes.
+By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/eagle-head/timekeeper-countdown/blob/main/CODE_OF_CONDUCT.md).
 
 ---
 

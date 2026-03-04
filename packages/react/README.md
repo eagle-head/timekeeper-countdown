@@ -236,13 +236,9 @@ function MultiStageTimer() {
 
 ## Contributing
 
-Bug reports and pull requests are welcome. Please read the [repository guidelines](https://github.com/eagle-head/timekeeper-countdown/blob/main/AGENTS.md) and check your work with:
+We welcome contributions! Please read our [Contributing Guide](https://github.com/eagle-head/timekeeper-countdown/blob/main/CONTRIBUTING.md) to get started.
 
-```bash
-npm run lint --workspaces
-npm run test --workspaces
-npm run typecheck --workspaces
-```
+By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/eagle-head/timekeeper-countdown/blob/main/CODE_OF_CONDUCT.md).
 
 ---
 

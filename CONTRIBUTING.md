@@ -132,5 +132,6 @@ npm run test --workspace @timekeeper-countdown/react
 - Use the **feature request** template for ideas and suggestions
 - **Search existing issues** before opening a new one
 - **One issue per bug or feature** — don't combine multiple topics
+- For **general questions** or help, use [GitHub Discussions](https://github.com/eagle-head/timekeeper-countdown/discussions)
 
 Thank you for helping make Timekeeper Countdown better!
