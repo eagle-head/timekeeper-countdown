@@ -1,6 +1,20 @@
 # Timekeeper Countdown ⏳
 
+[![npm](https://img.shields.io/npm/v/@timekeeper-countdown/react?label=react&color=blue)](https://www.npmjs.com/package/@timekeeper-countdown/react)
+[![npm](https://img.shields.io/npm/v/@timekeeper-countdown/core?label=core&color=blue)](https://www.npmjs.com/package/@timekeeper-countdown/core)
+[![CI](https://github.com/eagle-head/timekeeper-countdown/actions/workflows/ci.yml/badge.svg)](https://github.com/eagle-head/timekeeper-countdown/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Welcome to the monorepo for **Timekeeper Countdown**. The current public release ships the React hook package; the shared countdown engine lives alongside it and powers the hook as well as future adapters.
+
+## Why Timekeeper?
+
+Most countdown libraries either lock you into a framework or sacrifice precision for simplicity. Timekeeper ships a **zero-dependency engine** that any framework can wrap, plus a React hook that uses it today.
+
+- **Wall-clock precision** — tracks elapsed time via `performance.now`, not tick counting. Pausing and resuming never drifts.
+- **Snapshot-driven API** — every tick delivers an immutable snapshot with pre-calculated `parts` (hours, minutes, seconds) and boolean helpers (`isRunning`, `isPaused`). No manual math.
+- **Testable by design** — `@timekeeper-countdown/core/testing-utils` ships a fake time provider so you can unit-test countdown logic without `setTimeout` hacks.
+- **Framework-agnostic core** — the engine has zero runtime dependencies. React today, Angular/Vue/Svelte adapters coming.
 
 ## Packages
 
