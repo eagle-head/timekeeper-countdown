@@ -42,15 +42,11 @@ function sanitizeSeconds(totalSeconds: number): number {
 }
 
 function safeFormat(value: number, padLength = 2): string {
-  try {
-    if (!Number.isFinite(value) || value < 0) {
-      return '0'.repeat(padLength);
-    }
-
-    return Math.floor(value).toString().padStart(padLength, '0');
-  } catch {
+  if (!Number.isFinite(value) || value < 0) {
     return '0'.repeat(padLength);
   }
+
+  return Math.floor(value).toString().padStart(padLength, '0');
 }
 
 function computeTotalMinutes(seconds: number) {
@@ -131,10 +127,44 @@ export function Formatter() {
 
 export const defaultFormatter = Formatter();
 
-export const formatTime = (target: FormatTarget) => defaultFormatter.formatTime(target);
-export const formatMinutes = (target: FormatTarget) => defaultFormatter.formatMinutes(target);
-export const formatSeconds = (target: FormatTarget) => defaultFormatter.formatSeconds(target);
-export const formatHours = (target: FormatTarget) => defaultFormatter.formatHours(target);
-export const formatDays = (target: FormatTarget) => defaultFormatter.formatDays(target);
-export const formatWeeks = (target: FormatTarget) => defaultFormatter.formatWeeks(target);
-export const formatYears = (target: FormatTarget) => defaultFormatter.formatYears(target);
+export function formatTime(target: number): { minutes: string; seconds: string };
+export function formatTime(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): { minutes: string; seconds: string };
+export function formatTime(target: FormatTarget): { minutes: string; seconds: string } {
+  return defaultFormatter.formatTime(target);
+}
+
+export function formatMinutes(target: number): string;
+export function formatMinutes(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatMinutes(target: FormatTarget): string {
+  return defaultFormatter.formatMinutes(target);
+}
+
+export function formatSeconds(target: number): string;
+export function formatSeconds(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatSeconds(target: FormatTarget): string {
+  return defaultFormatter.formatSeconds(target);
+}
+
+export function formatHours(target: number): string;
+export function formatHours(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatHours(target: FormatTarget): string {
+  return defaultFormatter.formatHours(target);
+}
+
+export function formatDays(target: number): string;
+export function formatDays(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatDays(target: FormatTarget): string {
+  return defaultFormatter.formatDays(target);
+}
+
+export function formatWeeks(target: number): string;
+export function formatWeeks(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatWeeks(target: FormatTarget): string {
+  return defaultFormatter.formatWeeks(target);
+}
+
+export function formatYears(target: number): string;
+export function formatYears(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): string;
+export function formatYears(target: FormatTarget): string {
+  return defaultFormatter.formatYears(target);
+}

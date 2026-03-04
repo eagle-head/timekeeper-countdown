@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CountdownEngine,
+  buildSnapshot,
   type CountdownEngineInstance,
   type CountdownEngineOptions,
   type CountdownSnapshot,
@@ -32,26 +33,13 @@ export interface UseCountdownResult extends UseCountdownControls {
   isCompleted: boolean;
 }
 
-const buildInitialSnapshot = (
-  initialSeconds: number,
-  options: Pick<UseCountdownOptions, 'tickIntervalMs' | 'timeProvider'>
-): CountdownSnapshot => {
-  const engine = CountdownEngine(initialSeconds, {
-    tickIntervalMs: options.tickIntervalMs,
-    timeProvider: options.timeProvider,
-  });
-  const snapshot = engine.getSnapshot();
-  engine.destroy();
-  return snapshot;
-};
-
 export function useCountdown(initialSeconds: number, options: UseCountdownOptions = {}): UseCountdownResult {
   const { autoStart = false, tickIntervalMs, timeProvider, onSnapshot, onStateChange, onError } = options;
 
   const handlersRef = useRef({ onSnapshot, onStateChange, onError });
   const engineRef = useRef<CountdownEngineInstance | null>(null);
   const [snapshot, setSnapshot] = useState<CountdownSnapshot>(() =>
-    buildInitialSnapshot(initialSeconds, { tickIntervalMs, timeProvider })
+    buildSnapshot(initialSeconds, initialSeconds, TimerState.IDLE)
   );
 
   useEffect(() => {
@@ -111,7 +99,7 @@ export function useCountdown(initialSeconds: number, options: UseCountdownOption
   const pause = useCallback(() => invoke(engine => engine.pause(), false), [invoke]);
   const resume = useCallback(() => invoke(engine => engine.resume(), false), [invoke]);
   const stop = useCallback(() => invoke(engine => engine.stop(), false), [invoke]);
-  const setSeconds = useCallback((value: number) => invoke(engine => engine.setSeconds(value), undefined), [invoke]);
+  const setSeconds = useCallback((value: number): void => { invoke(engine => engine.setSeconds(value), undefined); }, [invoke]);
   const reset = useCallback(
     (nextInitialSeconds?: number) => invoke(engine => engine.reset(nextInitialSeconds), false),
     [invoke]

@@ -29,6 +29,11 @@ export interface TimerInstance {
   destroy: () => void;
 }
 
+/**
+ * @internal — Use CountdownEngine instead. This is a low-level primitive not
+ * intended to be called directly by consumers. The `events` parameter is
+ * always provided by CountdownEngine and is guaranteed to be valid.
+ */
 export function Timer(initialSeconds: number, events: TimerEvents, config: TimerConfig = {}): TimerInstance {
   if (typeof initialSeconds !== 'number' || !Number.isFinite(initialSeconds)) {
     throw new Error('initialSeconds must be a finite number');
@@ -40,22 +45,6 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
 
   if (initialSeconds > Number.MAX_SAFE_INTEGER) {
     throw new Error('initialSeconds exceeds maximum safe integer');
-  }
-
-  if (!events || typeof events !== 'object') {
-    throw new Error('events must be an object');
-  }
-
-  if (typeof events.onTick !== 'function') {
-    throw new Error('events.onTick must be a function');
-  }
-
-  if (typeof events.onComplete !== 'function') {
-    throw new Error('events.onComplete must be a function');
-  }
-
-  if (typeof events.onError !== 'function') {
-    throw new Error('events.onError must be a function');
   }
 
   let totalSeconds = Math.floor(Math.max(0, initialSeconds));

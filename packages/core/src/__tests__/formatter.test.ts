@@ -270,38 +270,6 @@ describe('Formatter', () => {
       expect(formatter.formatYears(hugeNumber)).toBeDefined();
     });
 
-    it('should test toString that throws error to cover catch block', () => {
-      // Para cobrir o catch block, precisamos fazer toString() lançar um erro
-      // Vamos usar um spy para modificar o comportamento do Math.floor temporariamente
-      const originalFloor = Math.floor;
-      const originalToString = Number.prototype.toString;
-
-      // Fazer toString lançar erro
-      Number.prototype.toString = function () {
-        if (this.valueOf() === 42) {
-          throw new Error('Force catch block');
-        }
-        return originalToString.call(this);
-      };
-
-      // Fazer Math.floor retornar nosso valor especial
-      Math.floor = function (value: number) {
-        if (value === 0.7) {
-          // valor especial que vamos usar
-          return 42;
-        }
-        return originalFloor(value);
-      };
-
-      // Testar - deve cair no catch e retornar '00'
-      const result = formatter.formatTime(0.7);
-      expect(result.seconds).toBe('00');
-
-      // Restaurar comportamento original
-      Math.floor = originalFloor;
-      Number.prototype.toString = originalToString;
-    });
-
     it('should cover the !Number.isFinite branch by manipulating Math.floor', () => {
       // Para testar !Number.isFinite(value) no safeFormat
       const originalFloor = Math.floor;
