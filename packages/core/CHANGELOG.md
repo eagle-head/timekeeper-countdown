@@ -1,5 +1,11 @@
 # @timekeeper-countdown/core
 
+## 0.2.0
+
+### Minor Changes
+
+- Rename onUpdate to onSnapshot, add onError callback, export Countdown class
+
 ## 0.1.4
 
 ### Patch Changes
