@@ -1,8 +1,0 @@
-- [Home](/)
-- [Getting Started](getting-started.md)
-- [React Integration](react-integration.md)
-- [API Reference](api-reference.md)
-- [Examples](examples.md)
-- [Roadmap](roadmap.md)
-- [Changelog](CHANGELOG.md)
-- [FAQ](faq.md)

@@ -19,7 +19,10 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "npm run build --workspaces && changeset publish",
-    "prepublishOnly": "npm run build --workspaces && npm run test --workspaces && npm run typecheck --workspaces"
+    "prepublishOnly": "npm run build --workspaces && npm run test --workspaces && npm run typecheck --workspaces",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
@@ -33,6 +36,7 @@
     "tsup": "^8.0.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.38.0",
+    "vitepress": "^1.6.4",
     "vitest": "^1.2.2"
   },
   "engines": {

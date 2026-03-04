@@ -1,6 +1,25 @@
-# Timekeeper Countdown Documentation
+---
+layout: home
 
-Welcome! These docs focus on the React hook (`@timekeeper-countdown/react`) that is available today. The hook ships with the shared countdown engine, so everything you learn here transfers to the upcoming Angular, Vue, Svelte, and vanilla adapters that are currently on the roadmap.
+hero:
+  name: Timekeeper Countdown
+  tagline: Countdown timer library for React and beyond
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /getting-started
+    - theme: alt
+      text: API Reference
+      link: /api-reference
+
+features:
+  - title: React Hook
+    details: useCountdown hook with full TypeScript support and automatic lifecycle management.
+  - title: Core Engine
+    details: Framework-agnostic countdown engine for Node.js, vanilla JS, or any runtime.
+  - title: Testing Utilities
+    details: Built-in fake clocks and snapshot factories for deterministic timer testing.
+---
 
 ## What ships today?
 
@@ -9,14 +28,12 @@ Welcome! These docs focus on the React hook (`@timekeeper-countdown/react`) that
 
 ## What is coming next?
 
-The core engine already powers the React package. We are stabilising additional adapters so each framework gets a native experience with the same behaviour:
+The core engine already powers the React package. Additional adapters are being stabilised so each framework gets a native experience with the same behaviour:
 
 - `@timekeeper-countdown/angular`
 - `@timekeeper-countdown/vue`
 - `@timekeeper-countdown/svelte`
 - Lightweight vanilla bindings for direct DOM use
-
-As these adapters land, guides for them will appear alongside the React content without breaking changes to existing consumers.
 
 ## Documentation Map
 
@@ -28,4 +45,4 @@ As these adapters land, guides for them will appear alongside the React content 
 - [Roadmap & Future Adapters](roadmap.md) – overview of what is planned beyond React.
 - [FAQ](faq.md) – answers to common questions.
 
-Looking for the source? Everything lives in the [`packages/`](../packages) directory. Contributions are welcome!
+Looking for the source? Everything lives in the [`packages/`](https://github.com/eagle-head/timekeeper-countdown/tree/main/packages) directory. Contributions are welcome!
