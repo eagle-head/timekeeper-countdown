@@ -7,7 +7,7 @@ Today the public API centres on the React hook. The shared countdown engine alre
 | Package                         | Status         | Notes                                                                     |
 | ------------------------------- | -------------- | ------------------------------------------------------------------------- |
 | `@timekeeper-countdown/angular` | In research    | Native Angular service + directives that mirror the React hook semantics. |
-| `@timekeeper-countdown/vue`     | In development | Vue composable with the same snapshot contract.                           |
+| `@timekeeper-countdown/vue`     | Planned        | Vue composable with the same snapshot contract.                           |
 | `@timekeeper-countdown/svelte`  | Planned        | Svelte store wrapper exposing the familiar state machine.                 |
 | `@timekeeper-countdown/vanilla` | Planned        | Lightweight helper for direct DOM usage without a framework.              |
 
