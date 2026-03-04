@@ -118,6 +118,76 @@ it('advances when the fake clock moves', async () => {
 });
 ```
 
+> **Note:** When testing with `renderHook` or custom render functions that use Vitest fake timers (`vi.useFakeTimers()`), you may need to advance both the fake time provider AND Vitest's internal timers. The fake provider controls **what time the engine reads**; Vitest fake timers control **when `setInterval` callbacks fire**.
+>
+> ```ts
+> vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] });
+> const fake = createFakeTimeProvider({ startMs: 0 });
+>
+> // Inside your test:
+> act(() => {
+>   fake.advance(1000); // engine reads 1s elapsed
+>   vi.advanceTimersByTime(1000); // triggers setInterval callbacks
+> });
+> ```
+
+## Testing with Core Utilities
+
+### Snapshot fabrication for unit tests
+
+```ts
+import {
+  buildSnapshot,
+  buildSnapshotSequence,
+  assertSnapshotState,
+  assertSnapshotCompleted,
+  assertRemainingSeconds,
+  TimerState,
+} from '@timekeeper-countdown/core/testing-utils';
+
+// Create an isolated snapshot
+const idle = buildSnapshot({ totalSeconds: 60 });
+assertSnapshotState(idle, TimerState.IDLE);
+
+// Create a completed snapshot
+const done = buildSnapshot({ totalSeconds: 0, state: TimerState.STOPPED });
+assertSnapshotCompleted(done);
+
+// Verify with tolerance
+const mid = buildSnapshot({ totalSeconds: 30, state: TimerState.RUNNING });
+assertRemainingSeconds(mid, 30);
+
+// Generate a sequence
+const sequence = buildSnapshotSequence({ totalSeconds: 10, step: 5, count: 3 });
+// [10s RUNNING, 5s RUNNING, 0s STOPPED]
+```
+
+### Deterministic test with engine (plain core, no React)
+
+```ts
+import { CountdownEngine } from '@timekeeper-countdown/core';
+import {
+  createFakeTimeProvider,
+  toTimeProvider,
+  assertRemainingSeconds,
+  assertSnapshotCompleted,
+  TimerState,
+} from '@timekeeper-countdown/core/testing-utils';
+
+const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 });
+const engine = CountdownEngine(5, {
+  timeProvider: toTimeProvider(fake),
+  tickIntervalMs: 5,
+});
+
+engine.start();
+fake.advance(3000); // advance 3 seconds
+assertRemainingSeconds(engine.getSnapshot(), 2);
+
+fake.advance(2000); // advance 2 more seconds
+assertSnapshotCompleted(engine.getSnapshot());
+```
+
 ## Coming Soon
 
 Adapters for Angular, Vue, Svelte, and a vanilla bundle are in development. As they land, this page will grow with side-by-side examples so you can port patterns across frameworks with minimal effort.

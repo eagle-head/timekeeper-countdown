@@ -28,7 +28,7 @@ Import helpers from `@timekeeper-countdown/core/format`, for example `formatTime
 
 ### 7. How do I write deterministic tests?
 
-Use `createFakeTimeProvider` from `@timekeeper-countdown/core/testing-utils` and pass it through the `timeProvider` option. You can then advance the fake clock inside your tests.
+Use `createFakeTimeProvider` from `@timekeeper-countdown/core/testing-utils` and pass it through the `timeProvider` option via `toTimeProvider()`. You can then advance the fake clock inside your tests. The package also provides `buildSnapshot` and `buildSnapshotSequence` to fabricate snapshots without running an engine, plus `assertSnapshotState`, `assertSnapshotCompleted`, and `assertRemainingSeconds` for declarative assertions. See the [API Reference](api-reference.md#testing-utilities-timekeeper-countdowncoretesting-utils) for full details.
 
 ### 8. Will there be official Angular/Vue/Svelte adapters?
 

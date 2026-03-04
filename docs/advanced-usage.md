@@ -121,3 +121,29 @@ const countdown = useCountdown(120, {
 ```
 
 Returning to `IDLE` after an error keeps the timer safe to restart.
+
+## Accessible Countdown
+
+Screen readers benefit from live regions that announce time changes. Wrap your display in an element with `role="timer"` and `aria-live="polite"` to avoid overwhelming announcements.
+
+```tsx
+import { useCountdown } from '@timekeeper-countdown/react';
+import { formatTime } from '@timekeeper-countdown/core/format';
+
+function AccessibleTimer() {
+  const countdown = useCountdown(300, { autoStart: true });
+  const { minutes, seconds } = formatTime(countdown.snapshot);
+
+  return (
+    <div role="timer" aria-live="polite" aria-atomic="true">
+      <span aria-label={`${minutes} minutes and ${seconds} seconds remaining`}>
+        {minutes}:{seconds}
+      </span>
+    </div>
+  );
+}
+```
+
+- `role="timer"` identifies the element as a countdown for assistive technology.
+- `aria-live="polite"` announces changes without interrupting the current speech.
+- `aria-atomic="true"` ensures the entire region is read as a whole.
