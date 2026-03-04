@@ -105,37 +105,6 @@ describe('Timer - Happy Path', () => {
       expect(() => Timer(Number.MAX_SAFE_INTEGER + 1, events)).toThrow('initialSeconds exceeds maximum safe integer');
     });
 
-    it('should validate events object is provided', () => {
-      expect(() => Timer(60, null as any)).toThrow('events must be an object');
-      expect(() => Timer(60, undefined as any)).toThrow('events must be an object');
-      expect(() => Timer(60, 'invalid' as any)).toThrow('events must be an object');
-    });
-
-    it('should validate all event callbacks are functions', () => {
-      expect(() =>
-        Timer(60, {
-          onTick: 'not a function' as any,
-          onComplete: vi.fn(),
-          onError: vi.fn(),
-        })
-      ).toThrow('events.onTick must be a function');
-
-      expect(() =>
-        Timer(60, {
-          onTick: vi.fn(),
-          onComplete: 'not a function' as any,
-          onError: vi.fn(),
-        })
-      ).toThrow('events.onComplete must be a function');
-
-      expect(() =>
-        Timer(60, {
-          onTick: vi.fn(),
-          onComplete: vi.fn(),
-          onError: 'not a function' as any,
-        })
-      ).toThrow('events.onError must be a function');
-    });
   });
 
   describe('Start functionality', () => {

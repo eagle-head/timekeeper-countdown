@@ -3,8 +3,9 @@ import { TimerState } from '../state/state-machine';
 import { Formatter } from '../format/formatter';
 
 export interface CountdownOptions {
-  onUpdate?: (minutes: string, seconds: string) => void;
+  onSnapshot?: (snapshot: CountdownSnapshot) => void;
   onStateChange?: (state: TimerState) => void;
+  onError?: (error: Error) => void;
 }
 
 export interface CountdownInstance {
@@ -25,30 +26,38 @@ export interface CountdownInstance {
 }
 
 export function Countdown(initialSeconds: number, options: CountdownOptions = {}): CountdownInstance {
-  const { onUpdate, onStateChange } = options;
+  const { onSnapshot, onStateChange, onError } = options;
 
-  if (onUpdate !== undefined && typeof onUpdate !== 'function') {
-    throw new Error('onUpdate must be a function');
+  if (onSnapshot !== undefined && typeof onSnapshot !== 'function') {
+    throw new Error('onSnapshot must be a function');
   }
 
   if (onStateChange !== undefined && typeof onStateChange !== 'function') {
     throw new Error('onStateChange must be a function');
   }
 
+  if (onError !== undefined && typeof onError !== 'function') {
+    throw new Error('onError must be a function');
+  }
+
   const formatter = Formatter();
-  const engine = CountdownEngine(initialSeconds);
+  const engine = CountdownEngine(initialSeconds, { onError });
 
   let lastSnapshot = engine.getSnapshot();
   let lastState = lastSnapshot.state;
   let lastNotifiedSeconds = Number.NaN;
 
-  const notifyUpdate = (snapshot: CountdownSnapshot) => {
-    if (!onUpdate) return;
+  const handleError = (error: Error) => {
+    if (!onError) return;
+    try { onError(error); } catch { /* ignore handler errors */ }
+  };
+
+  const notifySnapshot = (snapshot: CountdownSnapshot) => {
+    if (!onSnapshot) return;
     try {
-      const { minutes, seconds } = formatter.formatTime(snapshot.totalSeconds);
-      onUpdate(minutes, seconds);
-    } catch {
-      // ignore consumer errors
+      onSnapshot(snapshot);
+    } catch (err) {
+      handleError(err instanceof Error ? err : new Error(String(err)));
     }
   };
 
@@ -56,8 +65,8 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
     if (!onStateChange) return;
     try {
       onStateChange(state);
-    } catch {
-      // ignore consumer errors
+    } catch (err) {
+      handleError(err instanceof Error ? err : new Error(String(err)));
     }
   };
 
@@ -70,101 +79,29 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
 
     if (snapshot.totalSeconds !== lastNotifiedSeconds) {
       lastNotifiedSeconds = snapshot.totalSeconds;
-      notifyUpdate(snapshot);
+      notifySnapshot(snapshot);
     }
   });
 
-  const safeExecute = (action: () => void) => {
-    try {
-      action();
-    } catch {
-      // swallow errors to match legacy behaviour
-    }
-  };
-
   return {
-    start: () => {
-      safeExecute(() => {
-        engine.start();
-      });
-    },
-    pause: () => {
-      safeExecute(() => {
-        engine.pause();
-      });
-    },
-    resume: () => {
-      safeExecute(() => {
-        engine.resume();
-      });
-    },
-    reset: (newInitialSeconds?: number) => {
-      safeExecute(() => {
-        engine.reset(newInitialSeconds);
-      });
-    },
-    stop: () => {
-      safeExecute(() => {
-        engine.stop();
-      });
-    },
-    getSeconds: () => {
-      try {
-        return formatter.formatSeconds(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getMinutes: () => {
-      try {
-        return formatter.formatMinutes(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getHours: () => {
-      try {
-        return formatter.formatHours(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getDays: () => {
-      try {
-        return formatter.formatDays(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getWeeks: () => {
-      try {
-        return formatter.formatWeeks(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getYears: () => {
-      try {
-        return formatter.formatYears(lastSnapshot.totalSeconds);
-      } catch {
-        return '00';
-      }
-    },
-    getCurrentState: () => {
-      try {
-        return lastSnapshot.state;
-      } catch {
-        return TimerState.IDLE;
-      }
-    },
+    start: () => { engine.start(); },
+    pause: () => { engine.pause(); },
+    resume: () => { engine.resume(); },
+    reset: (newInitialSeconds?: number) => { engine.reset(newInitialSeconds); },
+    stop: () => { engine.stop(); },
+    getSeconds: () => formatter.formatSeconds(lastSnapshot.totalSeconds),
+    getMinutes: () => formatter.formatMinutes(lastSnapshot.totalSeconds),
+    getHours: () => formatter.formatHours(lastSnapshot.totalSeconds),
+    getDays: () => formatter.formatDays(lastSnapshot.totalSeconds),
+    getWeeks: () => formatter.formatWeeks(lastSnapshot.totalSeconds),
+    getYears: () => formatter.formatYears(lastSnapshot.totalSeconds),
+    getCurrentState: () => lastSnapshot.state,
     getSnapshot: () => lastSnapshot,
     destroy: () => {
-      safeExecute(() => {
-        subscription.unsubscribe();
-        engine.destroy();
-      });
+      try { subscription.unsubscribe(); } finally { engine.destroy(); }
     },
   };
 }
 
 export { TimerState };
+export type { CountdownSnapshot };

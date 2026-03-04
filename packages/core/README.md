@@ -32,15 +32,20 @@ Supported runtimes:
 
 ```ts
 import { Countdown, TimerState } from '@timekeeper-countdown/core';
+import { formatTime } from '@timekeeper-countdown/core/format';
 
 const countdown = Countdown(300, {
-  onUpdate: (minutes, seconds) => {
+  onSnapshot: snapshot => {
+    const { minutes, seconds } = formatTime(snapshot);
     timerElement.textContent = `${minutes}:${seconds}`;
   },
   onStateChange: state => {
     if (state === TimerState.STOPPED) {
       console.log('Finished!');
     }
+  },
+  onError: error => {
+    console.error('Countdown error:', error);
   },
 });
 

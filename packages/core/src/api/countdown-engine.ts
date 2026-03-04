@@ -118,7 +118,7 @@ function computeParts(totalSeconds: number): CountdownParts {
   };
 }
 
-function buildSnapshot(initialSeconds: number, totalSeconds: number, state: TimerState): CountdownSnapshot {
+export function buildSnapshot(initialSeconds: number, totalSeconds: number, state: TimerState): CountdownSnapshot {
   const parts = computeParts(totalSeconds);
   return {
     initialSeconds,

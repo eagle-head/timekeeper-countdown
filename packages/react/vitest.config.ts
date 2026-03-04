@@ -1,6 +1,13 @@
 import { defineConfig } from 'vitest/config'
+import { resolve } from 'path'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@timekeeper-countdown/core/testing-utils': resolve(__dirname, '../core/testing-utils/index.ts'),
+      '@timekeeper-countdown/core': resolve(__dirname, '../core/src/index.ts'),
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

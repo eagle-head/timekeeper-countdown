@@ -3,6 +3,7 @@ export type { CountdownInstance, CountdownOptions } from './api/countdown'
 
 export {
   CountdownEngine,
+  buildSnapshot,
   type CountdownEngineInstance,
   type CountdownEngineOptions,
   type CountdownSnapshot,
