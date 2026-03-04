@@ -1,0 +1,74 @@
+name: Bug Report
+description: Report a bug in timekeeper-countdown
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the form below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug.
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Create a countdown with...
+        2. Call start()...
+        3. After 5 seconds...
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected Package
+      options:
+        - "@timekeeper-countdown/core"
+        - "@timekeeper-countdown/react"
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Information
+      description: Paste relevant environment details.
+      placeholder: |
+        - Package version:
+        - Node.js version:
+        - OS:
+        - Browser (if applicable):
+      render: text
+
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Validations
+      options:
+        - label: I have read the [Code of Conduct](https://github.com/eagle-head/timekeeper-countdown/blob/main/CODE_OF_CONDUCT.md)
+          required: true
+        - label: I have searched for [existing issues](https://github.com/eagle-head/timekeeper-countdown/issues)
+          required: true
+        - label: I have tested with the latest version
+          required: true

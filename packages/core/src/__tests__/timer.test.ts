@@ -104,7 +104,6 @@ describe('Timer - Happy Path', () => {
 
       expect(() => Timer(Number.MAX_SAFE_INTEGER + 1, events)).toThrow('initialSeconds exceeds maximum safe integer');
     });
-
   });
 
   describe('Start functionality', () => {

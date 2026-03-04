@@ -128,7 +128,10 @@ export function Formatter() {
 export const defaultFormatter = Formatter();
 
 export function formatTime(target: number): { minutes: string; seconds: string };
-export function formatTime(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): { minutes: string; seconds: string };
+export function formatTime(target: Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined): {
+  minutes: string;
+  seconds: string;
+};
 export function formatTime(target: FormatTarget): { minutes: string; seconds: string } {
   return defaultFormatter.formatTime(target);
 }

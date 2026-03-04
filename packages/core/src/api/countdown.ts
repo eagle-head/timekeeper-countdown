@@ -49,7 +49,11 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
 
   const handleError = (error: Error) => {
     if (!onError) return;
-    try { onError(error); } catch { /* ignore handler errors */ }
+    try {
+      onError(error);
+    } catch {
+      /* ignore handler errors */
+    }
   };
 
   const notifySnapshot = (snapshot: CountdownSnapshot) => {
@@ -84,11 +88,21 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
   });
 
   return {
-    start: () => { engine.start(); },
-    pause: () => { engine.pause(); },
-    resume: () => { engine.resume(); },
-    reset: (newInitialSeconds?: number) => { engine.reset(newInitialSeconds); },
-    stop: () => { engine.stop(); },
+    start: () => {
+      engine.start();
+    },
+    pause: () => {
+      engine.pause();
+    },
+    resume: () => {
+      engine.resume();
+    },
+    reset: (newInitialSeconds?: number) => {
+      engine.reset(newInitialSeconds);
+    },
+    stop: () => {
+      engine.stop();
+    },
     getSeconds: () => formatter.formatSeconds(lastSnapshot.totalSeconds),
     getMinutes: () => formatter.formatMinutes(lastSnapshot.totalSeconds),
     getHours: () => formatter.formatHours(lastSnapshot.totalSeconds),
@@ -98,7 +112,11 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
     getCurrentState: () => lastSnapshot.state,
     getSnapshot: () => lastSnapshot,
     destroy: () => {
-      try { subscription.unsubscribe(); } finally { engine.destroy(); }
+      try {
+        subscription.unsubscribe();
+      } finally {
+        engine.destroy();
+      }
     },
   };
 }
