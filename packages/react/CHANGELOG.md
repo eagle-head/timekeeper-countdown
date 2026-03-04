@@ -1,5 +1,12 @@
 # @timekeeper-countdown/react
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [1724e9b]
+  - @timekeeper-countdown/core@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

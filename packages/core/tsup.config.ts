@@ -6,7 +6,7 @@ export default defineConfig({
     format: 'src/format/index.ts',
     'testing-utils': 'testing-utils/index.ts',
   },
-  format: ['esm'],
+  format: ['esm', 'cjs'],
   dts: true,
   clean: true,
   sourcemap: false,

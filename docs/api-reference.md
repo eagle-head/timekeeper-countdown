@@ -112,23 +112,43 @@ import {
   createFakeTimeProvider,
   toTimeProvider,
   buildSnapshot,
+  buildSnapshotSequence,
   assertSnapshotState,
+  assertSnapshotCompleted,
+  assertRemainingSeconds,
+  TimerState,
 } from '@timekeeper-countdown/core/testing-utils';
 ```
 
-- `createFakeTimeProvider(options?)` – returns a controllable clock with `.advance(ms)` and `.now()`.
-- `toTimeProvider(fake)` – adapts the fake clock for `timeProvider`.
-- `buildSnapshot(overrides?)` – fabricates `CountdownSnapshot` objects for unit tests.
-- `assertSnapshotState(snapshot, expectedState)` – throws when the snapshot is not in the expected state.
+- `createFakeTimeProvider(options?)` – returns a controllable clock with `advance(ms?)`, `set(ms)`, `reset()`, and `getTime()`.
+- `toTimeProvider(fake)` – adapts a `FakeTimeProvider` to the read-only `TimeProvider` interface for `CountdownEngine` or `useCountdown`.
+- `buildSnapshot(options?)` – fabricates `CountdownSnapshot` objects for unit tests without running an engine.
+- `buildSnapshotSequence(options?)` – generates an array of snapshots simulating a descending countdown.
+- `assertSnapshotState(snapshot, expected, message?)` – throws if the snapshot is not in the expected `TimerState`.
+- `assertSnapshotCompleted(snapshot, message?)` – throws if the countdown is not complete (`isCompleted === false` or `totalSeconds !== 0`).
+- `assertRemainingSeconds(snapshot, expected, tolerance?, message?)` – throws if remaining seconds differ beyond the tolerance.
+- `TimerState` – re-exported for convenience.
 
-Attach a fake provider via `useCountdown` options to avoid relying on real timers:
+```ts
+const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 });
+const engine = CountdownEngine(5, {
+  timeProvider: toTimeProvider(fake),
+  tickIntervalMs: 5,
+});
 
-```tsx
-const fake = createFakeTimeProvider({ startMs: 0 });
-const countdown = useCountdown(30, { timeProvider: toTimeProvider(fake) });
+engine.start();
+fake.advance(3000);
 
-fake.advance(1000);
-expect(countdown.totalSeconds).toBe(29);
+assertRemainingSeconds(engine.getSnapshot(), 2);
+assertSnapshotState(engine.getSnapshot(), TimerState.RUNNING);
+
+fake.advance(2000);
+assertSnapshotCompleted(engine.getSnapshot());
+
+// Sequence for formatter tests
+const sequence = buildSnapshotSequence({ totalSeconds: 4, step: 2, count: 3 });
+assertSnapshotState(sequence[0], TimerState.RUNNING);
+assertSnapshotCompleted(sequence[2]);
 ```
 
 These utilities remain part of the shared engine so upcoming adapters can reuse the exact same testing story.

@@ -182,6 +182,21 @@ it('counts down when the fake clock advances', async () => {
 
 The hook handles cleanup automatically, so tests do not need to destroy the engine manually.
 
+### Available Testing Utilities
+
+The core package ships several helpers under `@timekeeper-countdown/core/testing-utils`:
+
+- `createFakeTimeProvider(options?)` — controllable clock with `advance()`, `set()`, `reset()`, and `getTime()`.
+- `toTimeProvider(fake)` — adapts a fake clock to the `TimeProvider` interface.
+- `buildSnapshot(options?)` — fabricates `CountdownSnapshot` objects for unit tests without running an engine.
+- `buildSnapshotSequence(options?)` — generates an array of snapshots simulating a countdown progression.
+- `assertSnapshotState(snapshot, expected, message?)` — throws if the snapshot is not in the expected `TimerState`.
+- `assertSnapshotCompleted(snapshot, message?)` — throws if the countdown is not completed.
+- `assertRemainingSeconds(snapshot, expected, tolerance?, message?)` — throws if remaining seconds differ beyond tolerance.
+- `TimerState` — re-exported for convenience (`IDLE`, `RUNNING`, `PAUSED`, `STOPPED`).
+
+See the [core README](https://github.com/eagle-head/timekeeper-countdown/tree/main/packages/core#testing-utilities) or [API Reference](https://eagle-head.github.io/timekeeper-countdown/#/api-reference) for full signatures and examples.
+
 ---
 
 ## Multiple Timers

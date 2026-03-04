@@ -21,6 +21,7 @@ As these adapters land, guides for them will appear alongside the React content 
 ## Documentation Map
 
 - [Getting Started](getting-started.md) – install the React package, understand snapshots, and render your first timer.
+- [Core Usage](core-usage.md) – use the core engine directly in Node.js, vanilla JS, or any framework without a dedicated adapter.
 - [API Reference](api-reference.md) – complete reference for `useCountdown`, its options, and the data it returns.
 - [Advanced Usage](advanced-usage.md) – custom clocks, coordinating multiple timers, and formatting strategies.
 - [Examples](examples.md) – copy-and-paste React snippets for common scenarios.

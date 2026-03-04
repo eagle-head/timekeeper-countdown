@@ -116,6 +116,40 @@ interface CountdownSnapshot {
 
 ---
 
+## State Transitions
+
+The engine enforces a strict state machine. Invalid transitions are silently ignored and return `false`.
+
+```text
+           start()
+  IDLE ──────────────► RUNNING
+   ▲                    │    │
+   │                    │    │
+   │   reset()    pause()   stop() / complete()
+   │                    │    │
+   │                    ▼    │
+   │                 PAUSED  │
+   │                    │    │
+   │   reset()          │    │
+   │◄───────────────────┘    │
+   │                         │
+   │   reset()               ▼
+   │◄──────────────────── STOPPED
+```
+
+| From      | Action     | To        |
+| --------- | ---------- | --------- |
+| `IDLE`    | `start()`  | `RUNNING` |
+| `RUNNING` | `pause()`  | `PAUSED`  |
+| `RUNNING` | `reset()`  | `IDLE`    |
+| `RUNNING` | `stop()`   | `STOPPED` |
+| `PAUSED`  | `resume()` | `RUNNING` |
+| `PAUSED`  | `reset()`  | `IDLE`    |
+| `PAUSED`  | `stop()`   | `STOPPED` |
+| `STOPPED` | `reset()`  | `IDLE`    |
+
+---
+
 ## Formatting Helpers
 
 Use the helpers exported at `@timekeeper-countdown/core/format` to avoid reimplementing `padStart` logic.
@@ -145,28 +179,140 @@ import {
   createFakeTimeProvider,
   toTimeProvider,
   buildSnapshot,
+  buildSnapshotSequence,
   assertSnapshotState,
+  assertSnapshotCompleted,
+  assertRemainingSeconds,
+  TimerState,
 } from '@timekeeper-countdown/core/testing-utils';
-
-const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 });
-const engine = CountdownEngine(5, {
-  timeProvider: toTimeProvider(fake),
-  tickIntervalMs: 5,
-});
-
-engine.start();
-fake.advance(3000);
-
-expect(engine.getSnapshot().totalSeconds).toBe(2);
-
-const snapshot = buildSnapshot({ totalSeconds: 42 });
-assertSnapshotState(snapshot, 'RUNNING');
 ```
 
-Utilities include:
+### `createFakeTimeProvider(options?)`
 
-- `createFakeTimeProvider` / `toTimeProvider` for manual clock control.
-- `buildSnapshot`, `assertSnapshotState` helpers for quick snapshot fabrication.
+Provides a controllable clock for deterministic testing.
+
+```ts
+interface FakeTimeOptions {
+  startMs?: number;         // default: 0
+  tickMs?: number;          // default: 1000 — default step for advance()
+  highResolution?: boolean; // default: true
+}
+
+interface FakeTimeProvider extends TimeProvider {
+  advance(ms?: number): number; // advances by ms (or tickMs if omitted), returns current time
+  set(ms: number): number;      // sets clock to absolute value, returns current time
+  reset(): number;              // resets to startMs, returns current time
+  getTime(): number;            // returns current time without advancing
+  now(): number;                // same as getTime (inherited from TimeProvider)
+  isHighResolution: boolean;
+  type: 'fake';
+}
+
+function createFakeTimeProvider(options?: FakeTimeOptions): FakeTimeProvider;
+```
+
+- Negative or non-finite values are clamped to `0`.
+- Values above `Number.MAX_SAFE_INTEGER` are clamped to `Number.MAX_SAFE_INTEGER`.
+- `advance()` without a parameter uses `tickMs` as the default step.
+
+### `toTimeProvider(fake)`
+
+```ts
+function toTimeProvider(fake: FakeTimeProvider): TimeProvider;
+```
+
+Converts a `FakeTimeProvider` to a read-only `TimeProvider`, used to pass to `CountdownEngine` or `useCountdown`.
+
+### `buildSnapshot(options?)`
+
+```ts
+interface SnapshotOptions {
+  initialSeconds?: number; // fallback: totalSeconds, then 0
+  totalSeconds?: number;   // fallback: initialSeconds, then 0
+  state?: TimerState;      // fallback: IDLE if totalSeconds > 0, else STOPPED
+}
+
+function buildSnapshot(options?: SnapshotOptions): CountdownSnapshot;
+```
+
+```ts
+const snapshot = buildSnapshot({ totalSeconds: 90, state: TimerState.RUNNING });
+// snapshot.parts.minutes === 1
+// snapshot.parts.seconds === 30
+// snapshot.isRunning === true
+```
+
+### `buildSnapshotSequence(options?)`
+
+```ts
+interface SequenceOptions extends SnapshotOptions {
+  step?: number;  // default: 1 — decrement per snapshot
+  count?: number; // default: 1 — number of snapshots
+}
+
+function buildSnapshotSequence(options?: SequenceOptions): CountdownSnapshot[];
+```
+
+Generates `count` snapshots, decrementing `totalSeconds` by `step` each iteration. The last snapshot with `remaining === 0` gets `state: STOPPED`; all others get `state: RUNNING`.
+
+```ts
+const sequence = buildSnapshotSequence({ totalSeconds: 4, step: 2, count: 3 });
+// sequence[0].totalSeconds === 4  (RUNNING)
+// sequence[1].totalSeconds === 2  (RUNNING)
+// sequence[2].totalSeconds === 0  (STOPPED)
+```
+
+### `assertSnapshotState(snapshot, expected, message?)`
+
+```ts
+function assertSnapshotState(
+  snapshot: CountdownSnapshot,
+  expected: TimerState,
+  message?: string // default: "Unexpected countdown state"
+): void;
+```
+
+### `assertSnapshotCompleted(snapshot, message?)`
+
+```ts
+function assertSnapshotCompleted(
+  snapshot: CountdownSnapshot,
+  message?: string // default: "Countdown should be completed"
+): void;
+```
+
+Throws if `snapshot.isCompleted === false` OR `snapshot.totalSeconds !== 0`.
+
+### `assertRemainingSeconds(snapshot, expected, tolerance?, message?)`
+
+```ts
+function assertRemainingSeconds(
+  snapshot: CountdownSnapshot,
+  expected: number,
+  tolerance?: number, // default: 0
+  message?: string    // default: "Unexpected remaining seconds"
+): void;
+```
+
+Throws if `Math.abs(snapshot.totalSeconds - Math.floor(expected)) > tolerance` or if `expected` is not a finite number.
+
+```ts
+assertRemainingSeconds(snapshot, 5);       // exact
+assertRemainingSeconds(snapshot, 5, 0.5); // accepts 4.5–5.5
+```
+
+### `TimerState` re-export
+
+`TimerState` is re-exported via `testing-utils`, avoiding a double import:
+
+```ts
+// Instead of two separate imports:
+import { TimerState } from '@timekeeper-countdown/core';
+import { buildSnapshot } from '@timekeeper-countdown/core/testing-utils';
+
+// You can import everything from one place:
+import { buildSnapshot, TimerState } from '@timekeeper-countdown/core/testing-utils';
+```
 
 ---
 
