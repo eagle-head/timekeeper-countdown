@@ -67,3 +67,6 @@ pids
 
 # AI
 AGENTS.md
+
+# Git worktrees
+.worktrees/
