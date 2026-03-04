@@ -50,13 +50,9 @@ Vitest powers the unit test suites in both packages. React tests use `@testing-l
 
 ## Contributing
 
-1. Fork or branch from `main`.
-2. Run `npm install` to fetch dependencies.
-3. Make changes and add or update tests when applicable.
-4. Ensure `npm run lint`, `npm run typecheck`, and relevant `npm run test --workspace ...` pass.
-5. Open a PR with a clear summary and link any related issues.
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-Please review the internal guidelines in [`AGENTS.md`](AGENTS.md) before raising a PR.
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
