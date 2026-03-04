@@ -2,6 +2,16 @@
 
 ## @timekeeper-countdown/core
 
+### 0.2.0
+
+#### Minor Changes
+
+- Rename `onUpdate` callback to `onSnapshot` in `Countdown` high-level API
+- Add `onError` callback support to `Countdown`
+- Export `Countdown` class from core index
+- Add function overloads to all format helpers for better TypeScript DX
+- Remove redundant `try-catch` in `safeFormat` and `safeExecute` wrappers
+
 ### 0.1.4
 
 #### Patch Changes
@@ -35,6 +45,13 @@
 ---
 
 ## @timekeeper-countdown/react
+
+### 0.2.0
+
+#### Minor Changes
+
+- Updated dependencies
+  - @timekeeper-countdown/core@0.2.0
 
 ### 0.1.4
 
