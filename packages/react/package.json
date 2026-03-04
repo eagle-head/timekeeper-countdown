@@ -2,6 +2,16 @@
   "name": "@timekeeper-countdown/react",
   "version": "0.1.4",
   "description": "React adapter for the Timekeeper Countdown engine",
+  "author": "Eduardo Kohn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eagle-head/timekeeper-countdown.git"
+  },
+  "homepage": "https://eagle-head.github.io/timekeeper-countdown/",
+  "bugs": {
+    "url": "https://github.com/eagle-head/timekeeper-countdown/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
