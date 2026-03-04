@@ -99,7 +99,12 @@ export function useCountdown(initialSeconds: number, options: UseCountdownOption
   const pause = useCallback(() => invoke(engine => engine.pause(), false), [invoke]);
   const resume = useCallback(() => invoke(engine => engine.resume(), false), [invoke]);
   const stop = useCallback(() => invoke(engine => engine.stop(), false), [invoke]);
-  const setSeconds = useCallback((value: number): void => { invoke(engine => engine.setSeconds(value), undefined); }, [invoke]);
+  const setSeconds = useCallback(
+    (value: number): void => {
+      invoke(engine => engine.setSeconds(value), undefined);
+    },
+    [invoke]
+  );
   const reset = useCallback(
     (nextInitialSeconds?: number) => invoke(engine => engine.reset(nextInitialSeconds), false),
     [invoke]

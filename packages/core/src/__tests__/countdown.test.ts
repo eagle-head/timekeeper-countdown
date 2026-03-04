@@ -524,9 +524,7 @@ describe('Countdown - Error Handling', () => {
     });
 
     it('should throw error when onError is not a function', () => {
-      expect(() => Countdown(60, { onError: 'not a function' as any })).toThrowError(
-        'onError must be a function'
-      );
+      expect(() => Countdown(60, { onError: 'not a function' as any })).toThrowError('onError must be a function');
     });
   });
 
@@ -581,7 +579,9 @@ describe('Countdown - Error Handling', () => {
   describe('onError callback', () => {
     it('should call onError when onSnapshot throws', () => {
       const onError = vi.fn();
-      const onSnapshot = vi.fn(() => { throw new Error('snapshot boom'); });
+      const onSnapshot = vi.fn(() => {
+        throw new Error('snapshot boom');
+      });
       const countdown = Countdown(60, { onSnapshot, onError });
 
       countdown.start();
@@ -592,7 +592,9 @@ describe('Countdown - Error Handling', () => {
 
     it('should call onError when onStateChange throws', () => {
       const onError = vi.fn();
-      const onStateChange = vi.fn(() => { throw new Error('state boom'); });
+      const onStateChange = vi.fn(() => {
+        throw new Error('state boom');
+      });
       const countdown = Countdown(60, { onStateChange, onError });
 
       countdown.start();
@@ -603,7 +605,9 @@ describe('Countdown - Error Handling', () => {
 
     it('should normalize non-Error throws to Error instances', () => {
       const onError = vi.fn();
-      const onSnapshot = vi.fn(() => { throw 'raw string error'; });
+      const onSnapshot = vi.fn(() => {
+        throw 'raw string error';
+      });
       const countdown = Countdown(60, { onSnapshot, onError });
 
       countdown.start();
@@ -614,7 +618,9 @@ describe('Countdown - Error Handling', () => {
 
     it('should normalize non-Error throws from onStateChange to Error instances', () => {
       const onError = vi.fn();
-      const onStateChange = vi.fn(() => { throw 'raw string from state'; });
+      const onStateChange = vi.fn(() => {
+        throw 'raw string from state';
+      });
       const countdown = Countdown(60, { onStateChange, onError });
 
       countdown.start();
@@ -624,7 +630,9 @@ describe('Countdown - Error Handling', () => {
     });
 
     it('should not throw when onError is not provided and callbacks throw', () => {
-      const onSnapshot = vi.fn(() => { throw new Error('no handler'); });
+      const onSnapshot = vi.fn(() => {
+        throw new Error('no handler');
+      });
       const countdown = Countdown(60, { onSnapshot });
 
       countdown.start();
@@ -632,8 +640,12 @@ describe('Countdown - Error Handling', () => {
     });
 
     it('should not throw when onError itself throws', () => {
-      const onError = vi.fn(() => { throw new Error('handler also broken'); });
-      const onSnapshot = vi.fn(() => { throw new Error('snapshot error'); });
+      const onError = vi.fn(() => {
+        throw new Error('handler also broken');
+      });
+      const onSnapshot = vi.fn(() => {
+        throw new Error('snapshot error');
+      });
       const countdown = Countdown(60, { onSnapshot, onError });
 
       expect(() => countdown.start()).not.toThrow();
@@ -661,7 +673,9 @@ describe('Countdown - Error Handling', () => {
     it('should propagate errors thrown by the engine start method', async () => {
       vi.doMock('../runtime/timer', () => ({
         Timer: vi.fn(() => ({
-          start: vi.fn(() => { throw new Error('Timer start error'); }),
+          start: vi.fn(() => {
+            throw new Error('Timer start error');
+          }),
           stop: vi.fn(),
           reset: vi.fn(),
           destroy: vi.fn(),
@@ -686,7 +700,9 @@ describe('Countdown - Error Handling', () => {
         Timer: vi.fn(() => ({
           start: vi.fn(() => true),
           stop: vi.fn(),
-          reset: vi.fn(() => { throw new Error('Reset error'); }),
+          reset: vi.fn(() => {
+            throw new Error('Reset error');
+          }),
           destroy: vi.fn(),
           getTotalSeconds: vi.fn(() => 60),
           setSeconds: vi.fn(),
@@ -708,7 +724,9 @@ describe('Countdown - Error Handling', () => {
       vi.doMock('../format/formatter', () => ({
         Formatter: vi.fn(() => ({
           formatTime: vi.fn(() => ({ minutes: '00', seconds: '00' })),
-          formatSeconds: vi.fn(() => { throw new Error('Format seconds error'); }),
+          formatSeconds: vi.fn(() => {
+            throw new Error('Format seconds error');
+          }),
           formatMinutes: vi.fn(() => '00'),
           formatHours: vi.fn(() => '00'),
           formatDays: vi.fn(() => '00'),
@@ -868,6 +886,5 @@ describe('Countdown - Error Handling', () => {
 
       vi.doUnmock('../runtime/timer');
     });
-
   });
 });
