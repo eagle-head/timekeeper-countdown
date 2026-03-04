@@ -124,5 +124,5 @@ packages/
 - Run `npm install` only at the root — never inside individual packages.
 - React package's vitest config uses path aliases to core's TypeScript source, so core doesn't need to be built for React tests to pass.
 - The `testing-utils` directory lives at `packages/core/testing-utils/` (not under `src/`) but is a separate tsup entry point published as `@timekeeper-countdown/core/testing-utils`.
-- No CI/CD is configured — builds, tests, and releases are all manual.
+- Releases are manual — use Changesets (`npm run changeset` → `npm run version` → `npm run release`).
 - Some code comments are in Portuguese.
