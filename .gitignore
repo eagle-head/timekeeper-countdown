@@ -10,6 +10,10 @@ packages/*/dist/
 build/
 *.tsbuildinfo
 
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
 # Environment variables
 .env
 .env.local
