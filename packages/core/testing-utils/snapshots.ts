@@ -1,5 +1,6 @@
 import type { CountdownSnapshot } from '../src/api/countdown-engine';
 import { decompose } from '../src/time/decompose';
+import { clampSeconds } from '../src/time/clamp';
 import { TimerState } from '../src/state/state-machine';
 
 export interface SnapshotOptions {
@@ -7,21 +8,6 @@ export interface SnapshotOptions {
   totalSeconds?: number;
   state?: TimerState;
 }
-
-const clampSeconds = (value: number | undefined): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return 0;
-  }
-
-  if (value <= 0) {
-    return 0;
-  }
-
-  if (value >= Number.MAX_SAFE_INTEGER) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-  return Math.floor(value);
-};
 
 export function buildSnapshot(options: SnapshotOptions = {}): CountdownSnapshot {
   const initialSeconds = clampSeconds(options.initialSeconds ?? options.totalSeconds ?? 0);

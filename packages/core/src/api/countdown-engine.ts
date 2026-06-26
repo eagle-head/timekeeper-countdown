@@ -2,6 +2,7 @@ import { Timer } from '../runtime/timer';
 import { createSafeTimeProvider, createMonotonicTimeSource, type TimeProvider } from '../runtime/time-providers';
 import { StateMachine, TimerState } from '../state/state-machine';
 import { decompose, type CountdownParts } from '../time/decompose';
+import { clampSeconds } from '../time/clamp';
 
 export type { CountdownParts };
 
@@ -79,14 +80,22 @@ function resolveTimeProvider(provider?: TimeProvider | (() => number)): () => nu
 }
 
 export function buildSnapshot(initialSeconds: number, totalSeconds: number, state: TimerState): CountdownSnapshot {
-  const parts = decompose(totalSeconds);
+  // Sanitize the stored numeric fields once with clampSeconds (non-finite/negative -> 0,
+  // floor, capped at MAX_SAFE_INTEGER) and decompose THAT SAME value, so the snapshot is
+  // always self-consistent for every caller (public buildSnapshot, the React useState
+  // initializer, etc.): `parts` reconstruct the stored `totalSeconds` exactly — including
+  // above MAX_SAFE_INTEGER, where clampSeconds caps but a raw decompose() would not — and
+  // both second counts are non-negative integers.
+  const safeInitialSeconds = clampSeconds(initialSeconds);
+  const safeTotalSeconds = clampSeconds(totalSeconds);
+  const parts = decompose(safeTotalSeconds);
   return {
-    initialSeconds,
-    totalSeconds,
+    initialSeconds: safeInitialSeconds,
+    totalSeconds: safeTotalSeconds,
     parts,
     state,
     isRunning: state === TimerState.RUNNING,
-    isCompleted: totalSeconds === 0 && state === TimerState.STOPPED,
+    isCompleted: safeTotalSeconds === 0 && state === TimerState.STOPPED,
   };
 }
 
@@ -117,7 +126,15 @@ export function CountdownEngine(
   };
 
   const signalStateChange = (state: TimerState) => {
-    currentSnapshot = buildSnapshot(currentInitialSeconds, currentSnapshot.totalSeconds, state);
+    // signalStateChange is the SOLE notifier for transition-driven updates, so each
+    // transition emits exactly one snapshot (the redundant trailing
+    // handleSnapshotUpdate emits were removed from start/pause/resume/stop/complete).
+    // A transition to STOPPED (explicit stop OR natural completion) always means zero
+    // remaining; every other transition reflects the timer's live value. Value-only
+    // updates (onTick / setSeconds / an IDLE-state reset) still flow through
+    // handleSnapshotUpdate.
+    const totalSeconds = state === TimerState.STOPPED ? 0 : timer.getTotalSeconds();
+    currentSnapshot = buildSnapshot(currentInitialSeconds, totalSeconds, state);
     try {
       options.onStateChange?.(state, currentSnapshot);
     } catch {
@@ -153,8 +170,9 @@ export function CountdownEngine(
         handleSnapshotUpdate(totalSeconds);
       },
       onComplete: () => {
+        // The RUNNING->STOPPED transition emits the final isCompleted snapshot (0)
+        // exactly once via signalStateChange; no extra emit needed here.
         stateMachine.complete();
-        handleSnapshotUpdate(0);
       },
       onError: error => {
         handleError(error);
@@ -175,7 +193,6 @@ export function CountdownEngine(
     const started = timer.start();
     if (started) {
       stateMachine.start();
-      handleSnapshotUpdate(timer.getTotalSeconds());
     }
 
     return started;
@@ -187,12 +204,7 @@ export function CountdownEngine(
     }
 
     timer.stop();
-    const transitioned = stateMachine.pause();
-    if (transitioned) {
-      handleSnapshotUpdate(timer.getTotalSeconds());
-    }
-
-    return transitioned;
+    return stateMachine.pause();
   };
 
   const resume = (): boolean => {
@@ -203,7 +215,6 @@ export function CountdownEngine(
     const resumed = timer.start();
     if (resumed) {
       stateMachine.resume();
-      handleSnapshotUpdate(timer.getTotalSeconds());
     }
 
     return resumed;
@@ -213,8 +224,9 @@ export function CountdownEngine(
     timer.stop();
     const transitioned = stateMachine.stop();
     if (transitioned) {
+      // The STOPPED snapshot (reporting 0) was already emitted by signalStateChange;
+      // this only keeps the timer's internal remaining consistent with it.
       timer.setSeconds(0);
-      handleSnapshotUpdate(0);
     }
 
     return transitioned;
@@ -230,8 +242,14 @@ export function CountdownEngine(
       currentInitialSeconds = initialSeconds;
       timer.reset();
     }
-    stateMachine.reset();
-    handleSnapshotUpdate(timer.getTotalSeconds());
+    // reset() restores the value AND may change state (RUNNING/PAUSED/STOPPED -> IDLE).
+    // When the state actually transitions, signalStateChange already emits the restored
+    // IDLE snapshot. When reset() is called from IDLE there is no transition, so emit the
+    // value change directly here — exactly one notification either way.
+    const transitioned = stateMachine.reset();
+    if (!transitioned) {
+      handleSnapshotUpdate(timer.getTotalSeconds());
+    }
 
     return true;
   };

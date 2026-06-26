@@ -127,4 +127,25 @@ describe('Timer - mutation coverage', () => {
 
     expect(timer.getInitialValue()).toBe(10);
   });
+
+  // Tick-loop `Number.isFinite(elapsedSeconds) ? ... : initialValue` FALSE branch.
+  // The engine wraps every provider in a monotonic, finite source, so a non-finite
+  // elapsed is only reachable by driving the raw Timer with a hostile provider. Here
+  // the provider returns a finite reading at start() then Infinity on every tick, so
+  // elapsedMs (and thus elapsedSeconds) is non-finite: the real code HOLDS the last
+  // good value (initialValue) and never leaks NaN/Infinity into totalSeconds/onTick.
+  it('holds the last value (never leaks non-finite) when elapsed becomes non-finite', () => {
+    const events = makeEvents();
+    let now = 0; // finite at start() so startTimestamp is captured cleanly
+    const timer = Timer(10, events, { timeProvider: () => now });
+
+    timer.start();
+    now = Number.POSITIVE_INFINITY; // hostile clock reading on the next tick
+    vi.advanceTimersByTime(100);
+
+    expect(timer.getTotalSeconds()).toBe(10);
+    expect(Number.isFinite(timer.getTotalSeconds())).toBe(true);
+    // No second-change was reported because remaining held at the initial value.
+    expect(events.onTick).not.toHaveBeenCalled();
+  });
 });

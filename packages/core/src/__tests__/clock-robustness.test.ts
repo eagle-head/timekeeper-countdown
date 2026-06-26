@@ -19,6 +19,10 @@ describe('clock robustness — hostile timeProvider', () => {
     const snap = engine.getSnapshot();
     expect(Number.isFinite(snap.totalSeconds)).toBe(true);
     expect(ticks.every(Number.isFinite)).toBe(true);
+    // Deterministic outcome: the NaN provider is pinned to the last known-good
+    // reading (0), so elapsed never advances and remaining holds at the initial 60.
+    expect(snap.totalSeconds).toBe(60);
+    expect(snap.isCompleted).toBe(false);
   });
 
   it('bug #2: a backward clock never makes remaining exceed the initial value', () => {
