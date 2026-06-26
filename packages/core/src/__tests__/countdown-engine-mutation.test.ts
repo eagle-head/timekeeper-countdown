@@ -17,23 +17,17 @@ describe('countdown-engine — mutation oracle', () => {
   describe('sanitizeInitialSeconds validation (lines 42, 50)', () => {
     // id 4 / id 6 — forcing the line-42 guard false would let a non-integer through.
     it('throws on a non-integer constructor input', () => {
-      expect(() => CountdownEngine(10.5, { timeProvider: () => 0 })).toThrow(
-        'finite, non-negative integer'
-      );
+      expect(() => CountdownEngine(10.5, { timeProvider: () => 0 })).toThrow('finite, non-negative integer');
     });
 
     it('throws on NaN constructor input', () => {
-      expect(() => CountdownEngine(NaN, { timeProvider: () => 0 })).toThrow(
-        'finite, non-negative integer'
-      );
+      expect(() => CountdownEngine(NaN, { timeProvider: () => 0 })).toThrow('finite, non-negative integer');
     });
 
     // id 21 — boundary: `> MAX_SAFE_INTEGER` must NOT throw at exactly MAX_SAFE_INTEGER.
     // The `>=` mutant would throw here.
     it('accepts exactly Number.MAX_SAFE_INTEGER without throwing', () => {
-      expect(() =>
-        CountdownEngine(Number.MAX_SAFE_INTEGER, { timeProvider: () => 0 })
-      ).not.toThrow();
+      expect(() => CountdownEngine(Number.MAX_SAFE_INTEGER, { timeProvider: () => 0 })).not.toThrow();
 
       const e = CountdownEngine(Number.MAX_SAFE_INTEGER, { timeProvider: () => 0 });
       expect(e.getSnapshot().totalSeconds).toBe(Number.MAX_SAFE_INTEGER);

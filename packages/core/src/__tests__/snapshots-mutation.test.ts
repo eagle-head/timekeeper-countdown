@@ -94,11 +94,7 @@ describe('snapshots.ts mutation coverage', () => {
 
       expect(snapshots.map(s => s.initialSeconds)).toEqual([100, 100, 100]);
       expect(snapshots.map(s => s.totalSeconds)).toEqual([4, 2, 0]);
-      expect(snapshots.map(s => s.state)).toEqual([
-        TimerState.RUNNING,
-        TimerState.RUNNING,
-        TimerState.STOPPED,
-      ]);
+      expect(snapshots.map(s => s.state)).toEqual([TimerState.RUNNING, TimerState.RUNNING, TimerState.STOPPED]);
     });
   });
 });

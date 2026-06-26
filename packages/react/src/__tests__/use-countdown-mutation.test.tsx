@@ -70,7 +70,9 @@ describe('useCountdown — control & wiring behavior', () => {
 
   it('autoStart starts the engine on mount; omitting it stays idle', () => {
     const ticking = createFakeTimeProvider({ startMs: 0 });
-    const { result } = renderHook(() => useCountdown(3, { autoStart: true, timeProvider: ticking, tickIntervalMs: 10 }));
+    const { result } = renderHook(() =>
+      useCountdown(3, { autoStart: true, timeProvider: ticking, tickIntervalMs: 10 })
+    );
     expect(result.current.isRunning).toBe(true);
     act(() => {
       ticking.advance(1000);
@@ -94,7 +96,10 @@ describe('useCountdown — control & wiring behavior', () => {
     act(() => {
       result.current.start();
     });
-    expect(onStateChange).toHaveBeenCalledWith(TimerState.RUNNING, expect.objectContaining({ state: TimerState.RUNNING }));
+    expect(onStateChange).toHaveBeenCalledWith(
+      TimerState.RUNNING,
+      expect.objectContaining({ state: TimerState.RUNNING })
+    );
     act(() => {
       ticking.advance(1000);
       vi.advanceTimersByTime(1000);
