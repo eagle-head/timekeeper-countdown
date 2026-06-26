@@ -1,15 +1,5 @@
 import type { CountdownSnapshot } from '../api/countdown-engine';
-import {
-  SECONDS_PER_MINUTE,
-  MINUTES_PER_HOUR,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_DAY,
-  SECONDS_PER_WEEK,
-  SECONDS_PER_YEAR,
-  HOURS_PER_DAY,
-  DAYS_PER_WEEK,
-  WEEKS_PER_YEAR,
-} from '../time/constants';
+import { decompose } from '../time/decompose';
 
 export type FormatTarget = number | Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined;
 
@@ -41,78 +31,32 @@ function sanitizeSeconds(totalSeconds: number): number {
   return Math.floor(totalSeconds);
 }
 
+// `value` is always a non-negative integer here — every caller passes a field from
+// `decompose()`, which floors and clamps. So this is a pure padding helper; the input
+// is validated once upstream (extractSeconds + sanitizeSeconds), not re-guarded here.
 function safeFormat(value: number, padLength = 2): string {
-  if (!Number.isFinite(value) || value < 0) {
-    return '0'.repeat(padLength);
-  }
-
-  return Math.floor(value).toString().padStart(padLength, '0');
-}
-
-function computeTotalMinutes(seconds: number) {
-  return Math.floor(seconds / SECONDS_PER_MINUTE);
-}
-
-function computeMinutes(seconds: number) {
-  return computeTotalMinutes(seconds) % MINUTES_PER_HOUR;
-}
-
-function computeHours(seconds: number) {
-  return Math.floor(seconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
-}
-
-function computeDays(seconds: number) {
-  return Math.floor(seconds / SECONDS_PER_DAY) % DAYS_PER_WEEK;
-}
-
-function computeWeeks(seconds: number) {
-  return Math.floor(seconds / SECONDS_PER_WEEK) % WEEKS_PER_YEAR;
-}
-
-function computeYears(seconds: number) {
-  return Math.floor(seconds / SECONDS_PER_YEAR);
+  return value.toString().padStart(padLength, '0');
 }
 
 export function Formatter() {
-  const getSafeSeconds = (target: FormatTarget) => sanitizeSeconds(extractSeconds(target));
+  // Single source of truth: every formatter derives from the canonical, lossless
+  // decomposition, so formatted units are mutually consistent and reconstruct the total.
+  const partsOf = (target: FormatTarget) => decompose(sanitizeSeconds(extractSeconds(target)));
 
   const formatTime = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
+    const parts = partsOf(target);
     return {
-      minutes: safeFormat(computeTotalMinutes(safeSeconds)),
-      seconds: safeFormat(safeSeconds % SECONDS_PER_MINUTE),
+      minutes: safeFormat(parts.totalMinutes),
+      seconds: safeFormat(parts.seconds),
     };
   };
 
-  const formatMinutes = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(computeMinutes(safeSeconds));
-  };
-
-  const formatSeconds = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(safeSeconds % SECONDS_PER_MINUTE);
-  };
-
-  const formatHours = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(computeHours(safeSeconds));
-  };
-
-  const formatDays = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(computeDays(safeSeconds));
-  };
-
-  const formatWeeks = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(computeWeeks(safeSeconds));
-  };
-
-  const formatYears = (target: FormatTarget) => {
-    const safeSeconds = getSafeSeconds(target);
-    return safeFormat(computeYears(safeSeconds));
-  };
+  const formatMinutes = (target: FormatTarget) => safeFormat(partsOf(target).minutes);
+  const formatSeconds = (target: FormatTarget) => safeFormat(partsOf(target).seconds);
+  const formatHours = (target: FormatTarget) => safeFormat(partsOf(target).hours);
+  const formatDays = (target: FormatTarget) => safeFormat(partsOf(target).days);
+  const formatWeeks = (target: FormatTarget) => safeFormat(partsOf(target).weeks);
+  const formatYears = (target: FormatTarget) => safeFormat(partsOf(target).years);
 
   return {
     formatTime,

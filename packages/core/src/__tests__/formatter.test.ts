@@ -139,8 +139,8 @@ describe('Formatter', () => {
       expect(formatter.formatWeeks(604800)).toBe('01');
       expect(formatter.formatWeeks(1209600)).toBe('02');
       expect(formatter.formatWeeks(31449599)).toBe('51');
-      expect(formatter.formatWeeks(31449600)).toBe('00'); // Resets after 52 weeks
-      expect(formatter.formatWeeks(32054400)).toBe('01'); // 53 weeks = 1 week
+      expect(formatter.formatWeeks(31449600)).toBe('52'); // 364 days = 0 years + 52 weeks (< 365-day year)
+      expect(formatter.formatWeeks(32054400)).toBe('00'); // 371 days = 1 year + 6 days = 0 weeks
     });
 
     it('should handle edge cases', () => {
