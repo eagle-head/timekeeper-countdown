@@ -81,6 +81,7 @@ engine.start();
 Fine-grained control methods:
 
 - `start`, `pause`, `resume`, `reset(nextInitialSeconds?)`, `stop`, `setSeconds(value)`, `destroy`
+- `setSeconds(value)`, `reset(value)`, and `CountdownEngine(value)` require a non-negative integer; an invalid value (negative, non-integer, `NaN`, `Infinity`, or above `Number.MAX_SAFE_INTEGER`) throws.
 - `getSnapshot()` – returns the latest `CountdownSnapshot`.
 - `subscribe(listener)` – emits the current snapshot immediately and on every tick.
 

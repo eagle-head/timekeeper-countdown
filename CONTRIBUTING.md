@@ -16,7 +16,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 18 or later
+- [Node.js](https://nodejs.org/) 22 or later
 - npm (comes with Node.js)
 
 ### Getting Started
@@ -86,11 +86,12 @@ For the full guide with all types, scopes, and examples, see [.github/commit-con
 - Keep PRs **focused** — one feature or fix per PR
 - **Add tests** for new functionality
 - **Update documentation** if behavior changes
-- Add a **changeset** for user-facing changes:
-  ```bash
-  npm run changeset
-  ```
-  Follow the prompts to describe your change and its semver impact.
+- **Update the CHANGELOG** for user-facing changes: add a bullet under the
+  `## [Unreleased]` section of `packages/core/CHANGELOG.md` and/or
+  `packages/react/CHANGELOG.md`, grouped under `### Added` / `### Changed` /
+  `### Fixed` ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format).
+  (Maintainers cut releases by bumping the version and pushing a `vX.Y.Z` tag —
+  see [RELEASING.md](RELEASING.md).)
 - **CI must pass** before your PR can be merged
 
 ## Code Style
@@ -117,6 +118,8 @@ The project uses ESLint 9 and Prettier for linting and formatting. TypeScript st
 - **Test location:** `src/__tests__/*.test.ts` (core) or `src/__tests__/*.test.tsx` (react)
 - **Time mocking:** Use `vi.useFakeTimers()` in `beforeEach` and `vi.useRealTimers()` in `afterEach`
 - **React tests:** Use `renderHook` and `act` from `@testing-library/react`
+- **Property-based testing:** Use [fast-check](https://fast-check.dev/) for property/invariant tests alongside example-based tests
+- **Mutation testing:** Run `npm run test:mutation` ([Stryker](https://stryker-mutator.io/), configured per package via `stryker.config.json`) to check test effectiveness against thresholds
 - **Custom test helpers:** Available from `@timekeeper-countdown/core/testing-utils` — includes `createFakeTimeProvider()`, `buildSnapshot()`, and assertion utilities
 
 Run tests for a specific package:
