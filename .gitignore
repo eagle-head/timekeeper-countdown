@@ -38,6 +38,12 @@ Thumbs.db
 coverage/
 .nyc_output
 
+# Mutation testing (Stryker)
+.stryker-tmp/
+packages/*/.stryker-tmp/
+reports/
+packages/*/reports/
+
 # Logs
 logs
 *.log
@@ -74,3 +80,6 @@ AGENTS.md
 
 # Git worktrees
 .worktrees/
+
+# Stryker generated vitest setup (transient)
+packages/*/stryker-setup-*.js
