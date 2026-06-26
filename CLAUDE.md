@@ -35,6 +35,10 @@ npm run format:check
 # Type check
 npm run typecheck
 
+# Quality gate — the SAME script the git hooks and CI run
+bin/quality-gate.sh            # full: build + format:check + lint + typecheck + test
+bin/quality-gate.sh --fast     # fast lane (no tests); ./hooks/install.sh wires it into git
+
 # Docs (VitePress)
 npm run docs:dev      # dev server
 npm run docs:build    # production build

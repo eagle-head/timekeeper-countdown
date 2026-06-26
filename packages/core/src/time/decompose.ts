@@ -1,10 +1,4 @@
-import {
-  SECONDS_PER_MINUTE,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_DAY,
-  SECONDS_PER_WEEK,
-  SECONDS_PER_YEAR,
-} from './constants';
+import { SECONDS_PER_MINUTE, SECONDS_PER_HOUR, SECONDS_PER_DAY, SECONDS_PER_WEEK, SECONDS_PER_YEAR } from './constants';
 
 /**
  * A countdown duration broken down into calendar-style units.

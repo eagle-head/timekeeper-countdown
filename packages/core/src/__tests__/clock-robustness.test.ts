@@ -38,7 +38,10 @@ describe('clock robustness — hostile timeProvider', () => {
   it('bug #2b: remaining is monotonically non-increasing under an erratic clock', () => {
     const readings = [0, 1000, 900, 2000, 1500, 3000, 2999, 7000];
     let i = 0;
-    const engine = CountdownEngine(30, { timeProvider: () => readings[Math.min(i, readings.length - 1)], tickIntervalMs: 100 });
+    const engine = CountdownEngine(30, {
+      timeProvider: () => readings[Math.min(i, readings.length - 1)],
+      tickIntervalMs: 100,
+    });
     engine.start();
     let prev = engine.getSnapshot().totalSeconds;
     for (i = 1; i < readings.length; i++) {

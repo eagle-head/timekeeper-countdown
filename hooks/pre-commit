@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Pre-commit hook — fast lane of the quality gate (build + format + lint + types).
+# Installed via `hooks/install.sh` (sets git core.hooksPath to this dir).
+exec "$(git rev-parse --show-toplevel)/bin/quality-gate.sh" --pre-commit

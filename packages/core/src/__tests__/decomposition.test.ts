@@ -38,7 +38,12 @@ describe('decomposition — reconstruction law (bug #5)', () => {
 
   it('decomposes a rich duration 1y 2w 3d 4h 5m 6s exactly', () => {
     const total =
-      1 * SECONDS_PER_YEAR + 2 * SECONDS_PER_WEEK + 3 * SECONDS_PER_DAY + 4 * SECONDS_PER_HOUR + 5 * SECONDS_PER_MINUTE + 6;
+      1 * SECONDS_PER_YEAR +
+      2 * SECONDS_PER_WEEK +
+      3 * SECONDS_PER_DAY +
+      4 * SECONDS_PER_HOUR +
+      5 * SECONDS_PER_MINUTE +
+      6;
     const p = partsOf(total);
     expect(p).toMatchObject({ years: 1, weeks: 2, days: 3, hours: 4, minutes: 5, seconds: 6 });
     expect(reconstruct(p)).toBe(total);

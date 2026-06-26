@@ -28,6 +28,9 @@ cd timekeeper-countdown
 
 # Install dependencies (always from the root — never inside individual packages)
 npm install
+
+# Install the git hooks (pre-commit + pre-push run the quality gate)
+./hooks/install.sh
 ```
 
 ### Key Scripts
@@ -41,6 +44,19 @@ npm install
 | `npm run format:check`                                 | Check code formatting   |
 | `npm run test --workspace @timekeeper-countdown/core`  | Test core only          |
 | `npm run test --workspace @timekeeper-countdown/react` | Test react only         |
+| `bin/quality-gate.sh`                                  | Full quality gate (build + format + lint + types + test) |
+| `bin/quality-gate.sh --fast`                           | Fast gate (skips tests) — what pre-commit runs |
+
+### Quality gate
+
+`bin/quality-gate.sh` is the single source of truth for checks — the **same
+script runs in the git hooks and in CI** (`.github/workflows/ci.yml`):
+
+- `--fast` / `--pre-commit`: build + `format:check` + lint + typecheck
+- `--full` / `--pre-push` (default): the fast lane plus the test suite
+
+`./hooks/install.sh` wires it into git (`core.hooksPath`): **pre-commit** runs
+the fast lane, **pre-push** runs the full lane.
 
 ## Project Structure
 
@@ -60,9 +76,10 @@ packages/
    git checkout -b feat/my-feature
    ```
 3. **Make your changes** and add or update tests as needed
-4. **Run the checks** before committing:
+4. **Run the quality gate** before committing (the git hooks run it for you once
+   you've run `./hooks/install.sh`):
    ```bash
-   npm run lint && npm run typecheck && npm run test
+   bin/quality-gate.sh
    ```
 5. **Commit** using [Conventional Commits](#commit-convention)
 6. **Push** and open a pull request against `main`
