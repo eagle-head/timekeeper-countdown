@@ -100,6 +100,7 @@ interface UseCountdownResult {
 ```
 
 - All control methods mirror the engine and return `false` for invalid transitions.
+- `setSeconds(value)` and `reset(value)` validate their argument and **throw** on an invalid value (negative, non-integer, `NaN`, or `Infinity`), matching the engine.
 - `snapshot` is stable per render; derive memoised values with `useMemo` if needed.
 - `totalSeconds`, `parts`, `isRunning`, and `isCompleted` are re-exposed for convenience.
 

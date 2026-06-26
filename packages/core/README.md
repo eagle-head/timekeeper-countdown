@@ -21,7 +21,7 @@ The published bundle is pure ESM. When targeting CommonJS environments use a bun
 
 Supported runtimes:
 
-- Node.js 18+
+- Node.js 22+
 - Modern browsers (ES2022 modules)
 
 ---
@@ -93,6 +93,7 @@ engine.start();
 `CountdownEngine` exposes fine-grained control:
 
 - `start`, `pause`, `resume`, `reset(nextInitialSeconds?)`, `stop`, `setSeconds(value)`, `destroy`
+- The constructor, `reset(value)`, and `setSeconds(value)` require a non-negative integer (≤ `Number.MAX_SAFE_INTEGER`) and **throw** on an invalid value (negative, non-integer, `NaN`, or `Infinity`).
 - `getSnapshot()` returns the latest snapshot.
 - `subscribe(listener)` emits the current snapshot immediately and on every tick.
 
