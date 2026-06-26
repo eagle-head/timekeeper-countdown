@@ -1,29 +1,9 @@
 import { Timer } from '../runtime/timer';
-import { createSafeTimeProvider, type TimeProvider } from '../runtime/time-providers';
+import { createSafeTimeProvider, createMonotonicTimeSource, type TimeProvider } from '../runtime/time-providers';
 import { StateMachine, TimerState } from '../state/state-machine';
-import {
-  SECONDS_PER_DAY,
-  SECONDS_PER_HOUR,
-  SECONDS_PER_MINUTE,
-  SECONDS_PER_WEEK,
-  SECONDS_PER_YEAR,
-  DAYS_PER_WEEK,
-  HOURS_PER_DAY,
-  MINUTES_PER_HOUR,
-  WEEKS_PER_YEAR,
-} from '../time/constants';
+import { decompose, type CountdownParts } from '../time/decompose';
 
-export interface CountdownParts {
-  years: number;
-  weeks: number;
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  totalDays: number;
-  totalHours: number;
-  totalMinutes: number;
-}
+export type { CountdownParts };
 
 export interface CountdownSnapshot {
   initialSeconds: number;
@@ -75,51 +55,31 @@ function sanitizeInitialSeconds(value: number): number {
 }
 
 function resolveTimeProvider(provider?: TimeProvider | (() => number)): () => number {
+  let source: () => number;
+
   if (!provider) {
     const safeProvider = createSafeTimeProvider();
-    return () => safeProvider.now();
-  }
-
-  if (typeof provider === 'function') {
-    return provider;
-  }
-
-  if (typeof provider.now === 'function') {
+    source = () => safeProvider.now();
+  } else if (typeof provider === 'function') {
+    source = provider;
+  } else if (typeof provider.now === 'function') {
     const ref = provider;
-    return () => ref.now();
+    source = () => ref.now();
+  } else {
+    throw new Error('timeProvider must implement a now(): number method');
   }
 
-  throw new Error('timeProvider must implement a now(): number method');
-}
-
-function computeParts(totalSeconds: number): CountdownParts {
-  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
-  const years = Math.floor(safeSeconds / SECONDS_PER_YEAR);
-  const weeks = Math.floor(safeSeconds / SECONDS_PER_WEEK) % WEEKS_PER_YEAR;
-  const days = Math.floor(safeSeconds / SECONDS_PER_DAY) % DAYS_PER_WEEK;
-  const hours = Math.floor(safeSeconds / SECONDS_PER_HOUR) % HOURS_PER_DAY;
-  const minutes = Math.floor(safeSeconds / SECONDS_PER_MINUTE) % MINUTES_PER_HOUR;
-  const seconds = safeSeconds % SECONDS_PER_MINUTE;
-
-  const totalDays = Math.floor(safeSeconds / SECONDS_PER_DAY);
-  const totalHours = Math.floor(safeSeconds / SECONDS_PER_HOUR);
-  const totalMinutes = Math.floor(safeSeconds / SECONDS_PER_MINUTE);
-
-  return {
-    years,
-    weeks,
-    days,
-    hours,
-    minutes,
-    seconds,
-    totalDays,
-    totalHours,
-    totalMinutes,
-  };
+  // Elapsed-time math requires a finite, monotonic non-decreasing clock. Wrapping
+  // every resolved provider (default OR caller-supplied) makes a NaN/Infinity/
+  // backward reading (NTP/DST/sleep-wake, or a buggy custom provider) unrepresentable
+  // downstream: such readings are repaired to the last known-good value instead of
+  // corrupting the countdown. A provider that *throws* still propagates to the
+  // timer's onError path — only out-of-range *values* are repaired here.
+  return createMonotonicTimeSource(source);
 }
 
 export function buildSnapshot(initialSeconds: number, totalSeconds: number, state: TimerState): CountdownSnapshot {
-  const parts = computeParts(totalSeconds);
+  const parts = decompose(totalSeconds);
   return {
     initialSeconds,
     totalSeconds,
@@ -277,7 +237,11 @@ export function CountdownEngine(
   };
 
   const setSeconds = (seconds: number): void => {
-    timer.setSeconds(seconds);
+    // Same validation policy as the constructor and reset(n): reject invalid input
+    // loudly instead of silently coercing it. The internal Timer keeps its own
+    // defensive clamp as defense-in-depth.
+    const safeSeconds = sanitizeInitialSeconds(seconds);
+    timer.setSeconds(safeSeconds);
     handleSnapshotUpdate(timer.getTotalSeconds());
   };
 

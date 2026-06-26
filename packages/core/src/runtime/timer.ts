@@ -4,6 +4,19 @@ import { createSafeTimeProvider } from './time-providers';
 const MIN_TICK_INTERVAL_MS = 10;
 const DEFAULT_TICK_INTERVAL_MS = 100;
 
+/**
+ * Resolves a caller-supplied tick interval to a safe `setInterval` delay. An invalid
+ * value (non-number, non-finite, or <= 0) falls back to the default; a valid value is
+ * floored and clamped to the minimum. This prevents `setInterval(fn, NaN/Infinity/0)`
+ * from degenerating into a ~0/1ms CPU tight-loop.
+ */
+function sanitizeTickInterval(value: number | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_TICK_INTERVAL_MS;
+  }
+  return Math.max(MIN_TICK_INTERVAL_MS, Math.floor(value));
+}
+
 type TimerID = ReturnType<typeof setInterval>;
 
 interface TimerEvents {
@@ -53,7 +66,7 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
   let pausedDuration = 0;
   let lastReportedSeconds = totalSeconds;
   let initialValue = totalSeconds;
-  const tickInterval = Math.max(MIN_TICK_INTERVAL_MS, Math.floor(config.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS));
+  const tickInterval = sanitizeTickInterval(config.tickIntervalMs);
   const defaultProvider = createSafeTimeProvider();
   const timeProvider = config.timeProvider ?? (() => defaultProvider.now());
 
@@ -66,7 +79,13 @@ export function Timer(initialSeconds: number, events: TimerEvents, config: Timer
         const currentTime = timeProvider();
         const elapsedMs = currentTime - startTimestamp - pausedDuration;
         const elapsedSeconds = Math.floor(elapsedMs / MILLISECONDS_PER_SECOND);
-        const remainingSeconds = Math.max(0, initialValue - elapsedSeconds);
+        // Clamp remaining to [0, initialValue]. The upper bound makes a backward clock
+        // (or negative elapsed) unable to count the timer UP; a non-finite elapsed holds
+        // the last value rather than corrupting state with NaN. Defense-in-depth: the
+        // engine already feeds this a monotonic, finite clock via createMonotonicTimeSource.
+        const remainingSeconds = Number.isFinite(elapsedSeconds)
+          ? Math.min(initialValue, Math.max(0, initialValue - elapsedSeconds))
+          : initialValue;
 
         // Update totalSeconds to reflect actual time
         totalSeconds = remainingSeconds;

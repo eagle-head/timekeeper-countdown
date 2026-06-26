@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { Countdown, TimerState } from '../api/countdown';
 
-const mockedNow = vi.hoisted(() => vi.fn<[], number>(() => Date.now())) as Mock<[], number>;
+const mockedNow = vi.hoisted(() => vi.fn<() => number>(() => Date.now())) as Mock<() => number>;
 
 // Mock the time-providers module
 vi.mock('../runtime/time-providers', async importOriginal => {
@@ -214,7 +214,7 @@ describe('Countdown - Happy Path', () => {
       const countdown = Countdown(31536000); // 1 year (365 days)
 
       expect(countdown.getYears()).toBe('01');
-      expect(countdown.getDays()).toBe('01'); // 365 days = 1 year + 1 extra day due to modulo calculation
+      expect(countdown.getDays()).toBe('00'); // 365 days = exactly 1 year (consistent successive-subtraction decomposition)
       expect(countdown.getHours()).toBe('00');
       expect(countdown.getMinutes()).toBe('00'); // 525600 total min % 60 = 0
       expect(countdown.getSeconds()).toBe('00');

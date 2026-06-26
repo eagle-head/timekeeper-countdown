@@ -1,4 +1,5 @@
-import type { CountdownSnapshot, CountdownParts } from '../src/api/countdown-engine';
+import type { CountdownSnapshot } from '../src/api/countdown-engine';
+import { decompose } from '../src/time/decompose';
 import { TimerState } from '../src/state/state-machine';
 
 export interface SnapshotOptions {
@@ -22,37 +23,12 @@ const clampSeconds = (value: number | undefined): number => {
   return Math.floor(value);
 };
 
-const computeParts = (totalSeconds: number): CountdownParts => {
-  const safeSeconds = clampSeconds(totalSeconds);
-  const years = Math.floor(safeSeconds / 31536000);
-  const weeks = Math.floor(safeSeconds / 604800) % 52;
-  const days = Math.floor(safeSeconds / 86400) % 7;
-  const hours = Math.floor(safeSeconds / 3600) % 24;
-  const minutes = Math.floor(safeSeconds / 60) % 60;
-  const seconds = safeSeconds % 60;
-
-  const totalDays = Math.floor(safeSeconds / 86400);
-  const totalHours = Math.floor(safeSeconds / 3600);
-  const totalMinutes = Math.floor(safeSeconds / 60);
-
-  return {
-    years,
-    weeks,
-    days,
-    hours,
-    minutes,
-    seconds,
-    totalDays,
-    totalHours,
-    totalMinutes,
-  };
-};
-
 export function buildSnapshot(options: SnapshotOptions = {}): CountdownSnapshot {
   const initialSeconds = clampSeconds(options.initialSeconds ?? options.totalSeconds ?? 0);
   const totalSeconds = clampSeconds(options.totalSeconds ?? options.initialSeconds ?? 0);
   const state = options.state ?? (totalSeconds > 0 ? TimerState.IDLE : TimerState.STOPPED);
-  const parts = computeParts(totalSeconds);
+  // Canonical, lossless breakdown — same source of truth as the engine and formatters.
+  const parts = decompose(totalSeconds);
   return {
     initialSeconds,
     totalSeconds,

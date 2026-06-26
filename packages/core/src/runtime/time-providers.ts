@@ -100,6 +100,32 @@ export function createSafeTimeProvider(): TimeProvider {
   };
 }
 
+/**
+ * Wraps any time source so it can only ever emit a finite, non-decreasing value.
+ *
+ * Elapsed-time measurement requires a monotonic clock; wall-clock sources can jump
+ * backward (NTP correction, DST, sleep/wake) and custom providers can return garbage.
+ * Any reading that is not a finite number, or that is smaller than the previous one,
+ * is repaired by returning the last known-good value — so NaN / Infinity / backward
+ * readings can never propagate into downstream duration math.
+ *
+ * A source that *throws* is intentionally NOT caught here: the exception propagates so
+ * the caller's error handling (the Timer's onError path) can react. Only out-of-range
+ * values are repaired.
+ */
+export function createMonotonicTimeSource(source: () => number, startValue = 0): () => number {
+  let last = typeof startValue === 'number' && Number.isFinite(startValue) && startValue >= 0 ? startValue : 0;
+
+  return () => {
+    const next = source();
+    if (typeof next !== 'number' || !Number.isFinite(next) || next < last) {
+      return last;
+    }
+    last = next;
+    return last;
+  };
+}
+
 // Global instance to be used throughout the library
 const globalTimeProvider = createSafeTimeProvider();
 
