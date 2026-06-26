@@ -31,5 +31,5 @@ Fixes #<!-- issue number -->
 - [ ] `npm run typecheck` passes
 - [ ] `npm run test` passes
 - [ ] I have followed the [commit convention](.github/commit-convention.md)
-- [ ] I have added a changeset (`npm run changeset`) if this is a user-facing change
+- [ ] I have updated the CHANGELOG (`packages/*/CHANGELOG.md`) if this is a user-facing change
 - [ ] I have updated documentation if needed

@@ -1,0 +1,226 @@
+name: Release
+
+# Title each run with the version tag being published (e.g. "Release · v0.3.0")
+# instead of a bare "Release". (GitHub Actions "run-name".)
+run-name: Release · ${{ inputs.tag || github.ref_name }}
+
+# Tag-triggered publish to npm for the timekeeper-countdown monorepo, which ships
+# TWO packages that are a FIXED version group (always the same version):
+#
+#   - @timekeeper-countdown/core   (packages/core,  zero-dependency engine)
+#   - @timekeeper-countdown/react  (packages/react, React hook; depends on core)
+#
+# Because the two packages always share a version, ONE `vX.Y.Z` tag publishes
+# BOTH in a single run, in the required order: core FIRST (react declares
+# "@timekeeper-countdown/core": "^X.Y.Z"), then react. A registry poll between
+# the two publishes guarantees core is downloadable before react ships, so a
+# consumer never resolves react against a not-yet-live core.
+#
+# Why a tag — not push/merge to main: npm versions are IMMUTABLE (a published
+# name@version can never be overwritten, only deprecated/unpublished within 72h).
+# Merges to main happen many times per release, so publishing is gated on a
+# deliberate version tag. The tag's version must equal BOTH packages' package.json
+# .version (validated below) so the git tag and the registry versions never drift.
+#
+# One-time human setup (see RELEASING.md): a GitHub Environment `npm-publish`
+# holding the `NPM_TOKEN` secret (a granular automation token with publish rights
+# to both @timekeeper-countdown/* packages).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to publish (e.g. v0.3.0). Must match both packages' package.json version."
+        required: true
+
+concurrency:
+  # Never cancel an in-flight publish — a half-published release (core live,
+  # react not) is worse than a queued one. Serialize per tag.
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  # contents: write -> create the GitHub Release at the end.
+  # id-token: write -> mint the OIDC token npm uses to attach provenance.
+  # npm AUTH still uses NODE_AUTH_TOKEN/NPM_TOKEN, independent of GITHUB_TOKEN.
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    # The NPM_TOKEN secret lives in this environment. Declaring it here grants
+    # access to that secret AND runs any environment protection rules (required
+    # reviewers / wait timer) configured in repo settings — the manual gate.
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Tag push -> github.ref_name is the tag; dispatch -> the tag input.
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@timekeeper-countdown'
+
+      # Derive the version from the tag (strip the leading "v").
+      - name: Resolve version from tag
+        id: ver
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-$REF_NAME}"
+          case "$TAG" in
+            v*) VSN="${TAG#v}" ;;
+            *)  echo "::error::Tag '$TAG' is not a 'vX.Y.Z' version tag."; exit 1 ;;
+          esac
+          {
+            echo "tag=$TAG"
+            echo "vsn=$VSN"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing version $VSN (tag $TAG)"
+
+      # The tag's version must equal BOTH packages' package.json .version (fixed
+      # group), so the git tag and the two registry versions can never drift.
+      - name: Validate tag matches both package versions
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          VSN: ${{ steps.ver.outputs.vsn }}
+        run: |
+          set -euo pipefail
+          CORE_VSN=$(jq -r .version packages/core/package.json)
+          REACT_VSN=$(jq -r .version packages/react/package.json)
+          echo "tag_vsn=$VSN  core=$CORE_VSN  react=$REACT_VSN"
+          if [ "$VSN" != "$CORE_VSN" ] || [ "$VSN" != "$REACT_VSN" ]; then
+            echo "::error::Tag '$TAG' (version '$VSN') must match BOTH packages/core ($CORE_VSN) and packages/react ($REACT_VSN). Run 'npm run version-bump $VSN', commit, then re-tag."
+            exit 1
+          fi
+          # Sanity-check react's internal dependency range is satisfied by this version.
+          REQ=$(jq -r '.dependencies["@timekeeper-countdown/core"]' packages/react/package.json)
+          if ! npx --yes semver -r "$REQ" "$VSN" >/dev/null; then
+            echo "::error::react requires core '$REQ' but releasing '$VSN'. Re-run 'npm run version-bump $VSN' to sync the range."
+            exit 1
+          fi
+          echo "Publishing core + react $VSN"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Full gate before any immutable publish.
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm run test
+      - name: Type check
+        run: npm run typecheck
+
+      # Dry-run BOTH tarballs first — validates files/metadata WITHOUT burning an
+      # immutable version.
+      - name: Dry-run publish (no upload)
+        run: |
+          set -euo pipefail
+          npm publish -w @timekeeper-countdown/core  --dry-run
+          npm publish -w @timekeeper-countdown/react --dry-run
+
+      # Idempotency guard: skip a package whose name@version is already live, so a
+      # re-run (e.g. react failed after core succeeded) does not fail on
+      # "cannot publish over existing version".
+      - name: Detect already-published versions
+        id: live
+        env:
+          VSN: ${{ steps.ver.outputs.vsn }}
+        run: |
+          set -euo pipefail
+          core_live=$(npm view "@timekeeper-countdown/core@$VSN" version 2>/dev/null || true)
+          react_live=$(npm view "@timekeeper-countdown/react@$VSN" version 2>/dev/null || true)
+          echo "core_published=$([ "$core_live" = "$VSN" ] && echo true || echo false)"   >> "$GITHUB_OUTPUT"
+          echo "react_published=$([ "$react_live" = "$VSN" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      # Prerelease versions (containing "-") go to the 'next' dist-tag so they
+      # never move 'latest'.
+      - name: Resolve dist-tag
+        id: disttag
+        env:
+          VSN: ${{ steps.ver.outputs.vsn }}
+        run: |
+          case "$VSN" in
+            *-*) echo "tag=next"   >> "$GITHUB_OUTPUT" ;;
+            *)   echo "tag=latest" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # 1) core FIRST.
+      - name: Publish @timekeeper-countdown/core
+        if: steps.live.outputs.core_published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish -w @timekeeper-countdown/core --provenance --access public --tag ${{ steps.disttag.outputs.tag }}
+
+      # 2) Poll until core@VSN is resolvable on the registry (CDN propagation), so
+      #    react never ships against a not-yet-live core.
+      - name: Wait for core to be live on the registry
+        env:
+          VSN: ${{ steps.ver.outputs.vsn }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if [ "$(npm view "@timekeeper-countdown/core@$VSN" version 2>/dev/null || true)" = "$VSN" ]; then
+              echo "core@$VSN is live."
+              exit 0
+            fi
+            echo "Attempt $i: core@$VSN not visible yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::core@$VSN did not become visible on the registry within ~5 min. Aborting before publishing react."
+          exit 1
+
+      # 3) react SECOND.
+      - name: Publish @timekeeper-countdown/react
+        if: steps.live.outputs.react_published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish -w @timekeeper-countdown/react --provenance --access public --tag ${{ steps.disttag.outputs.tag }}
+
+      # Best-effort provenance/signature verification after publish.
+      - name: Verify signatures
+        run: npm audit signatures || true
+
+      # Create the visible GitHub Release LAST — only after BOTH publishes
+      # succeed, so a failed publish never leaves a release for a version not on
+      # npm. Body is core's CHANGELOG section for this version; fall back to
+      # auto-generated notes if the section is missing.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          VSN: ${{ steps.ver.outputs.vsn }}
+        run: |
+          set -euo pipefail
+          CHANGELOG="packages/core/CHANGELOG.md"
+          NOTES_FILE="$(mktemp)"
+          VSN_RE=$(printf '%s' "$VSN" | sed 's/\./\\./g')
+          # CHANGELOG follows Keep a Changelog: "## [0.3.0] - 2026-06-26", with
+          # "### Changed"/"### Fixed" subheadings INSIDE each section. Slice from
+          # this version's "## [<ver>]" heading to the NEXT "## " heading (not any
+          # "#", so the "###" subheadings stay in the body).
+          awk -v ver="$VSN_RE" '
+            $0 ~ ("^## \\[" ver "\\]") { flag=1; next }
+            flag && /^## / { flag=0 }
+            flag { print }
+          ' "$CHANGELOG" > "$NOTES_FILE"
+          PRERELEASE=""
+          case "$VSN" in *-*) PRERELEASE="--prerelease" ;; esac
+          if grep -q '[^[:space:]]' "$NOTES_FILE"; then
+            echo "Using ${CHANGELOG} section for ${VSN} as release notes."
+            gh release create "$TAG" --title "Release $TAG" --notes-file "$NOTES_FILE" --verify-tag $PRERELEASE
+          else
+            echo "No ${CHANGELOG} section for ${VSN} — using auto-generated notes."
+            gh release create "$TAG" --title "Release $TAG" --generate-notes --verify-tag $PRERELEASE
+          fi
