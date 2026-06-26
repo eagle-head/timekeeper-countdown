@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CountdownEngine } from '../api/countdown-engine';
 import { TimerState } from '../state/state-machine';
 
@@ -146,6 +146,74 @@ describe('CountdownEngine', () => {
 
     expect(engine.start()).toBe(true);
     expect(engine.start()).toBe(false);
+
+    engine.destroy();
+  });
+});
+
+describe('CountdownEngine — single emission per transition (F11)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('emits exactly one snapshot per start/pause/resume/stop transition', () => {
+    const t = 0;
+    const onSnapshot = vi.fn();
+    const engine = CountdownEngine(60, { timeProvider: () => t, tickIntervalMs: 100, onSnapshot });
+
+    // Construction does not notify; each transition below must notify exactly once.
+    onSnapshot.mockClear();
+    expect(engine.start()).toBe(true);
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(onSnapshot).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: TimerState.RUNNING, totalSeconds: 60 })
+    );
+
+    onSnapshot.mockClear();
+    expect(engine.pause()).toBe(true);
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(onSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({ state: TimerState.PAUSED }));
+
+    onSnapshot.mockClear();
+    expect(engine.resume()).toBe(true);
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(onSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({ state: TimerState.RUNNING }));
+
+    onSnapshot.mockClear();
+    expect(engine.stop()).toBe(true);
+    expect(onSnapshot).toHaveBeenCalledTimes(1);
+    expect(onSnapshot).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: TimerState.STOPPED, totalSeconds: 0 })
+    );
+
+    engine.destroy();
+  });
+
+  it('emits exactly one completed (isCompleted) snapshot on natural completion', () => {
+    let t = 0;
+    const completedTotals: number[] = [];
+    const engine = CountdownEngine(2, {
+      timeProvider: () => t,
+      tickIntervalMs: 100,
+      onSnapshot: snapshot => {
+        if (snapshot.isCompleted) {
+          completedTotals.push(snapshot.totalSeconds);
+        }
+      },
+    });
+
+    engine.start();
+    for (let s = 1; s <= 2; s += 1) {
+      t = s * 1000;
+      vi.advanceTimersByTime(100);
+    }
+
+    expect(engine.getSnapshot().isCompleted).toBe(true);
+    // The final STOPPED snapshot is the ONLY isCompleted emission; the preceding
+    // 0-remaining onTick is still RUNNING (isCompleted false) and must not double-fire it.
+    expect(completedTotals).toEqual([0]);
 
     engine.destroy();
   });

@@ -1,5 +1,6 @@
 import type { CountdownSnapshot } from '../api/countdown-engine';
 import { decompose } from '../time/decompose';
+import { clampSeconds } from '../time/clamp';
 
 export type FormatTarget = number | Pick<CountdownSnapshot, 'totalSeconds'> | null | undefined;
 
@@ -15,25 +16,9 @@ function extractSeconds(target: FormatTarget): number {
   return 0;
 }
 
-function sanitizeSeconds(totalSeconds: number): number {
-  if (typeof totalSeconds !== 'number' || !Number.isFinite(totalSeconds)) {
-    return 0;
-  }
-
-  if (totalSeconds <= 0) {
-    return 0;
-  }
-
-  if (totalSeconds >= Number.MAX_SAFE_INTEGER) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  return Math.floor(totalSeconds);
-}
-
 // `value` is always a non-negative integer here — every caller passes a field from
 // `decompose()`, which floors and clamps. So this is a pure padding helper; the input
-// is validated once upstream (extractSeconds + sanitizeSeconds), not re-guarded here.
+// is validated once upstream (extractSeconds + clampSeconds), not re-guarded here.
 function safeFormat(value: number, padLength = 2): string {
   return value.toString().padStart(padLength, '0');
 }
@@ -41,7 +26,7 @@ function safeFormat(value: number, padLength = 2): string {
 export function Formatter() {
   // Single source of truth: every formatter derives from the canonical, lossless
   // decomposition, so formatted units are mutually consistent and reconstruct the total.
-  const partsOf = (target: FormatTarget) => decompose(sanitizeSeconds(extractSeconds(target)));
+  const partsOf = (target: FormatTarget) => decompose(clampSeconds(extractSeconds(target)));
 
   const formatTime = (target: FormatTarget) => {
     const parts = partsOf(target);

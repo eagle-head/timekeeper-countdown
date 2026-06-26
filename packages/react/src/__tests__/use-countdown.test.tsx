@@ -43,7 +43,10 @@ describe('useCountdown', () => {
     subscription.unsubscribe();
     engine.destroy();
     expect(snapshotAfterAdvance.totalSeconds).toBe(2);
-    expect(totals).toEqual([3, 3, 3, 2]);
+    // Single-emit contract (F11): initial subscribe (3) + the RUNNING transition (3)
+    // + the 2s tick (2). The old behavior double-emitted the start transition (an
+    // extra 3); this asserts exactly one snapshot per transition.
+    expect(totals).toEqual([3, 3, 2]);
   });
 
   it('should expose initial snapshot in idle state', () => {

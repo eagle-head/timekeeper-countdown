@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
 import { buildSnapshot } from '../api/countdown-engine';
+import { decompose } from '../time/decompose';
 import { TimerState } from '../state/state-machine';
 import {
   SECONDS_PER_YEAR,
@@ -98,5 +99,78 @@ describe('decomposition — reconstruction law (bug #5)', () => {
       }),
       { numRuns: 2000 }
     );
+  });
+});
+
+describe('decompose — non-finite / negative / non-integer contract (F22)', () => {
+  // Exercise decompose() directly (it is the total function that owns the breakdown's
+  // sanitization). buildSnapshot and the formatters now pre-clamp via clampSeconds, so
+  // a direct call is the only path that drives decompose's own guard —
+  // `Number.isFinite(...) ? Math.max(0, Math.floor(...)) : 0` — through both its false
+  // branch (NaN/Infinity -> 0) and the Math.max(0, ...) negative branch.
+  const ALL_PART_KEYS = [
+    'years',
+    'weeks',
+    'days',
+    'hours',
+    'minutes',
+    'seconds',
+    'totalDays',
+    'totalHours',
+    'totalMinutes',
+  ] as const;
+
+  it.each<[string, number]>([
+    ['negative (-5)', -5], // Number.isFinite true -> Math.max(0, floor(-5)) === 0
+    ['NaN', Number.NaN], // Number.isFinite false -> 0 branch
+    ['Infinity', Number.POSITIVE_INFINITY], // Number.isFinite false -> 0 branch
+    ['-Infinity', Number.NEGATIVE_INFINITY], // Number.isFinite false -> 0 branch
+  ])('collapses %s to an all-zero, reconstructable breakdown', (_label, input) => {
+    const p = decompose(input);
+    for (const key of ALL_PART_KEYS) {
+      expect(p[key]).toBe(0);
+    }
+    expect(reconstruct(p)).toBe(0);
+  });
+
+  it('floors a non-integer (10.5) rather than zeroing it', () => {
+    const p = decompose(10.5);
+    expect(p.seconds).toBe(10);
+    expect(p.totalMinutes).toBe(0);
+    expect(reconstruct(p)).toBe(10);
+  });
+});
+
+describe('buildSnapshot — self-consistent numeric fields (F01)', () => {
+  // buildSnapshot must sanitize BOTH totalSeconds and initialSeconds so the stored
+  // numbers are non-negative integers and `parts` always reconstruct totalSeconds —
+  // no caller (public buildSnapshot, the React useState initializer) can produce a
+  // snapshot where parts disagree with the stored total or where raw NaN/Infinity/
+  // negatives leak into the fields.
+  it.each<[string, number, number]>([
+    ['10.5 -> floored to 10', 10.5, 10],
+    ['NaN -> 0', Number.NaN, 0],
+    ['Infinity -> 0', Number.POSITIVE_INFINITY, 0],
+    ['-5 -> 0', -5, 0],
+    // Above MAX_SAFE_INTEGER clampSeconds caps the stored total; parts must decompose
+    // the SAME capped value (not the raw one) so they still reconstruct it exactly.
+    ['1e16 -> capped to MAX_SAFE_INTEGER', 1e16, Number.MAX_SAFE_INTEGER],
+    ['MAX_VALUE -> capped to MAX_SAFE_INTEGER', Number.MAX_VALUE, Number.MAX_SAFE_INTEGER],
+  ])('sanitizes %s for both totalSeconds and initialSeconds', (_label, input, expected) => {
+    const snap = buildSnapshot(input, input, TimerState.IDLE);
+
+    expect(snap.totalSeconds).toBe(expected);
+    expect(snap.initialSeconds).toBe(expected);
+    expect(Number.isInteger(snap.totalSeconds)).toBe(true);
+    expect(Number.isInteger(snap.initialSeconds)).toBe(true);
+    expect(snap.totalSeconds).toBeGreaterThanOrEqual(0);
+    expect(snap.initialSeconds).toBeGreaterThanOrEqual(0);
+
+    // The parts always reconstruct the stored (sanitized) totalSeconds.
+    expect(reconstruct(snap.parts)).toBe(snap.totalSeconds);
+    for (const value of Object.values(snap.parts)) {
+      expect(Number.isInteger(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+    }
   });
 });

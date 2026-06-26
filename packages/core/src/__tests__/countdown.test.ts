@@ -829,8 +829,17 @@ describe('Countdown - Error Handling', () => {
 
       countdown.start();
 
-      // The engine passes the raw timer value through; sanitization happens in the Formatter layer
-      expect(onSnapshot).toHaveBeenCalledWith(expect.objectContaining({ totalSeconds: -5 }));
+      // F01: buildSnapshot sanitizes totalSeconds at the snapshot-construction boundary,
+      // so a negative timer reading can never leak into any emitted snapshot — every
+      // emission is a finite, non-negative integer (the bad -5 is clamped to 0). Old
+      // behavior leaked the raw -5.
+      expect(onSnapshot).toHaveBeenCalled();
+      onSnapshot.mock.calls.forEach(call => {
+        expect(Number.isInteger(call[0].totalSeconds)).toBe(true);
+        expect(call[0].totalSeconds).toBeGreaterThanOrEqual(0);
+      });
+      // The post-start transition snapshot (driven by the mocked timer's -5) is clamped to 0.
+      expect(onSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({ totalSeconds: 0 }));
 
       vi.doUnmock('../runtime/timer');
     });
@@ -855,8 +864,16 @@ describe('Countdown - Error Handling', () => {
 
       countdown.start();
 
-      // The engine passes the raw timer value through; sanitization happens in the Formatter layer
-      expect(onSnapshot).toHaveBeenCalledWith(expect.objectContaining({ totalSeconds: NaN }));
+      // F01: a non-finite timer reading (NaN) is sanitized to 0 in buildSnapshot, so no
+      // emitted snapshot ever carries NaN — every emission is a finite, non-negative
+      // integer. Old behavior leaked the raw NaN.
+      expect(onSnapshot).toHaveBeenCalled();
+      onSnapshot.mock.calls.forEach(call => {
+        expect(Number.isFinite(call[0].totalSeconds)).toBe(true);
+        expect(call[0].totalSeconds).toBeGreaterThanOrEqual(0);
+      });
+      // The post-start transition snapshot (driven by the mocked timer's NaN) is clamped to 0.
+      expect(onSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({ totalSeconds: 0 }));
 
       vi.doUnmock('../runtime/timer');
     });
@@ -881,8 +898,16 @@ describe('Countdown - Error Handling', () => {
 
       countdown.start();
 
-      // The engine passes the raw timer value through; sanitization happens in the Formatter layer
-      expect(onSnapshot).toHaveBeenCalledWith(expect.objectContaining({ totalSeconds: Infinity }));
+      // F01: a non-finite timer reading (Infinity) is sanitized to 0 in buildSnapshot, so
+      // no emitted snapshot ever carries Infinity — every emission is a finite,
+      // non-negative integer. Old behavior leaked the raw Infinity.
+      expect(onSnapshot).toHaveBeenCalled();
+      onSnapshot.mock.calls.forEach(call => {
+        expect(Number.isFinite(call[0].totalSeconds)).toBe(true);
+        expect(call[0].totalSeconds).toBeGreaterThanOrEqual(0);
+      });
+      // The post-start transition snapshot (driven by the mocked timer's Infinity) is clamped to 0.
+      expect(onSnapshot).toHaveBeenLastCalledWith(expect.objectContaining({ totalSeconds: 0 }));
 
       vi.doUnmock('../runtime/timer');
     });

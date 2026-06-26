@@ -14,7 +14,18 @@ import { SECONDS_PER_MINUTE, SECONDS_PER_HOUR, SECONDS_PER_DAY, SECONDS_PER_WEEK
  *   hours*SECONDS_PER_HOUR + minutes*SECONDS_PER_MINUTE + seconds === totalSeconds
  * ```
  *
- * Field ranges: `weeks` 0–52, `days` 0–6, `hours` 0–23, `minutes`/`seconds` 0–59.
+ * Field ranges:
+ * - `years` — 0+ (unbounded; one year is 365 days)
+ * - `weeks` — 0–52 (one week is 7 days, so the 365-day remainder reaches 52 weeks)
+ * - `days` — 0–6
+ * - `hours` — 0–23
+ * - `minutes` / `seconds` — 0–59
+ *
+ * The `total*` fields are cumulative floors of the whole duration, NOT modular
+ * remainders of the calendar ladder:
+ * - `totalDays` — `Math.floor(totalSeconds / SECONDS_PER_DAY)`
+ * - `totalHours` — `Math.floor(totalSeconds / SECONDS_PER_HOUR)`
+ * - `totalMinutes` — `Math.floor(totalSeconds / SECONDS_PER_MINUTE)`
  */
 export interface CountdownParts {
   years: number;
