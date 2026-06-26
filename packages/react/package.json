@@ -1,6 +1,6 @@
 {
   "name": "@timekeeper-countdown/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "React adapter for the Timekeeper Countdown engine",
   "author": "Eduardo Kohn",
   "license": "MIT",
@@ -33,6 +33,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -44,11 +45,12 @@
     "react": ">=17.0.0"
   },
   "dependencies": {
-    "@timekeeper-countdown/core": "^0.2.0"
+    "@timekeeper-countdown/core": "^0.3.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/react": "^15.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "react": "^18.3.1",
@@ -62,6 +64,9 @@
     "typescript"
   ],
   "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
