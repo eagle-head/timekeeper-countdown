@@ -70,7 +70,7 @@ describe('CountdownEngine', () => {
     vi.useFakeTimers();
 
     const provider = vi
-      .fn<[], number>()
+      .fn<() => number>()
       .mockReturnValueOnce(0)
       .mockImplementation(() => {
         throw new Error('tick failure');
@@ -97,7 +97,7 @@ describe('CountdownEngine', () => {
     const throwingListener = vi.fn(() => {
       throw new Error('listener failure');
     });
-    const safeListener = vi.fn<[ReturnType<typeof engine.getSnapshot>]>();
+    const safeListener = vi.fn<(snapshot: ReturnType<typeof engine.getSnapshot>) => void>();
 
     expect(() => engine.subscribe(throwingListener)).not.toThrow();
     engine.subscribe(snapshot => safeListener(snapshot));

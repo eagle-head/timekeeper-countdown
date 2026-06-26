@@ -11,35 +11,36 @@
     "test": "npm run test --workspaces",
     "test:ui": "npm run test:ui --workspaces",
     "test:coverage": "npm run test:coverage --workspaces",
+    "test:mutation": "npm run test:mutation --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
     "format": "npm run format --workspaces",
     "format:check": "npm run format:check --workspaces",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "npm run build --workspaces && changeset publish",
+    "version-bump": "bash scripts/version-bump.sh",
     "prepublishOnly": "npm run build --workspaces && npm run test --workspaces && npm run typecheck --workspaces",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
     "@eslint/js": "^9.32.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^20.11.17",
-    "@vitest/coverage-v8": "^1.2.2",
-    "@vitest/ui": "^1.2.2",
+    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/ui": "^4.1.9",
     "eslint": "^9.32.0",
-    "jsdom": "^24.0.0",
+    "fast-check": "^4.8.0",
+    "jsdom": "^29.1.1",
     "prettier": "^3.2.5",
     "tsup": "^8.0.2",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.38.0",
     "vitepress": "^1.6.4",
-    "vitest": "^1.2.2"
+    "vitest": "^4.1.9"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

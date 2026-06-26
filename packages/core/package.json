@@ -1,6 +1,6 @@
 {
   "name": "@timekeeper-countdown/core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Lightweight countdown engine that powers the Timekeeper packages. Pure TypeScript with no runtime dependencies.",
   "keywords": [
     "countdown",
@@ -54,6 +54,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:mutation": "stryker run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -62,7 +63,7 @@
     "prepublishOnly": "npm run build && npm run test && npm run typecheck"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

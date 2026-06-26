@@ -3,8 +3,8 @@ import type { Mock } from 'vitest';
 import { Timer } from '../runtime/timer';
 
 const { now: mockedNow } = vi.hoisted(() => ({
-  now: vi.fn<[], number>(() => Date.now()),
-})) as { now: Mock<[], number> };
+  now: vi.fn<() => number>(() => Date.now()),
+})) as { now: Mock<() => number> };
 
 vi.mock('../runtime/time-providers', async importOriginal => {
   const actual = await importOriginal<typeof import('../runtime/time-providers')>();
