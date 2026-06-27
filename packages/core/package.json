@@ -1,6 +1,6 @@
 {
   "name": "@timekeeper-countdown/core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Lightweight countdown engine that powers the Timekeeper packages. Pure TypeScript with no runtime dependencies.",
   "keywords": [
     "countdown",
