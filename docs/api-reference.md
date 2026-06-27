@@ -19,7 +19,7 @@ Creates a countdown engine instance and wires it into React state.
 
 #### Parameters
 
-- `initialSeconds: number` – non-negative integer representing the initial duration in seconds.
+- `initialSeconds: number` – non-negative integer representing the initial duration in seconds. Must be a finite, non-negative integer `≤ Number.MAX_SAFE_INTEGER`; an invalid value (negative, non-integer, `NaN`, or `Infinity`) **throws** at construction (the error propagates from the hook's effect).
 - `options?: UseCountdownOptions`
   - `autoStart?: boolean` – start automatically on mount (default `false`).
   - `tickIntervalMs?: number` – polling interval in milliseconds (default `100`).
@@ -27,6 +27,8 @@ Creates a countdown engine instance and wires it into React state.
   - `onSnapshot?: (snapshot: CountdownSnapshot) => void` – side effects on every snapshot.
   - `onStateChange?: (state: TimerState, snapshot: CountdownSnapshot) => void` – notified whenever the state machine transitions.
   - `onError?: (error: Error) => void` – capture unexpected engine errors.
+
+Exceptions thrown by your own callbacks — `onSnapshot`, `onStateChange`, and `subscribe` listeners — are **swallowed** (fail-soft): one throwing listener never crashes the timer or stops the others. These callback errors are **not** delivered to `onError`, which is reserved for internal/timer errors only.
 
 #### Returns: `UseCountdownResult`
 
@@ -56,6 +58,7 @@ interface UseCountdownControls {
 - `parts` exposes derived units (`minutes`, `hours`, `days`, etc.) as numbers.
 - `isRunning` and `isCompleted` are boolean helpers.
 - Control methods return `false` when the requested transition is invalid for the current state.
+- `reset(value)` and `setSeconds(value)` validate their argument like the constructor: each requires a finite, non-negative integer `≤ Number.MAX_SAFE_INTEGER` and **throws** on an invalid value (negative, non-integer, `NaN`, or `Infinity`).
 
 The hook memoises every method with `useCallback`, so you can pass them directly to event handlers.
 

@@ -97,6 +97,8 @@ engine.start();
 - `getSnapshot()` returns the latest snapshot.
 - `subscribe(listener)` emits the current snapshot immediately and on every tick.
 
+Exceptions thrown by your own callbacks — `onSnapshot`, `onStateChange`, and `subscribe` listeners — are **swallowed** (fail-soft): one throwing listener never crashes the timer or stops the other listeners. These callback errors are **not** delivered to `onError`; `onError` is reserved for internal/timer errors only.
+
 Snapshot structure:
 
 ```ts
@@ -339,6 +341,10 @@ const provider = {
 };
 CountdownEngine(60, { timeProvider: provider });
 ```
+
+Constructing with an invalid `timeProvider` — anything that is neither a function nor an object exposing a `now(): number` method — **throws** at construction (and that error propagates from `useCountdown`'s effect).
+
+Every time provider — the default one and any custom provider you supply — is wrapped in a finite, non-decreasing guard, so a `NaN`/`Infinity`/backward clock reading (from NTP, DST, or sleep-wake, or a buggy custom provider) is repaired to the last good value, and remaining seconds is always clamped to `[0, initialValue]`. A provider whose `now()` *throws* is not repaired; the error routes to `onError` instead.
 
 ---
 

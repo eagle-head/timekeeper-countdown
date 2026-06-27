@@ -103,6 +103,8 @@ function ControlledCountdown() {
 
 Passing a fake provider keeps your tests synchronous and deterministic. You can also use this hook to sync multiple countdowns to a shared clock.
 
+Every time provider — the default one and any custom provider you inject — is wrapped in a finite, non-decreasing guard, so a `NaN`/`Infinity`/backward clock reading is repaired to the last good value, and remaining seconds is always clamped to `[0, initialSeconds]`. (A provider that *throws* instead routes to `onError`.)
+
 ## Multiple Timers
 
 ```tsx

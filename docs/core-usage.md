@@ -18,9 +18,11 @@ npm install @timekeeper-countdown/core
 
 ```ts
 import { Countdown, TimerState } from '@timekeeper-countdown/core';
+import { formatTime } from '@timekeeper-countdown/core/format';
 
 const countdown = Countdown(300, {
-  onUpdate: (minutes, seconds) => {
+  onSnapshot: snapshot => {
+    const { minutes, seconds } = formatTime(snapshot);
     console.log(`${minutes}:${seconds}`);
   },
   onStateChange: state => {
