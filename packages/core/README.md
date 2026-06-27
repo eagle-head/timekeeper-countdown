@@ -55,7 +55,7 @@ countdown.start(); // Begin the countdown
 `Countdown` wraps the lower-level engine and returns convenient methods:
 
 ```ts
-countdown.start();                   // boolean (false when invalid transition)
+countdown.start();                   // void (the low-level CountdownEngine returns boolean)
 countdown.pause();
 countdown.resume();
 countdown.reset(nextInitialSeconds?);

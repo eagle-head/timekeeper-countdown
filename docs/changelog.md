@@ -8,13 +8,16 @@ Both packages are versioned in lockstep and always share one version.
 
 ## @timekeeper-countdown/core
 
-### [0.3.0] - 2026-06-26
+### [0.3.0] - 2026-06-27
 
 #### Changed
 
+- **Single-emit per transition (behavior change):** each state transition (`start`/`pause`/`resume`/`stop` and natural completion) now emits exactly one snapshot; redundant emissions were removed. Consumers relying on the previous (larger) number of `onSnapshot`/`onStateChange` callbacks per transition must update.
 - The unit breakdown (`years`/`weeks`/`days`/…, the standalone `formatDays`/`formatWeeks`/`formatYears`, and `getDays`/`getWeeks`/`getYears`) is now computed by a single lossless successive-subtraction ladder (year = 365 days, week = 7 days), so the parts always reconstruct the total. **Behavior change:** values around the 52-week / 365-day boundaries are now corrected — e.g. 364 days no longer renders as all-zero.
 - `CountdownEngine.setSeconds(n)` now validates its argument like the constructor and `reset(n)`: it **throws** on a negative / non-finite / non-integer / out-of-range value instead of silently coercing it. Valid values behave as before.
+- `buildSnapshot` now sanitizes **both** `initialSeconds` and `totalSeconds` (non-finite/negative → 0, floored, capped at `MAX_SAFE_INTEGER`) and derives `isCompleted` from the clamped total, so every snapshot is self-consistent. **Behavior change:** callers that previously read back a raw/oversized/non-integer `initialSeconds` now receive the clamped value.
 - A single canonical `decompose()` is now shared by the engine, the formatters, and the published testing utilities (removing three divergent copies).
+- **Raised the minimum supported Node to `>=22`** (was `>=18`), declared via the `engines` field, so installing on older Node emits a warning or fails under `engine-strict`.
 
 #### Fixed
 
@@ -63,11 +66,13 @@ Both packages are versioned in lockstep and always share one version.
 
 ## @timekeeper-countdown/react
 
-### [0.3.0] - 2026-06-26
+### [0.3.0] - 2026-06-27
 
 #### Changed
 
-- The `useCountdown` hook inherits the engine hardening (see `@timekeeper-countdown/core` 0.3.0): a hostile `timeProvider` (`NaN`/`Infinity`/backward clock) can no longer corrupt the countdown, `tickIntervalMs` is sanitized, and the time decomposition is lossless. **Behavior change:** the hook's `setSeconds(value)` and `reset(value)` now **throw** on an invalid argument (negative / non-finite / non-integer / out-of-range) instead of silently coercing it.
+- The `useCountdown` hook inherits the engine hardening (see `@timekeeper-countdown/core` 0.3.0): a hostile `timeProvider` (`NaN`/`Infinity`/backward clock) can no longer corrupt the countdown, `tickIntervalMs` is sanitized, and the time decomposition is lossless. **Behavior change:** the hook's `setSeconds(value)` now **throws** on an invalid argument (negative / non-finite / non-integer / out-of-range) instead of silently coercing it; `reset(value)` and construction already threw in 0.2.0 (unchanged).
+- **Single-emit per transition (behavior change):** `useCountdown` now receives exactly one snapshot per engine state transition (redundant emissions removed), which can break consumers that relied on the previous number of update callbacks per transition.
+- **Now declares `engines.node` `>=22`** (the package previously declared no `engines` field); installing on older Node emits a warning or fails under `engine-strict`.
 - Bumped `@timekeeper-countdown/core` to `^0.3.0`.
 
 ### [0.2.0] - 2026-03-03
@@ -109,5 +114,3 @@ Both packages are versioned in lockstep and always share one version.
 #### Added
 
 - Initial React adapter (`useCountdown`) for the 0.1.0 React-first release.
-</content>
-</invoke>

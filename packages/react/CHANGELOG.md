@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-06-26
+## [0.3.0] - 2026-06-27
 
 ### Changed
 
-- The `useCountdown` hook inherits the engine hardening (see `@timekeeper-countdown/core` 0.3.0): a hostile `timeProvider` (`NaN`/`Infinity`/backward clock) can no longer corrupt the countdown, `tickIntervalMs` is sanitized, and the time decomposition is lossless. **Behavior change:** the hook's `setSeconds(value)` and `reset(value)` now **throw** on an invalid argument (negative / non-finite / non-integer / out-of-range) instead of silently coercing it.
+- The `useCountdown` hook inherits the engine hardening (see `@timekeeper-countdown/core` 0.3.0): a hostile `timeProvider` (`NaN`/`Infinity`/backward clock) can no longer corrupt the countdown, `tickIntervalMs` is sanitized, and the time decomposition is lossless. **Behavior change:** the hook's `setSeconds(value)` now **throws** on an invalid argument (negative / non-finite / non-integer / out-of-range) instead of silently coercing it; `reset(value)` and construction already threw in 0.2.0 (unchanged).
+- **Single-emit per transition (behavior change):** `useCountdown` now receives exactly one snapshot per engine state transition (redundant emissions removed), which can break consumers that relied on the previous number of update callbacks per transition.
+- **Now declares `engines.node` `>=22`** (the package previously declared no `engines` field); installing on older Node emits a warning or fails under `engine-strict`.
 - Bumped `@timekeeper-countdown/core` to `^0.3.0`.
 
 ## [0.2.0] - 2026-03-03

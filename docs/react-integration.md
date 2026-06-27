@@ -8,7 +8,7 @@
 npm install @timekeeper-countdown/react
 ```
 
-The hook lists `react` and `react-dom` as peer dependencies (React 17+). The shared engine and helper utilities are bundled automatically.
+The hook lists `react` (React 17+) as its only peer dependency. The shared engine and helper utilities are bundled automatically.
 
 ## Basic Hook Usage
 

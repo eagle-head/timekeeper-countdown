@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-06-26
+## [0.3.0] - 2026-06-27
 
 ### Changed
 
+- **Single-emit per transition (behavior change):** each state transition (`start`/`pause`/`resume`/`stop` and natural completion) now emits exactly one snapshot; redundant emissions were removed. Consumers relying on the previous (larger) number of `onSnapshot`/`onStateChange` callbacks per transition must update.
 - The unit breakdown (`years`/`weeks`/`days`/…, the standalone `formatDays`/`formatWeeks`/`formatYears`, and `getDays`/`getWeeks`/`getYears`) is now computed by a single lossless successive-subtraction ladder (year = 365 days, week = 7 days), so the parts always reconstruct the total. **Behavior change:** values around the 52-week / 365-day boundaries are now corrected — e.g. 364 days no longer renders as all-zero.
 - `CountdownEngine.setSeconds(n)` now validates its argument like the constructor and `reset(n)`: it **throws** on a negative / non-finite / non-integer / out-of-range value instead of silently coercing it. Valid values behave as before.
+- `buildSnapshot` now sanitizes **both** `initialSeconds` and `totalSeconds` (non-finite/negative → 0, floored, capped at `MAX_SAFE_INTEGER`) and derives `isCompleted` from the clamped total, so every snapshot is self-consistent. **Behavior change:** callers that previously read back a raw/oversized/non-integer `initialSeconds` now receive the clamped value.
 - A single canonical `decompose()` is now shared by the engine, the formatters, and the published testing utilities (removing three divergent copies).
+- **Raised the minimum supported Node to `>=22`** (was `>=18`), declared via the `engines` field, so installing on older Node emits a warning or fails under `engine-strict`.
 
 ### Fixed
 

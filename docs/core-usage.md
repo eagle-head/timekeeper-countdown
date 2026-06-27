@@ -41,7 +41,7 @@ countdown.start();
 Available methods:
 
 ```ts
-countdown.start();                   // boolean (false when invalid transition)
+countdown.start();                   // void (the low-level CountdownEngine returns boolean)
 countdown.pause();
 countdown.resume();
 countdown.reset(nextInitialSeconds?);

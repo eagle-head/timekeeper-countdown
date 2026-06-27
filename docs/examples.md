@@ -170,26 +170,34 @@ const sequence = buildSnapshotSequence({ totalSeconds: 10, step: 5, count: 3 });
 ### Deterministic test with engine (plain core, no React)
 
 ```ts
+import { vi } from 'vitest';
 import { CountdownEngine } from '@timekeeper-countdown/core';
 import {
   createFakeTimeProvider,
   toTimeProvider,
   assertRemainingSeconds,
   assertSnapshotCompleted,
-  TimerState,
 } from '@timekeeper-countdown/core/testing-utils';
+
+// Deterministic engine tests advance the injected clock AND fire the engine's
+// internal interval with your runner's fake timers (Vitest shown), because
+// `getSnapshot()` only refreshes on a tick or a state transition.
+vi.useFakeTimers();
 
 const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 });
 const engine = CountdownEngine(5, {
   timeProvider: toTimeProvider(fake),
-  tickIntervalMs: 5,
+  tickIntervalMs: 10,
 });
 
 engine.start();
-fake.advance(3000); // advance 3 seconds
+
+fake.advance(3000); // advance the injected clock 3 seconds
+vi.advanceTimersByTime(10); // fire the interval so getSnapshot() refreshes
 assertRemainingSeconds(engine.getSnapshot(), 2);
 
-fake.advance(2000); // advance 2 more seconds
+fake.advance(2000); // 2 more seconds -> reaches zero
+vi.advanceTimersByTime(10); // drive the final tick -> completion
 assertSnapshotCompleted(engine.getSnapshot());
 ```
 
