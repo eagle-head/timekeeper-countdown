@@ -22,6 +22,8 @@ Yes. Use `setSeconds(next)` to adjust the time in place, or `reset(nextInitialSe
 
 The engine samples `performance.now()` (falling back to `Date.now()`) and corrects for tab throttling on each tick. Adjust `tickIntervalMs` if you need denser or sparser updates.
 
+Every time provider — the default one and any custom provider you inject — is wrapped in a finite, non-decreasing guard, so a `NaN`/`Infinity`/backward clock reading (from NTP, DST, or sleep-wake) is repaired to the last good value, and remaining seconds is always clamped to `[0, initialSeconds]`. (A provider that *throws* instead routes to `onError`.)
+
 ### 6. How do I format the remaining time?
 
 Import helpers from `@timekeeper-countdown/core/format`, for example `formatTime(snapshot)` or `formatMinutes(snapshot)`. They return zero-padded strings ready for display.

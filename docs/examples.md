@@ -31,9 +31,14 @@ export function TimerCard() {
 
 ## Form-Controlled Duration
 
+Durations must be non-negative integers — `setSeconds`/`reset` **throw** on a negative, non-integer, `NaN`, or `Infinity` value (see the [API Reference](api-reference.md#parameters)). Sanitize the raw `<input>` value at the boundary so a decimal like `1.5` can never reach the engine.
+
 ```tsx
 import { useState } from 'react';
 import { useCountdown } from '@timekeeper-countdown/react';
+
+// Coerce any raw input into a safe, non-negative integer.
+const toSafeSeconds = (raw: string) => Math.max(0, Math.floor(Number(raw) || 0));
 
 function AdjustableCountdown() {
   const [seconds, setSeconds] = useState(150);
@@ -43,13 +48,13 @@ function AdjustableCountdown() {
     <section>
       <label>
         Seconds
-        <input type="number" value={seconds} onChange={event => setSeconds(Number(event.target.value) || 0)} />
+        <input type="number" value={seconds} onChange={event => setSeconds(toSafeSeconds(event.target.value))} />
       </label>
 
       <div>
         <button onClick={countdown.start}>Start</button>
         <button onClick={countdown.pause}>Pause</button>
-        <button onClick={() => countdown.reset(seconds)}>Apply</button>
+        <button onClick={() => countdown.reset(Math.max(0, Math.floor(seconds)))}>Apply</button>
       </div>
 
       <p>{countdown.totalSeconds}s remaining</p>
