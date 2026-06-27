@@ -63,7 +63,7 @@
     "prepublishOnly": "npm run build && npm run test && npm run typecheck"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=18"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

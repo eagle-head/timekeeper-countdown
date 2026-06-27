@@ -65,7 +65,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=22"
+    "node": ">=18"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

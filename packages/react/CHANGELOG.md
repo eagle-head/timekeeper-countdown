@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Lowered the published `engines.node` floor from `>=22` to `>=18` (the hook adds no Node-22 requirement of its own). Building and testing the library still require Node 22 (declared only at the private workspace root).
+
 ## [0.3.0] - 2026-06-27
 
 ### Changed
