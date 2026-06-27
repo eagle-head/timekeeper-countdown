@@ -8,10 +8,9 @@ on:
 
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# Least privilege at the workflow level: nothing is granted globally.
+# Each job opts into only the scopes it needs (see per-job `permissions`).
+permissions: {}
 
 concurrency:
   group: pages
@@ -20,7 +19,22 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # The build job runs `npm ci` + `npm run docs:build`, executing lifecycle
+    # scripts from the checked-out tree. It must therefore ONLY ever run on
+    # trusted, push-originated code from this repository — never on a
+    # workflow_run triggered by a fork's pull_request (pwn-request vector).
+    # workflow_dispatch is manual and inherently trusted.
+    # The build job needs no write scopes; it only reads source and uploads
+    # an artifact (covered by the default GITHUB_TOKEN within the same repo).
+    permissions:
+      contents: read
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (github.event.workflow_run.event == 'push' &&
+         github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_repository.full_name == github.repository)
+      }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -48,6 +62,11 @@ jobs:
           path: docs/.vitepress/dist
 
   deploy:
+    # Privileged scopes live ONLY on the deploy job, which runs no untrusted
+    # code — it just publishes the artifact produced by the gated build job.
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
