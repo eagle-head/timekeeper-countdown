@@ -196,7 +196,7 @@ The core package ships several helpers under `@timekeeper-countdown/core/testing
 - `assertRemainingSeconds(snapshot, expected, tolerance?, message?)` — throws if remaining seconds differ beyond tolerance.
 - `TimerState` — re-exported for convenience (`IDLE`, `RUNNING`, `PAUSED`, `STOPPED`).
 
-See the [core README](https://github.com/eagle-head/timekeeper-countdown/tree/main/packages/core#testing-utilities) or [API Reference](https://eagle-head.github.io/timekeeper-countdown/#/api-reference) for full signatures and examples.
+See the [core README](https://github.com/eagle-head/timekeeper-countdown/tree/main/packages/core#testing-utilities) or [API Reference](https://eagle-head.github.io/timekeeper-countdown/api-reference) for full signatures and examples.
 
 ---
 

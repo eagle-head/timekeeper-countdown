@@ -23,7 +23,7 @@ Creates a countdown engine instance and wires it into React state.
 - `options?: UseCountdownOptions`
   - `autoStart?: boolean` – start automatically on mount (default `false`).
   - `tickIntervalMs?: number` – polling interval in milliseconds (default `100`).
-- `timeProvider?: TimeProvider | (() => number)` – inject a custom clock (`TimeProvider` is exported from `@timekeeper-countdown/core`).
+- `timeProvider?: (() => number) | TimeProvider` – inject a custom clock; the simplest form is a function returning monotonically increasing milliseconds. (The `TimeProvider` object interface is internal and is **not** exported from the public barrel; for deterministic clocks use `toTimeProvider()` from `@timekeeper-countdown/core/testing-utils`.)
   - `onSnapshot?: (snapshot: CountdownSnapshot) => void` – side effects on every snapshot.
   - `onStateChange?: (state: TimerState, snapshot: CountdownSnapshot) => void` – notified whenever the state machine transitions.
   - `onError?: (error: Error) => void` – capture unexpected engine errors.
@@ -133,22 +133,31 @@ import {
 - `TimerState` – re-exported for convenience.
 
 ```ts
+// Driving the engine deterministically uses your test runner's fake timers
+// (Vitest shown) to fire the engine's internal interval AFTER advancing the
+// injected clock — `getSnapshot()` only refreshes when a tick or transition fires.
+import { vi } from 'vitest';
+
+vi.useFakeTimers();
+
 const fake = createFakeTimeProvider({ startMs: 0, tickMs: 1000 });
 const engine = CountdownEngine(5, {
   timeProvider: toTimeProvider(fake),
-  tickIntervalMs: 5,
+  tickIntervalMs: 10,
 });
 
 engine.start();
-fake.advance(3000);
 
+fake.advance(3000); // advance the injected clock 3s
+vi.advanceTimersByTime(10); // fire the interval so the snapshot refreshes
 assertRemainingSeconds(engine.getSnapshot(), 2);
 assertSnapshotState(engine.getSnapshot(), TimerState.RUNNING);
 
-fake.advance(2000);
+fake.advance(2000); // 2s more -> reaches zero
+vi.advanceTimersByTime(10); // drive the final tick -> completion
 assertSnapshotCompleted(engine.getSnapshot());
 
-// Sequence for formatter tests
+// buildSnapshotSequence is pure (no timers) — handy for formatter tests
 const sequence = buildSnapshotSequence({ totalSeconds: 4, step: 2, count: 3 });
 assertSnapshotState(sequence[0], TimerState.RUNNING);
 assertSnapshotCompleted(sequence[2]);

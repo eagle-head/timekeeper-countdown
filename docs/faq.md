@@ -8,7 +8,7 @@ Install `@timekeeper-countdown/react`. It bundles the countdown engine and expos
 
 ### 2. Does the library depend on React?
 
-Yes. The published package targets React 17+ and lists `react`/`react-dom` as peer dependencies. Future adapters will target their respective frameworks.
+Yes. The published package targets React 17+ and declares `react` (`>=17.0.0`) as its only peer dependency. Future adapters will target their respective frameworks.
 
 ### 3. What timer states can I expect?
 
