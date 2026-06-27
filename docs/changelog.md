@@ -8,6 +8,12 @@ Both packages are versioned in lockstep and always share one version.
 
 ## @timekeeper-countdown/core
 
+### [Unreleased]
+
+#### Fixed
+
+- Lowered the published `engines.node` floor from `>=22` to `>=18`. The shipped `dist` targets es2022 and uses no Node-22-only API, so the previous floor needlessly warned (or, under `engine-strict`, blocked) installs on Node 18/20. Building and testing the library still require Node 22 (declared only at the private workspace root).
+
 ### [0.3.0] - 2026-06-27
 
 #### Changed
@@ -65,6 +71,12 @@ Both packages are versioned in lockstep and always share one version.
 ---
 
 ## @timekeeper-countdown/react
+
+### [Unreleased]
+
+#### Fixed
+
+- Lowered the published `engines.node` floor from `>=22` to `>=18` (the hook adds no Node-22 requirement of its own). Building and testing the library still require Node 22 (declared only at the private workspace root).
 
 ### [0.3.0] - 2026-06-27
 

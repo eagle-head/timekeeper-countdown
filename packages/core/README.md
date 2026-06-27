@@ -21,7 +21,7 @@ The published bundle is pure ESM. When targeting CommonJS environments use a bun
 
 Supported runtimes:
 
-- Node.js 22+
+- Node.js 18+
 - Modern browsers (ES2022 modules)
 
 ---
