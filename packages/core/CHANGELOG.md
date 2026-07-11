@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-07-11
+
+### Changed
+
+- Internal refactor only — **no public API or behavior change**. The `CountdownSnapshot` type moved to its own leaf module (still exported from the package root with an identical shape); the three repeated time-validation guards in the safe time provider were consolidated into one helper (restoring a `MAX_SAFE_INTEGER` upper bound the fallback path had dropped — internal and unreachable in practice); and the published `buildSnapshot` testing helper now delegates to the engine's canonical implementation, so the test double can no longer drift from production.
+
 ## [0.3.1] - 2026-06-27
 
 ### Fixed
