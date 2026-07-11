@@ -10,6 +10,12 @@ Both packages are versioned in lockstep and always share one version.
 
 ### [Unreleased]
 
+### [0.3.2] - 2026-07-11
+
+#### Changed
+
+- Internal refactor only — **no public API or behavior change**. The `CountdownSnapshot` type moved to its own leaf module (still exported from the package root with an identical shape); the three repeated time-validation guards in the safe time provider were consolidated into one helper (restoring a `MAX_SAFE_INTEGER` upper bound the fallback path had dropped — internal and unreachable in practice); and the published `buildSnapshot` testing helper now delegates to the engine's canonical implementation, so the test double can no longer drift from production.
+
 ### [0.3.1] - 2026-06-27
 
 #### Fixed
@@ -75,6 +81,12 @@ Both packages are versioned in lockstep and always share one version.
 ## @timekeeper-countdown/react
 
 ### [Unreleased]
+
+### [0.3.2] - 2026-07-11
+
+#### Changed
+
+- Lockstep release with `@timekeeper-countdown/core` 0.3.2 (internal refactor only — no changes to the `useCountdown` hook). Bumps the `@timekeeper-countdown/core` dependency to `^0.3.2`.
 
 ### [0.3.1] - 2026-06-27
 
