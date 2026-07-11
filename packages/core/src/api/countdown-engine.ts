@@ -3,17 +3,9 @@ import { createSafeTimeProvider, createMonotonicTimeSource, type TimeProvider } 
 import { StateMachine, TimerState } from '../state/state-machine';
 import { decompose, type CountdownParts } from '../time/decompose';
 import { clampSeconds } from '../time/clamp';
+import type { CountdownSnapshot } from '../model/countdown-snapshot';
 
 export type { CountdownParts };
-
-export interface CountdownSnapshot {
-  initialSeconds: number;
-  totalSeconds: number;
-  parts: CountdownParts;
-  state: TimerState;
-  isRunning: boolean;
-  isCompleted: boolean;
-}
 
 export interface CountdownSubscription {
   unsubscribe: () => void;

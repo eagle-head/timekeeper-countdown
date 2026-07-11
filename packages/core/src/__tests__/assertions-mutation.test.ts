@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { CountdownSnapshot } from '../api/countdown-engine';
+import type { CountdownSnapshot } from '../model/countdown-snapshot';
 import {
   buildSnapshot,
   assertSnapshotState,
@@ -69,6 +69,17 @@ describe('assertions.ts mutation coverage', () => {
   });
 
   describe('assertRemainingSeconds', () => {
+    /**
+     * EQUIVALENT MUTANT (Stryker id 595) — testing-utils/assertions.ts L31:7-31:35
+     * ConditionalExpression: `typeof expected !== 'number'` -> `false`, i.e. the guard becomes
+     * `false || !Number.isFinite(expected)` === `!Number.isFinite(expected)`.
+     * Unobservable: `Number.isFinite(x)` returns false for EVERY non-number type, so
+     * `typeof x !== 'number'` always implies `!Number.isFinite(x)`. The left operand is fully
+     * subsumed by the right and can never independently decide the guard; no public-API input
+     * distinguishes the two forms. Left as an honest, explained equivalent survivor.
+     * (The byte-identical whole-`if`-test -> false sibling, id 593, IS killable and is already
+     * killed by the `rejects non-finite expected values` test below via NaN / Infinity.)
+     */
     it('rejects non-finite expected values', () => {
       const snapshot = buildSnapshot({ totalSeconds: 5, state: TimerState.RUNNING });
       expect(() => assertRemainingSeconds(snapshot, Number.NaN)).toThrow(

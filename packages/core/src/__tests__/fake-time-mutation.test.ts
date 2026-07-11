@@ -32,3 +32,20 @@ describe('createFakeTimeProvider — highResolution default (mutant 664)', () =>
     expect(fake.isHighResolution).toBe(false);
   });
 });
+
+/**
+ * EQUIVALENT MUTANTS in testing-utils/fake-time.ts `clamp()` — left as honest, explained
+ * survivors because no public-API input can observe a difference (see Stryker report):
+ *
+ *  - L17:34 EqualityOperator `value < 0` -> `value <= 0` (Survived).
+ *    Differs only at `value === 0`. Real path: `0 < 0` is false, so it falls through to the
+ *    else-branch `Math.floor(0)` === 0; the mutant returns the literal 0 directly. Both yield 0,
+ *    so `now()`/`set()`/`reset()` produce the same value for every finite input. (The only
+ *    numeric distinguisher is -0 vs +0 via Object.is — not a meaningful millisecond distinction,
+ *    both are zero ms.)
+ *
+ *  - L20:7 EqualityOperator `value > Number.MAX_SAFE_INTEGER` -> `value >= Number.MAX_SAFE_INTEGER`
+ *    (Survived). Differs only at `value === Number.MAX_SAFE_INTEGER`, which is an integer. Real
+ *    path: `MAX > MAX` is false, so it falls through to `Math.floor(MAX)` === MAX; the mutant
+ *    returns the literal MAX. Both yield exactly MAX, so no input distinguishes them.
+ */

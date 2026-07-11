@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Formatter, formatSeconds as formatSecondsDirect } from '../format/formatter';
+import { buildSnapshot } from '../api/countdown-engine';
+import { TimerState } from '../state/state-machine';
 
 /**
  * Mutation-killing tests for src/format/formatter.ts.
@@ -50,3 +52,68 @@ describe('Formatter mutation killers', () => {
     });
   });
 });
+
+describe('clampSeconds negative-zero normalization (clamp.ts line 19, via buildSnapshot)', () => {
+  // Mutant: EqualityOperator `value <= 0` -> `value < 0` in clampSeconds.
+  //
+  // The two operators disagree on exactly one finite input: negative zero. Every
+  // other value <= 0 collapses to +0 under BOTH operators (for any strictly-negative
+  // v, `v < 0` is true, so the mutant still returns 0), and every positive value
+  // falls through under both. So -0 is the SOLE input that distinguishes them:
+  //   - real: `-0 <= 0` is true  -> returns the canonical +0 literal.
+  //   - mutant: `-0 < 0` is false -> falls through to `return Math.floor(-0)`, == -0.
+  //
+  // A snapshot must store a canonical non-negative integer, so a -0 total must be
+  // normalized to +0. Object.is (which Vitest's toBe uses) distinguishes -0 from +0,
+  // making the mutant observable through the public buildSnapshot API.
+  it('stores canonical +0 (not -0) when the total is negative zero', () => {
+    const negativeZero = -0;
+    // Guard: make sure the fixture really is -0 (not constant-folded to +0), otherwise
+    // the assertions below would not exercise the divergent branch at all.
+    expect(Object.is(negativeZero, -0)).toBe(true);
+
+    const snapshot = buildSnapshot(0, negativeZero, TimerState.STOPPED);
+
+    // Load-bearing: real code yields +0 here; the mutant yields -0 -> these fail.
+    expect(Object.is(snapshot.totalSeconds, 0)).toBe(true);
+    expect(Object.is(snapshot.totalSeconds, -0)).toBe(false);
+
+    // The rest of the snapshot stays canonical and completed under the real code.
+    expect(snapshot.isCompleted).toBe(true);
+    expect(snapshot.parts.seconds).toBe(0);
+  });
+});
+
+/*
+ * DOCUMENTED EQUIVALENT MUTANTS (proven unkillable — intentionally NOT tested).
+ *
+ * These survivors in this cluster (clamp.ts + formatter.ts) are observationally
+ * identical to the real code: no public-API input distinguishes them, so writing a
+ * "killing" test is impossible and any green test targeting them would be theater.
+ *
+ * 1. src/time/clamp.ts L23  EqualityOperator  `value >= MAX` -> `value > MAX`
+ *    The only input the operators disagree on is value === Number.MAX_SAFE_INTEGER:
+ *    the real guard returns MAX directly, while the mutant falls through to
+ *    `return Math.floor(MAX)`. MAX_SAFE_INTEGER (2^53 - 1) is an integer, so
+ *    Math.floor(MAX) === MAX — identical result (and MAX is positive, so no -0
+ *    edge exists here as it does on line 19). => EQUIVALENT.
+ *
+ * 2. src/format/formatter.ts L12  ConditionalExpression -> true
+ *    `if (target && typeof target.totalSeconds === 'number')` -> `if (target && true)`.
+ *    The branches diverge only when `target` is truthy AND `target.totalSeconds` is
+ *    NOT a number: the real code returns 0, the mutant returns that non-number value.
+ *    But extractSeconds' result is ALWAYS funnelled through clampSeconds (partsOf =
+ *    decompose(clampSeconds(extractSeconds(target)))), and clampSeconds' own type
+ *    guard (`typeof value !== 'number'`) collapses any non-number back to 0 — the same
+ *    value the real branch returns. Every divergent input therefore yields identical
+ *    "00" output across all formatters. (The property read cannot throw differently:
+ *    the real condition reads `target.totalSeconds` too.) => EQUIVALENT.
+ *
+ * 3. src/time/clamp.ts L15  ConditionalExpression -> false  (first operand `typeof value !== 'number'`)
+ *    The guard is `typeof value !== 'number' || !Number.isFinite(value)`. Dropping the typeof
+ *    operand leaves `!Number.isFinite(value)`, which is already true for EVERY non-number
+ *    (Number.isFinite never coerces), so any input the typeof clause caught the finite clause
+ *    catches too — the identical early `return 0` fires. The typeof operand is redundant
+ *    defense-in-depth. => EQUIVALENT. (This mutant flips between Timeout/Survived across Stryker
+ *    runs due to interval-test timeout nondeterminism; it is unkillable either way.)
+ */

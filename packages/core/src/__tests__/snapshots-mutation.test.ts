@@ -21,7 +21,7 @@ describe('snapshots.ts mutation coverage', () => {
     });
 
     it('treats NaN seconds as zero', () => {
-      // Disabling/flipping the finite guard on line 12 would route NaN to
+      // Disabling/flipping the finite guard in clampSeconds would route NaN to
       // Math.floor(NaN) === NaN instead of returning 0.
       const snapshot = buildSnapshot({ totalSeconds: Number.NaN });
 
@@ -32,7 +32,7 @@ describe('snapshots.ts mutation coverage', () => {
     });
 
     it('treats Infinity seconds via the finite guard, not as a large value', () => {
-      // The `||` -> `&&` mutant on line 12 would let Infinity skip the guard,
+      // The `||` -> `&&` mutant in clampSeconds would let Infinity skip the guard,
       // hit `value >= MAX_SAFE_INTEGER`, and return MAX_SAFE_INTEGER.
       const snapshot = buildSnapshot({ totalSeconds: Number.POSITIVE_INFINITY });
 
@@ -41,7 +41,7 @@ describe('snapshots.ts mutation coverage', () => {
     });
   });
 
-  describe('buildSnapshot seconds fallback chain (line 27)', () => {
+  describe('buildSnapshot seconds fallback chain', () => {
     it('uses the provided initialSeconds verbatim', () => {
       // `??` -> `&&` mutants on the fallback chain would coerce a provided
       // initialSeconds of 90 into 0 (X && 0) or into totalSeconds (X && total).
@@ -68,8 +68,8 @@ describe('snapshots.ts mutation coverage', () => {
     });
 
     it('requires BOTH zero seconds AND stopped state for isCompleted', () => {
-      // Targets line 38: `&&` -> `||`, the full condition -> `true`, and the
-      // right operand -> `true`. Each must keep these two cases false.
+      // Targets the isCompleted `&&`: `&&` -> `||`, the full condition -> `true`,
+      // and the right operand -> `true`. Each must keep these two cases false.
       const zeroButRunning = buildSnapshot({ totalSeconds: 0, state: TimerState.RUNNING });
       expect(zeroButRunning.isCompleted).toBe(false);
 
@@ -81,7 +81,7 @@ describe('snapshots.ts mutation coverage', () => {
     });
   });
 
-  describe('buildSnapshotSequence (line 58)', () => {
+  describe('buildSnapshotSequence', () => {
     it('applies the provided initialSeconds to every snapshot', () => {
       // `initialSeconds ?? safeTotal` -> `initialSeconds && safeTotal` would
       // replace the provided 100 with safeTotal (4) on every snapshot.

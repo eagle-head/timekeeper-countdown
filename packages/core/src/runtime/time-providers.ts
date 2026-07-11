@@ -25,6 +25,22 @@ function createDateTimeProvider(): TimeProvider {
   };
 }
 
+/**
+ * True only for a usable absolute clock reading: a finite, non-negative number within the
+ * safe-integer range [0, Number.MAX_SAFE_INTEGER]. Readings feed elapsed-time subtraction and
+ * Math.floor(delta / 1000) downstream; past Number.MAX_SAFE_INTEGER (2^53 - 1) millisecond
+ * deltas are no longer exactly representable, so an out-of-range reading would corrupt the
+ * second count. This is the single source of truth for that contract across createSafeTimeProvider.
+ *
+ * Number.isFinite performs no coercion (unlike the global isFinite) and returns false for every
+ * non-number, NaN and +/-Infinity, so it alone subsumes the former `typeof === 'number'` and
+ * `!isNaN(...)` clauses. It must stay first so a runtime non-number short-circuits before the
+ * relational comparisons, which would otherwise coerce their operands (e.g. '5' >= 0 === true).
+ */
+function isValidTime(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= Number.MAX_SAFE_INTEGER;
+}
+
 export function createSafeTimeProvider(): TimeProvider {
   let currentProvider: TimeProvider;
   const fallbackProvider = createDateTimeProvider();
@@ -35,13 +51,7 @@ export function createSafeTimeProvider(): TimeProvider {
       // Test if performance.now() is available and working
       if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
         const testTime = performance.now();
-        if (
-          typeof testTime === 'number' &&
-          Number.isFinite(testTime) &&
-          !isNaN(testTime) &&
-          testTime >= 0 &&
-          testTime <= Number.MAX_SAFE_INTEGER
-        ) {
+        if (isValidTime(testTime)) {
           currentProvider = createPerformanceTimeProvider();
           return;
         }
@@ -60,13 +70,7 @@ export function createSafeTimeProvider(): TimeProvider {
     now: () => {
       try {
         const time = currentProvider.now();
-        if (
-          typeof time === 'number' &&
-          Number.isFinite(time) &&
-          !isNaN(time) &&
-          time >= 0 &&
-          time <= Number.MAX_SAFE_INTEGER
-        ) {
+        if (isValidTime(time)) {
           return time;
         }
         throw new Error('Invalid time value returned');
@@ -77,12 +81,7 @@ export function createSafeTimeProvider(): TimeProvider {
         }
         try {
           const fallbackTime = fallbackProvider.now();
-          if (
-            typeof fallbackTime === 'number' &&
-            Number.isFinite(fallbackTime) &&
-            !isNaN(fallbackTime) &&
-            fallbackTime >= 0
-          ) {
+          if (isValidTime(fallbackTime)) {
             return fallbackTime;
           }
         } catch {

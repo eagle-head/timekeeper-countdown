@@ -1,4 +1,4 @@
-import type { CountdownSnapshot } from '../src/api/countdown-engine';
+import type { CountdownSnapshot } from '../src/model/countdown-snapshot';
 import { TimerState } from '../src/state/state-machine';
 
 const formatErrorMessage = (message: string, details?: string) => {

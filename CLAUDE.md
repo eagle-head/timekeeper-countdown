@@ -65,8 +65,11 @@ packages/
 │   │   │   ├── timer.ts             # Timer() — setInterval-based tick at 100ms
 │   │   │   └── time-providers.ts    # High-res time abstraction (performance.now fallback)
 │   │   ├── time/
+│   │   │   ├── clamp.ts             # clampSeconds() — shared second-field sanitizer (single source of truth for clamping)
 │   │   │   ├── constants.ts         # Time math constants
 │   │   │   └── decompose.ts         # decompose() — single lossless source of truth for the year/week/day/hour/min/sec breakdown (shared by engine, formatters, testing-utils)
+│   │   ├── model/
+│   │   │   └── countdown-snapshot.ts # CountdownSnapshot type — leaf module shared by engine, formatters, testing-utils (re-exported from the package root)
 │   │   └── format/
 │   │       └── formatter.ts         # Formatter() + standalone format functions
 │   └── testing-utils/         # Published test helpers (./testing-utils export)
