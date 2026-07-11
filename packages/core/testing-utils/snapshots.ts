@@ -1,5 +1,5 @@
-import type { CountdownSnapshot } from '../src/api/countdown-engine';
-import { decompose } from '../src/time/decompose';
+import { buildSnapshot as buildEngineSnapshot } from '../src/api/countdown-engine';
+import type { CountdownSnapshot } from '../src/model/countdown-snapshot';
 import { clampSeconds } from '../src/time/clamp';
 import { TimerState } from '../src/state/state-machine';
 
@@ -10,19 +10,18 @@ export interface SnapshotOptions {
 }
 
 export function buildSnapshot(options: SnapshotOptions = {}): CountdownSnapshot {
-  const initialSeconds = clampSeconds(options.initialSeconds ?? options.totalSeconds ?? 0);
-  const totalSeconds = clampSeconds(options.totalSeconds ?? options.initialSeconds ?? 0);
-  const state = options.state ?? (totalSeconds > 0 ? TimerState.IDLE : TimerState.STOPPED);
-  // Canonical, lossless breakdown — same source of truth as the engine and formatters.
-  const parts = decompose(totalSeconds);
-  return {
-    initialSeconds,
-    totalSeconds,
-    parts,
-    state,
-    isRunning: state === TimerState.RUNNING,
-    isCompleted: totalSeconds === 0 && state === TimerState.STOPPED,
-  };
+  // This helper owns ONLY the ergonomic option-bag defaults (the cross-fallback
+  // chains and the default-state heuristic). Every snapshot invariant — the clamp
+  // of the stored second-fields, decompose -> parts, and the isRunning/isCompleted
+  // flags — is derived by the engine's canonical buildSnapshot, which is the single
+  // source of truth. Delegating here (instead of re-implementing those rules) makes
+  // it impossible for the test double to drift from production.
+  const initialSeconds = options.initialSeconds ?? options.totalSeconds ?? 0;
+  const totalSeconds = options.totalSeconds ?? options.initialSeconds ?? 0;
+  // The default-state heuristic gates on the CLAMPED total (clampSeconds is itself the
+  // shared single source of truth for clamping); the engine re-clamps idempotently.
+  const state = options.state ?? (clampSeconds(totalSeconds) > 0 ? TimerState.IDLE : TimerState.STOPPED);
+  return buildEngineSnapshot(initialSeconds, totalSeconds, state);
 }
 
 export interface SequenceOptions extends SnapshotOptions {

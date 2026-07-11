@@ -16,7 +16,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interact
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) 22 or later
+- [Node.js](https://nodejs.org/) 22 or later — required to build and test the library (the CI quality gate runs on Node 22). The published packages themselves support Node >= 18 at runtime; this higher floor applies to development only.
 - npm (comes with Node.js)
 
 ### Getting Started

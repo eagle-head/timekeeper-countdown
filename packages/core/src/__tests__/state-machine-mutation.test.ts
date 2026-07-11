@@ -7,10 +7,44 @@ import { StateMachine, TimerState } from '../state/state-machine';
  * Each test below pins an OBSERVABLE behavior (return value, getCurrentState(),
  * canX() booleans, or onStateChange invocations) tied to a surviving mutant.
  *
- * NOTE: Several survivors in this file are genuinely EQUIVALENT mutants because
- * the constructs they touch are purely defensive over provably-safe operands
- * (see suspected_equivalent in the report). The tests here lock down the real
- * behavior so any NON-equivalent regression is still caught.
+ * ---------------------------------------------------------------------------
+ * PROVEN-EQUIVALENT SURVIVORS (documented, not killed — no public-API input can
+ * distinguish the mutant from the real code). These are honest survivors.
+ *
+ * Reachability invariant used below: `currentState` starts at IDLE and is only
+ * ever reassigned to `VALID_TRANSITIONS[currentState][action]` after a truthy
+ * guard, i.e. to one of the table's VALUES — every one of which is a TimerState
+ * member. VALID_TRANSITIONS has an entry for ALL FOUR members (IDLE, RUNNING,
+ * PAUSED, STOPPED). So `VALID_TRANSITIONS[currentState]` is ALWAYS a defined
+ * object, and `currentState` is ALWAYS one of the four states.
+ *
+ * 1) destroy() guard, line 111 — the ENTIRE cluster is equivalent:
+ *      L111:9  ConditionalExpression -> `false`        (whole `if` test)
+ *      L111:9  ConditionalExpression -> `false`        (left operand `=== IDLE`)
+ *      L111:9  LogicalOperator       -> `... && ...`   (&&, always false)
+ *      L111:45 ConditionalExpression -> `false`        (right operand `=== STOPPED`)
+ *      L111:82 BlockStatement        -> `{}`           (drops the `return`)
+ *    Every one of these makes destroy() fall through to `performTransition('stop')`
+ *    for the IDLE and/or STOPPED cases that the guard used to short-circuit. But
+ *    'stop' is NOT a valid transition from IDLE ({start}) or from STOPPED ({reset}),
+ *    so performTransition returns false WITHOUT mutating state or firing
+ *    onStateChange. destroy() returns void, so its inner boolean is unobservable.
+ *    Net effect on the only public observables (getCurrentState / canX / isRunning
+ *    / onStateChange) is identical => EQUIVALENT. The guard is a redundant
+ *    early-out; performTransition already rejects the same no-ops. The tests in
+ *    "destroy() guard" below still pin the real behavior so any NON-equivalent
+ *    regression (e.g. destroy from RUNNING/PAUSED) is caught.
+ *
+ * 2) canResume / canPause, lines 127 & 128 — OptionalChaining removed:
+ *      L127:30 `VALID_TRANSITIONS[currentState]?.resume` -> `[currentState].resume`
+ *      L128:29 `VALID_TRANSITIONS[currentState]?.pause`  -> `[currentState].pause`
+ *    The `?.` only short-circuits when the left operand is null/undefined. By the
+ *    reachability invariant `VALID_TRANSITIONS[currentState]` is never undefined,
+ *    so `.resume`/`.pause` can never throw and the short-circuit is never taken:
+ *    dropping `?.` yields byte-identical behavior => EQUIVALENT. The
+ *    "capability queries across every state" tests below still pin the real
+ *    canResume/canPause values in all four states.
+ * ---------------------------------------------------------------------------
  */
 describe('StateMachine - mutation hardening', () => {
   describe('performTransition lookup (line 68 ?.[action])', () => {

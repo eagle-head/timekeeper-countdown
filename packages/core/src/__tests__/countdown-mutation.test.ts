@@ -158,3 +158,23 @@ describe('Countdown - mutation coverage (engine wiring)', () => {
     vi.doUnmock('../runtime/timer');
   });
 });
+
+/*
+ * DOCUMENTED EQUIVALENT MUTANT (proven unkillable — intentionally NOT tested).
+ *
+ * src/api/countdown.ts L52  ConditionalExpression -> false
+ *   handleError's guard `if (!onError) return;` -> `if (false) return;`.
+ *
+ * handleError is only ever called from the catch blocks of notifySnapshot /
+ * notifyStateChange, i.e. when a user onSnapshot/onStateChange callback throws.
+ * The guard only matters when `onError` is falsy — and the constructor validates
+ * onError to be either undefined or a function, so `!onError` is true exactly when
+ * onError is undefined. In that case:
+ *   - real code: returns early, no-op.
+ *   - mutant: proceeds to `try { onError(error) }` where onError is undefined, so
+ *     `undefined(error)` throws a TypeError which the surrounding
+ *     `catch { /* ignore *\/ }` immediately swallows — also a no-op.
+ * Both paths produce no external effect (no callback fires, nothing re-throws, the
+ * timer keeps running); when onError IS defined both paths call it identically.
+ * No public-API input distinguishes them. => EQUIVALENT.
+ */

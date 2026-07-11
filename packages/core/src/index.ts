@@ -6,9 +6,10 @@ export {
   buildSnapshot,
   type CountdownEngineInstance,
   type CountdownEngineOptions,
-  type CountdownSnapshot,
   type CountdownParts,
 } from './api/countdown-engine'
+
+export type { CountdownSnapshot } from './model/countdown-snapshot'
 
 export { TimerState } from './state/state-machine'
 

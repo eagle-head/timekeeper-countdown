@@ -105,9 +105,61 @@ describe('Timer - mutation coverage', () => {
     expect(timer.getTotalSeconds()).toBe(8);
   });
 
+  // Mutant 401: L118 resume guard `totalSeconds < initialValue` -> `true` (ConditionalExpression).
+  // The guard's purpose is to RESUME (back-date elapsed via pausedDuration) ONLY when the current
+  // seconds were counted DOWN below the initial value; otherwise start() must be a FRESH start
+  // measured from the restart moment. Raise the seconds ABOVE the initial value with setSeconds,
+  // capture a non-null startTimestamp with a start()/stop() that never ticks, then restart after
+  // wall-clock has advanced. Real code fresh-starts (elapsed measured from now = 3000 -> 9 left);
+  // the `true` mutant takes the resume branch, where expectedElapsed = (10 - 20) * 1000 is negative,
+  // producing a bogus pausedDuration that back-dates the clock and swallows the first second (holds
+  // at 10). (The sibling `-> <=` EqualityOperator mutant is EQUIVALENT — see the NOTE below.)
+  it('restart is a fresh start (not a resume) when current seconds exceed the initial value', () => {
+    const events = makeEvents();
+    let now = 0;
+    const timer = Timer(10, events, { timeProvider: () => now });
+
+    timer.setSeconds(20); // totalSeconds = 20 > initialValue (10); startTimestamp reset to null
+    timer.start(); // fresh start captures startTimestamp = 0
+    timer.stop(); // no tick fired: totalSeconds stays 20, startTimestamp stays non-null
+
+    now = 3000; // wall-clock advances 3s while the timer is stopped
+    timer.start(); // real: fresh start (20 is NOT < 10), measuring elapsed from now = 3000
+
+    now = 4000; // 1s after the restart
+    vi.advanceTimersByTime(100);
+
+    // Fresh start: remaining = min(10, max(0, 10 - 1)) = 9.
+    expect(timer.getTotalSeconds()).toBe(9);
+    expect(events.onTick).toHaveBeenLastCalledWith(9);
+  });
+
+  /*
+   * Equivalent mutants in timer.ts — documented, intentionally left as honest survivors:
+   *
+   * - L118:38 EqualityOperator `totalSeconds < initialValue` -> `<=` (mutant 402): the two
+   *   comparisons differ ONLY when totalSeconds === initialValue with a non-null startTimestamp
+   *   (real -> fresh start, mutant -> resume). In that exact state the resume branch computes
+   *   expectedElapsed = (initialValue - totalSeconds) * 1000 = 0, so pausedDuration becomes
+   *   now - startTimestamp, which makes every future elapsedMs (= T - startTimestamp -
+   *   pausedDuration = T - now) identical to the fresh-start branch (startTimestamp = now,
+   *   pausedDuration = 0). The invariant `lastReportedSeconds === totalSeconds` holds whenever
+   *   startTimestamp !== null, so the first onTick fires at the same threshold too. Observationally
+   *   identical -> unkillable. (Note the `-> true` sibling IS killable: it ALSO flips the
+   *   totalSeconds > initialValue case, where expectedElapsed goes negative — see the test above.)
+   *
+   * - L138:9 stop() `if (intervalId)` -> `if (true)` (mutant 414): the branch only differs when
+   *   intervalId is null (setInterval never returns a falsy id). Then the mutant runs
+   *   clearInterval(null) — a spec no-op — and re-assigns intervalId = null (already null). No
+   *   public observable changes (isRunning() stays false) -> unkillable.
+   */
+
   // Mutants 479 (`||` -> `&&`) and 480 (whole `if` -> false) in setSeconds.
   // NaN is `typeof 'number'` but not finite; the real guard returns early and leaves
   // totalSeconds untouched. Both mutants let NaN through, corrupting totalSeconds to NaN.
+  // (Equivalent, documented: the first-operand-only mutant `typeof seconds !== 'number'` -> false
+  //  is unobservable — `!Number.isFinite(seconds)` already rejects every non-number without
+  //  coercion, so the same early return fires; the typeof clause is redundant defense-in-depth.)
   it('setSeconds ignores NaN and leaves totalSeconds untouched', () => {
     const events = makeEvents();
     const timer = Timer(10, events);
@@ -119,6 +171,8 @@ describe('Timer - mutation coverage', () => {
 
   // Mutant 492: setInitialValue finite-number guard `if (...)` -> false.
   // The mutant lets NaN through, corrupting initialValue to NaN.
+  // (Equivalent, documented: the first-operand-only mutant `typeof seconds !== 'number'` -> false
+  //  is unobservable — `!Number.isFinite(seconds)` subsumes it, so any non-number still returns early.)
   it('setInitialValue ignores NaN and leaves initialValue untouched', () => {
     const events = makeEvents();
     const timer = Timer(10, events);

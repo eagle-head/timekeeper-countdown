@@ -1,4 +1,4 @@
-import type { CountdownSnapshot } from '../api/countdown-engine';
+import type { CountdownSnapshot } from '../model/countdown-snapshot';
 import { decompose } from '../time/decompose';
 import { clampSeconds } from '../time/clamp';
 

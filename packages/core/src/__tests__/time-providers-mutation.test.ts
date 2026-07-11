@@ -5,7 +5,9 @@ import { createSafeTimeProvider, createMonotonicTimeSource } from '../runtime/ti
  * Mutation-killing tests for src/runtime/time-providers.ts.
  *
  * These assert observable behavior through the public factory functions
- * `createSafeTimeProvider` and `createMonotonicTimeSource`.
+ * `createSafeTimeProvider` and `createMonotonicTimeSource`. Titles describe the
+ * mutation each case kills conceptually (boundary, forced-true, guard clause)
+ * rather than by volatile line number / Stryker mutant id, which drift every run.
  */
 
 /** Install a stubbed global `performance.now` that yields `vals` in order (last value repeats). */
@@ -26,8 +28,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('createSafeTimeProvider - initialization validation (lines 42-43)', () => {
-  it('keeps the performance provider when init reading is exactly 0 (>= boundary, mutant 298)', () => {
+describe('createSafeTimeProvider - initialization validation', () => {
+  it('keeps the performance provider when init reading is exactly 0 (>= boundary)', () => {
     // 0 satisfies testTime >= 0; a `> 0` mutant would reject it and fall back to date.
     stubPerf(0);
     const p = createSafeTimeProvider();
@@ -35,7 +37,7 @@ describe('createSafeTimeProvider - initialization validation (lines 42-43)', () 
     expect(p.isHighResolution).toBe(true);
   });
 
-  it('falls back to date when init reading is negative (>= forced true, mutant 297)', () => {
+  it('falls back to date when init reading is negative (>= forced true)', () => {
     // -5 fails testTime >= 0, so the real code throws and falls back.
     // A mutant forcing the condition true would wrongly keep performance.
     stubPerf(-5);
@@ -44,7 +46,7 @@ describe('createSafeTimeProvider - initialization validation (lines 42-43)', () 
     expect(p.isHighResolution).toBe(false);
   });
 
-  it('keeps the performance provider when init reading equals MAX_SAFE_INTEGER (<= boundary, mutant 301)', () => {
+  it('keeps the performance provider when init reading equals MAX_SAFE_INTEGER (<= boundary)', () => {
     // MAX satisfies testTime <= MAX; a `< MAX` mutant would reject it.
     stubPerf(Number.MAX_SAFE_INTEGER);
     const p = createSafeTimeProvider();
@@ -52,7 +54,7 @@ describe('createSafeTimeProvider - initialization validation (lines 42-43)', () 
     expect(p.isHighResolution).toBe(true);
   });
 
-  it('falls back to date when init reading exceeds MAX_SAFE_INTEGER (<= forced true, mutant 300)', () => {
+  it('falls back to date when init reading exceeds MAX_SAFE_INTEGER (<= forced true)', () => {
     // MAX+1 is finite but fails testTime <= MAX, so real code falls back.
     stubPerf(Number.MAX_SAFE_INTEGER + 1);
     const p = createSafeTimeProvider();
@@ -61,7 +63,7 @@ describe('createSafeTimeProvider - initialization validation (lines 42-43)', () 
   });
 });
 
-describe('createSafeTimeProvider - now() validation + fallback switch (lines 63-77)', () => {
+describe('createSafeTimeProvider - now() validation + fallback switch', () => {
   // Each test inits with a valid performance reading (so the provider starts as
   // 'performance'), then returns a bad value from now(). The real code throws,
   // permanently switches to the date fallback, and returns a valid time.
@@ -79,19 +81,19 @@ describe('createSafeTimeProvider - now() validation + fallback switch (lines 63-
     expect(result).toBeGreaterThanOrEqual(0);
   }
 
-  it('rejects NaN and falls back (whole-condition mutants 312/314 etc.)', () => {
+  it('rejects NaN and falls back (whole-condition guard)', () => {
     expectFallbackOnBadNow(NaN);
   });
 
-  it('rejects a negative reading and falls back (>= 0 mutants 313/314/322)', () => {
+  it('rejects a negative reading and falls back (>= 0 guard)', () => {
     expectFallbackOnBadNow(-5);
   });
 
-  it('rejects a numeric string and falls back (typeof mutants 315/316/318)', () => {
+  it('rejects a numeric string and falls back (non-number guard)', () => {
     expectFallbackOnBadNow('5');
   });
 
-  it('rejects Infinity and falls back (isFinite mutants)', () => {
+  it('rejects Infinity and falls back (isFinite guard)', () => {
     expectFallbackOnBadNow(Infinity);
   });
 
@@ -100,8 +102,8 @@ describe('createSafeTimeProvider - now() validation + fallback switch (lines 63-
   });
 });
 
-describe('createSafeTimeProvider - fallback (Date.now) validation (lines 81-84)', () => {
-  it('returns 0 when the Date fallback yields Infinity (mutants 339/340/341/342/343)', () => {
+describe('createSafeTimeProvider - fallback (Date.now) validation', () => {
+  it('returns 0 when the Date fallback yields Infinity', () => {
     // performance unavailable -> provider is the date fallback from the start.
     vi.stubGlobal('performance', undefined);
     vi.spyOn(Date, 'now').mockReturnValue(Infinity);
@@ -112,35 +114,70 @@ describe('createSafeTimeProvider - fallback (Date.now) validation (lines 81-84)'
     expect(p.now()).toBe(0);
   });
 
-  it('returns 0 when the Date fallback yields a negative value (mutant 339)', () => {
+  it('returns 0 when the Date fallback yields a negative value', () => {
     vi.stubGlobal('performance', undefined);
     vi.spyOn(Date, 'now').mockReturnValue(-5);
     const p = createSafeTimeProvider();
     expect(p.now()).toBe(0);
   });
+
+  it('returns 0 when the Date fallback exceeds MAX_SAFE_INTEGER (shared upper-bound guard)', () => {
+    // A finite Date reading above the safe-integer ceiling must be rejected on the fallback
+    // path too, exactly as the primary now() path rejects it. Guards the unified isValidTime
+    // upper bound: a `< MAX` -> `<= MAX` or dropped-bound mutant would return the oversized value.
+    vi.stubGlobal('performance', undefined);
+    vi.spyOn(Date, 'now').mockReturnValue(Number.MAX_SAFE_INTEGER + 1);
+    const p = createSafeTimeProvider();
+    expect(p.type).toBe('date');
+    expect(p.now()).toBe(0);
+  });
 });
 
-describe('createMonotonicTimeSource - startValue sanitization (line 117)', () => {
+/**
+ * ── EQUIVALENT surviving mutants in createMonotonicTimeSource (documented, deliberately NOT tested) ──
+ * These three Stryker survivors are observationally identical to the original for every numeric time
+ * reading; the ONLY input that distinguishes each is a negative-zero SIGN, visible solely via
+ * Object.is / (1/x), which is outside the time-value contract — all downstream elapsed math and
+ * monotonicity treat -0 === 0 (`-0 < x` ≡ `0 < x`, and `x - (-0) === x - 0`). Production, moreover,
+ * only ever calls createMonotonicTimeSource(source) with the default startValue = 0
+ * (see countdown-engine.ts), so none of these boundaries is reachable with a distinguishing value.
+ *
+ *   • L116 EqualityOperator  `startValue >= 0` -> `startValue > 0`
+ *     Differs only at startValue === 0: `0 >= 0` keeps startValue (= 0); `0 > 0` falls to the `: 0`
+ *     default (also 0). Both set last = 0 — same first reading. (At -0 the real code keeps last = -0
+ *     vs the mutant's 0; Object.is-only, never observed by time arithmetic.)
+ *   • L120 first operand ConditionalExpression -> false  (`typeof next !== 'number'` -> `false`)
+ *     A redundant defensive clause: Number.isFinite(x) is false for EVERY non-number (it never
+ *     coerces), so the next operand `!Number.isFinite(next)` already covers every non-number the
+ *     typeof clause caught. Whenever the dropped operand was true, the following operand is also
+ *     true, so the same early-return branch is taken.
+ *   • L120 EqualityOperator  `next < last` -> `next <= last`
+ *     Differs only at next === last: the original re-assigns last = next and returns it; the mutant
+ *     returns the unchanged last. For finite numbers next === last means equal values, so the
+ *     returned number and all subsequent comparisons are identical. (Again -0-vs-0 is the sole
+ *     Object.is-only exception.)
+ */
+describe('createMonotonicTimeSource - startValue sanitization', () => {
   // The init `last` value is exposed by calling the wrapper with a source that
   // returns NaN: the wrapper then returns `last` unchanged.
   const badSource = () => NaN;
 
-  it('keeps a valid non-negative startValue (mutants 355/360/361 force it to 0)', () => {
+  it('keeps a valid non-negative startValue (a forced-to-0 mutant would fail this)', () => {
     const fn = createMonotonicTimeSource(badSource, 5);
     expect(fn()).toBe(5);
   });
 
-  it('resets a NaN startValue to 0 (whole condition forced true, mutant 354)', () => {
+  it('resets a NaN startValue to 0 (whole condition forced true)', () => {
     const fn = createMonotonicTimeSource(badSource, NaN);
     expect(fn()).toBe(0);
   });
 
-  it('resets an Infinity startValue to 0 (isFinite mutants 357/358)', () => {
+  it('resets an Infinity startValue to 0 (isFinite guard)', () => {
     const fn = createMonotonicTimeSource(badSource, Infinity);
     expect(fn()).toBe(0);
   });
 
-  it('resets a negative startValue to 0 (>= 0 mutants 356/362/364)', () => {
+  it('resets a negative startValue to 0 (>= 0 guard)', () => {
     const fn = createMonotonicTimeSource(badSource, -5);
     expect(fn()).toBe(0);
   });
@@ -151,8 +188,8 @@ describe('createMonotonicTimeSource - startValue sanitization (line 117)', () =>
   });
 });
 
-describe('createMonotonicTimeSource - reading validation & monotonicity (line 121)', () => {
-  it('repairs NaN/invalid readings to the last good value (mutants 369/370/371)', () => {
+describe('createMonotonicTimeSource - reading validation & monotonicity', () => {
+  it('repairs NaN/invalid readings to the last good value', () => {
     // A valid first reading, then NaN. The wrapper must repair NaN to the prior good value.
     const vals: unknown[] = [42, NaN];
     let i = 0;
@@ -186,5 +223,30 @@ describe('createMonotonicTimeSource - reading validation & monotonicity (line 12
     expect(fn()).toBe(5);
     expect(fn()).toBe(5);
     expect(fn()).toBe(8);
+  });
+});
+
+describe('createMonotonicTimeSource - a throwing source propagates (documented "not caught" contract)', () => {
+  // The wrapper repairs out-of-range *values* (NaN/Infinity/backward) to the last good reading,
+  // but a source that *throws* is intentionally NOT caught (see the doc comment on the factory):
+  // the exception must propagate so the caller's error handling (Timer's onError) can react.
+  // This is the deliberate contrast with createSafeTimeProvider, whose now() swallows and falls back.
+  it('re-throws a source exception instead of swallowing it', () => {
+    const fn = createMonotonicTimeSource(() => {
+      throw new Error('source failure');
+    });
+    expect(() => fn()).toThrow('source failure');
+  });
+
+  it('does not repair a throw to the last good value (the throw path is distinct from value repair)', () => {
+    let call = 0;
+    const fn = createMonotonicTimeSource(() => {
+      call += 1;
+      if (call === 1) return 42;
+      throw new Error('later failure');
+    });
+    expect(fn()).toBe(42); // first reading is a valid, good value
+    // A throw on a later call is NOT quietly repaired to the retained 42 — it surfaces.
+    expect(() => fn()).toThrow('later failure');
   });
 });

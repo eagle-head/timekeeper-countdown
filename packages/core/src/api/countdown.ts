@@ -1,4 +1,5 @@
-import { CountdownEngine, type CountdownSnapshot } from './countdown-engine';
+import { CountdownEngine } from './countdown-engine';
+import type { CountdownSnapshot } from '../model/countdown-snapshot';
 import { TimerState } from '../state/state-machine';
 import { Formatter } from '../format/formatter';
 
@@ -122,4 +123,3 @@ export function Countdown(initialSeconds: number, options: CountdownOptions = {}
 }
 
 export { TimerState };
-export type { CountdownSnapshot };

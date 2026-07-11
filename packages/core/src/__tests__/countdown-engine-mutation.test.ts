@@ -129,6 +129,62 @@ describe('countdown-engine — mutation oracle', () => {
 
       e.destroy();
     });
+
+    // id 104 (ConditionalExpression -> true on `if (transitioned)`): forcing the guard
+    // true would run `timer.setSeconds(0)` even on a REJECTED stop() from IDLE, zeroing
+    // the timer's live remaining. That corruption is invisible in the (still-60) snapshot
+    // but poisons the very next start(): timer.start() early-returns false when remaining
+    // is <= 0, so the engine would silently refuse to start. Drive stop()->start() from
+    // IDLE and assert the countdown genuinely begins running.
+    it('a rejected stop() from IDLE does not poison a subsequent start()', () => {
+      let t = 0;
+      const e = CountdownEngine(60, { timeProvider: () => t, tickIntervalMs: 100 });
+
+      expect(e.stop()).toBe(false); // rejected: still IDLE
+      expect(e.getSnapshot().state).toBe(TimerState.IDLE);
+
+      // With the mutant, the rejected stop() has already set the timer to 0, so this
+      // start() returns false and the engine stays IDLE.
+      expect(e.start()).toBe(true);
+      expect(e.getSnapshot().state).toBe(TimerState.RUNNING);
+
+      // And the countdown actually advances (the timer still holds its 60s).
+      t = 1000;
+      vi.advanceTimersByTime(100);
+      expect(e.getSnapshot().totalSeconds).toBe(59);
+
+      e.destroy();
+    });
+  });
+
+  describe('reset() single-emission (line 242)', () => {
+    // id 116 (ConditionalExpression -> true on `if (!transitioned)`): forcing this true
+    // makes reset() ALWAYS call handleSnapshotUpdate — even when stateMachine.reset()
+    // already drove a real transition (RUNNING/PAUSED/STOPPED -> IDLE) whose
+    // signalStateChange emitted the IDLE snapshot. That produces a DOUBLE emission for a
+    // single reset(). The content of both emits is identical, so only the emission COUNT
+    // exposes the mutant. Subscribe, then assert exactly one IDLE snapshot per reset().
+    it('reset() from RUNNING emits the IDLE snapshot exactly once', () => {
+      const t = 0;
+      const e = CountdownEngine(60, { timeProvider: () => t, tickIntervalMs: 100 });
+
+      expect(e.start()).toBe(true);
+
+      const seen: TimerState[] = [];
+      const sub = e.subscribe(snapshot => seen.push(snapshot.state));
+      expect(seen).toEqual([TimerState.RUNNING]); // initial emit on subscribe
+      seen.length = 0;
+
+      expect(e.reset()).toBe(true);
+      // Real: one IDLE emit via signalStateChange. Mutant: a second, redundant IDLE emit
+      // via the always-run handleSnapshotUpdate.
+      expect(seen).toEqual([TimerState.IDLE]);
+      expect(e.getSnapshot().state).toBe(TimerState.IDLE);
+      expect(e.getSnapshot().totalSeconds).toBe(60);
+
+      sub.unsubscribe();
+      e.destroy();
+    });
   });
 
   describe('subscribe()/unsubscribe()/destroy() (lines 252, 259, 265)', () => {
@@ -175,4 +231,58 @@ describe('countdown-engine — mutation oracle', () => {
       expect(snap.state).toBe(TimerState.STOPPED);
     });
   });
+
+  // ── EQUIVALENT survivors (documented, intentionally not tested) ────────────────
+  // The mutants below survive because no public-API input can make the mutated code
+  // observably diverge from the real code. They are honest equivalent mutants, not
+  // oracle gaps, so per policy they are documented here rather than "killed" with a
+  // theater test. Each note states the location, the mutation, and the one-line
+  // unobservability argument.
+  //
+  // sanitizeInitialSeconds guard (line 35):
+  //   `if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value))`
+  //   The trailing `!Number.isInteger(value)` already fully decides the throw:
+  //   Number.isInteger is true ONLY for finite integer numbers, and it never coerces,
+  //   so for any value where it is true the first two operands are necessarily false,
+  //   and for any value the first two would reject (non-number / non-finite) it is true.
+  //   • id 6  — Conditional -> false on `typeof value !== 'number'`: drops the redundant
+  //     typeof operand; every non-number also fails `!Number.isFinite` (no coercion), so
+  //     the throw set is unchanged. EQUIVALENT.
+  //   • id 4  — Conditional -> false on `typeof … || !Number.isFinite(value)`: leaves
+  //     `!Number.isInteger(value)`, which is true for exactly the same inputs the full
+  //     guard threw on. EQUIVALENT.
+  //   • id 5  — LogicalOperator `||` -> `&&` between the first two operands: makes the
+  //     condition `(A && B) || C`. It differs from `A || B || C` only when C
+  //     (`!Number.isInteger`) is false, i.e. an integer number — but then A (`typeof≠number`)
+  //     and B (`!isFinite`) are both false, so `A&&B` and `A||B` are both false. EQUIVALENT.
+  //
+  // Optional callback invocations (lines 106, 131, 146):
+  //   `options.onSnapshot?.(…)`, `options.onStateChange?.(…)`, `options.onError?.(…)`
+  //   • id 59 / id 67 / id 71 — OptionalChaining removed. Each call is the SOLE statement
+  //     inside a `try { } catch {}` whose catch body is empty. Dropping `?.` changes
+  //     behavior only when the callback is null/undefined, where the mutant throws a
+  //     TypeError — which is immediately swallowed by the empty catch, with nothing after
+  //     it in the try to skip. When the callback is a function both forms call it
+  //     identically. No public input observably diverges. EQUIVALENT. (Corroborated: the
+  //     existing suite drives ticks/transitions/errors with these callbacks omitted, and
+  //     all three mutants still survived.)
+  //
+  // pause() guard (line 194): `if (!stateMachine.canPause()) return false;`
+  //   • id 91 (Conditional -> false) / id 92 (BlockStatement -> {}) — both delete the early
+  //     `return false`, letting pause() fall through to `timer.stop(); return
+  //     stateMachine.pause()`. canPause() is false only in IDLE/PAUSED/STOPPED; the engine
+  //     invariant "timer runs ⟺ state === RUNNING" makes timer.stop() a no-op in those
+  //     states, and stateMachine.pause() rejects the invalid transition (returns false,
+  //     emits no snapshot). So pause() still returns false with no state change — identical
+  //     to the guarded path. EQUIVALENT.
+  //
+  // stop() bookkeeping (line 218): `if (transitioned) { timer.setSeconds(0); }`
+  //   • id 105 (Conditional -> false) / id 106 (BlockStatement -> {}) — both skip
+  //     `timer.setSeconds(0)` after a SUCCESSFUL stop(). But a successful stop already
+  //     emitted a STOPPED snapshot reporting 0 via signalStateChange, so getSnapshot() is 0
+  //     regardless. Skipping the call only leaves the timer's internal remaining stale, and
+  //     from STOPPED every path that could surface it (reset / setSeconds / destroy)
+  //     overwrites the timer before reading it. Never observable. EQUIVALENT. (Contrast
+  //     id 104 above — Conditional -> true — which IS killable: it runs setSeconds(0) on a
+  //     REJECTED stop from IDLE, poisoning the next start().)
 });
